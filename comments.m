@@ -75,3 +75,28 @@
 % some images of the figure and the reference to the script that generated
 % them. This will help you structure the systematic analyses. Tree like
 % structure.
+
+
+%% 2014 11 03
+% I added scripts on GitHub and made first modifications to the scripts
+
+% I ran time generalization tAll with wsize =4 for the target and probe
+% decoder (SVR) on all subjects. Time points of interest were however reduced
+% every 4 time points and from -.2 to 1.2 secs. Plotting results a clearer
+% distinction between seen and unseen trials exist for target orientations
+% for several measures like angle error, pvalue, rtests and so on. However
+% I was concerned that results are due to the lack of trials in the unseen
+% present bin compared to the seen present ones. However at second thought
+% I realized that the SVR is trained on all present trials. What we see is
+% simply the generalization to a general model to a specific case (unseen).
+% In other words the SVR was not trained on a smaller number of trials
+
+% I ran time generalization tAll with wsize=4 for the 4 visibilities
+% regressor (SVR). I plotted some graphs but I encountered a problem of
+% baseline and in general graphs were highly significant also before target
+% presentation. However some signal seems to be present given that a clean diagonal
+% emerged from the visibile one.
+
+% I transformed decode_defineContrast into a function taking as inputs cfg
+% and trials. cfg structure, used by the jr_classify was added a .contrast
+% field that specify the kind of contrast under study.

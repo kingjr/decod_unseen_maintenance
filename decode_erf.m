@@ -8,7 +8,6 @@ file_binary     = [data_path 'preprocessed/' subject '_preprocessed.dat'];
 time    = data.time{1}; % in secs
 
 %% Specify time region of interest
-toi     = 1:length(time); % careful: this will be long. otherwise, only take relevant data points
 % to be faster -----------------------
 toi     = find(time>-.200,1):2:find(time>1.500,1);
 

@@ -63,7 +63,7 @@ for s = 1:length(SubjectsList)
     % correlate predicted angle with true angle: not so great
     % combine the results to get a predicted angle
     % correlation between predicted angle and real angle
-    [rho p] = circ_corrcc(repmat(theta', [1 sz(predict_theta, [2, 3])]),predict_theta);
+    [rho p] = circ_corrcc(repmat(angle_truth', [1 sz(angle_predicted, [2, 3])]),angle_predicted);
     rhos(s,:,:) = rho;
     
     % 3. RELIAGNMENT AND DISTRIBUTION OF ALL TRIALS
@@ -158,24 +158,29 @@ for t = 1:length(toi)
 end
 plot(time(toi),-log10(p))
 
-
+figure,set(gcf,'Position',get(0,'ScreenSize'))
 for vis =1:4,
-    %     subplot(2,4,vis);
-    %     imagesc(squeeze(nanmean(all_p_r_vis(:,:,:,vis)))); colorbar;
-    %
+    subplot(2,4,vis);
+    imagesc(time(toi),time(toi),squeeze(nanmean(all_p_r_vis(:,:,:,vis))),[30 140]); 
+    axis tight;colorbar;
+    set(gca,'ydir','normal');
+    
     subplot(2,4,4+vis);
-    imagesc(squeeze(nanmedian(all_trial_prop_vis(:,round(end/2),:,:,vis))), [.13 .24]);
-    colorbar;
+    imagesc(time(toi),time(toi),squeeze(nanmedian(all_trial_prop_vis(:,round(end/2),:,:,vis))));
+    colorbar;axis fill
+    set(gca,'ydir','normal');
 end
 
 %% Plot prediction error distributions
 close all
+figure('name','angle prediction error distribution'),set(gcf,'Position',get(0,'ScreenSize'))
 for vis=1:4
     % GAT for each level of visibility: peak of distribution
     subplot(2,4,vis);
     clim = [.13 .24];
     imagesc(time(toi),time(toi), ...
-        squeeze(nanmedian(all_trial_prop_vis(:,round(end/2),:,:,vis))));
+        squeeze(nanmedian(all_trial_prop_vis(:,round(end/2),:,:,vis))),[.07 .155]);
+    set(gca,'ydir','normal')
     
     % Tuning curver: distribution of prediction error on GAT diagonal
     subplot(2,4,4+vis);
@@ -184,7 +189,7 @@ for vis=1:4
         % mean across orientations
         m(:,t) = squeeze(nanmean(all_trial_prop_vis(:,:,t,t,vis)));
     end
-    imagesc(time(toi),[], m)
+    imagesc(time(toi),[], m,[.06 .15])
 end
 
 %% Plot prediction error distributions after taking orientation bias into account.
@@ -192,13 +197,14 @@ end
 
 %% Plot mean angle error computed after taking orientation bias into account.
 close all
+figure('name','mean angle prediction error after taking orientation bias into account'),set(gcf,'Position',get(0,'ScreenSize'))
 colors = colorGradient([1 0 0], [0 1 0], 4);
 for vis=1:4
     % GAT for each level of visibility: angle error
     subplot(2,4,vis);
     imagesc(time(toi),time(toi), ...
         squeeze(-nanmean(nanmean(mean_angle_error(:,:,:,vis,:),5),1)));
-    
+    set(gca,'ydir','normal')
     % Angle per visibility across time (diagonal)
     subplot(2,1,2);
     clear m
@@ -207,5 +213,5 @@ for vis=1:4
         m(:,t) = -squeeze(nanmean(mean_angle_error(:,t,t,vis,:),5));
     end
     hold on;
-    plot_eb(time(toi),m, colors(vis,:))
+    plot_eb(time(toi),m, colors(vis,:));
 end
