@@ -17,75 +17,82 @@ toi     = find(time>-.200,1):2:find(time>1.500,1);
 contrasts = {'targetAngle', 'probeAngle','lambda', 'responseButton','tilt', 'visibility',...
     'visibilityPresent', 'presentAbsent', 'accuracy'}; % may increase over time
 for c = 1:length(contrasts)
-    contrast    = contrasts{c};
-    cfg         = [];
-    cfg.clf_type= 'SVC';
-    cfg.dims    = toi';
-    cfg.gentime = '';
-    decode_defineContrast;
+    cfg             = [];
+    cfg.contrast    = contrasts{c};
+    cfg.clf_type    = 'SVC';
+    cfg.dims        = toi';
+    cfg.gentime     = '';
+    [class ~]       = decode_defineContrast(cfg,trials);
     decode_run;
 %     plot_decode;
 end
 
 %% SVR: classic
+% here go all contrasts whose variables are in principle continuous like
+% angle and visibility ratings.
 
 contrasts   = {'targetAngle','probeAngle', '4visibilitiesPresent'}; 
 for c = 1:length(contrasts)
-    %% SVR: trained at each time point
-    contrast = contrasts{c};
-    cfg         = [];
-    cfg.clf_type= 'SVR';
-    cfg.dims    = toi';
-    cfg.wsize   = 4; % don't go beyond 32 ms if possible (wsize=8 if 256Hz)
-    cfg.gentime = '';
-    decode_defineContrast;
-    decode_run;
-%     plot_decode;
+%     %% SVR: trained at each time point
     
-    %% SVR: slice of time t = .176
-    cfg         = [];
-    cfg.clf_type= 'SVR';
-    cfg.dims    = find(time>=.176,1)+1;
-    cfg.dims_tg = toi;
-    cfg.wsize   = 4; % don't go beyond 32 ms if possible (wsize=8 if 256Hz)
-    cfg.gentime = ['_t' num2str(round(1000*time(cfg.dims)))];
-    decode_defineContrast;
-    decode_run;
-%     plot_decode;
-    
-    %% SVR: slice of time t = .300
-    cfg         = [];
-    cfg.clf_type= 'SVR';
-    cfg.dims    = find(time>=.300,1)+1;
-    cfg.dims_tg = toi;
-    cfg.wsize   = 4; % don't go beyond 32 ms if possible (wsize=8 if 256Hz)
-    cfg.gentime = ['_t' num2str(round(1000*time(cfg.dims)))];
-    decode_defineContrast;
-    decode_run;
-%     plot_decode;
-
-    %% SVR: slice of time t = .970 for probe only
-    cfg         = [];
-    cfg.clf_type= 'SVR';
-    cfg.dims    = find(time>=.970,1)+1;
-    cfg.dims_tg = toi;
-    cfg.wsize   = 4; % don't go beyond 32 ms if possible (wsize=8 if 256Hz)
-    cfg.gentime = ['_t' num2str(round(1000*time(cfg.dims)))];
-    decode_defineContrast;
-    decode_run;
-%     plot_decode;
-
-    %% SVR: slice etc, depending on contrast
+%     cfg                   = [];
+%     cfg.contrast          = contrasts{c};
+%     cfg.clf_type          = 'SVR';
+%     cfg.dims              = toi';
+%     cfg.wsize             = 4; % don't go beyond 32 ms if possible (wsize=8 if 256Hz)
+%     cfg.gentime           = '';
+%     [class_x class_y]     = decode_defineContrast(cfg,trials);
+%     decode_run;
+% %     plot_decode;
+%     
+%     %% SVR: slice of time t = .176
+%     cfg                   = [];
+%     cfg.contrast          = contrasts{c};
+%     cfg.clf_type          = 'SVR';
+%     cfg.dims              = find(time>=.176,1)+1;
+%     cfg.dims_tg           = toi;
+%     cfg.wsize             = 4; % don't go beyond 32 ms if possible (wsize=8 if 256Hz)
+%     cfg.gentime           = ['_t' num2str(round(1000*time(cfg.dims)))];
+%     [class_x class_y]     = decode_defineContrast(cfg,trials);
+%     decode_run;
+% %     plot_decode;
+%     
+%     %% SVR: slice of time t = .300
+%     cfg                   = [];
+%     cfg.contrast          = contrasts{c};
+%     cfg.clf_type          = 'SVR';
+%     cfg.dims              = find(time>=.300,1)+1;
+%     cfg.dims_tg           = toi;
+%     cfg.wsize             = 4; % don't go beyond 32 ms if possible (wsize=8 if 256Hz)
+%     cfg.gentime           = ['_t' num2str(round(1000*time(cfg.dims)))];
+%     [class_x class_y]     = decode_defineContrast(cfg,trials);
+%     decode_run;
+% %     plot_decode;
+% 
+%     %% SVR: slice of time t = .970 for probe only
+%     cfg                   = [];
+%     cfg.contrast          = contrasts{c};
+%     cfg.clf_type          = 'SVR';
+%     cfg.dims              = find(time>=.970,1)+1;
+%     cfg.dims_tg           = toi;
+%     cfg.wsize             = 4; % don't go beyond 32 ms if possible (wsize=8 if 256Hz)
+%     cfg.gentime           = ['_t' num2str(round(1000*time(cfg.dims)))];
+%     [class_x class_y]     = decode_defineContrast(cfg,trials);
+%     decode_run;
+% %     plot_decode;
+% 
+%     %% SVR: slice etc, depending on contrast
     
     %% SVR: time generalization
-    cfg         = [];
-    cfg.clf_type= 'SVR';
-    cfg.dims    = toi';
-    cfg.dims_tg = repmat(toi,length(toi),1);
-    cfg.wsize   = 1;
-    cfg.gentime = '_tAll';
+    cfg             = [];
+    cfg.contrast    = contrasts{c};
+    cfg.clf_type    = 'SVR';
+    cfg.dims        = toi';
+    cfg.dims_tg     = repmat(toi,length(toi),1);
+    cfg.wsize       = 4; % careful...
+    cfg.gentime     = '_tAll';
     
-    decode_defineContrast;
+    [class_x class_y] = decode_defineContrast(cfg,trials);
     decode_run;
 %     plot_decode;
 end

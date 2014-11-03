@@ -1,31 +1,42 @@
-%% Plotting
-% figure of targetAngle
-% load results
+%% Plotting within subjects decoding results
 
+% retrieve results
 switch cfg.clf_type
     case 'SVR'
-        results_x = load([data_path 'mvpas/' subject '_preprocessed_' contrast '_' cfg.clf_type cfg.gentime '_x_results.mat']); % classifier (and file) name
-        results_y = load([data_path 'mvpas/' subject '_preprocessed_' contrast '_' cfg.clf_type cfg.gentime '_y_results.mat']); % classifier (and file) name
+        results_x = load([data_path 'mvpas/' subject '_preprocessed_' cfg.contrast '_' cfg.clf_type cfg.gentime '_x_results.mat']); % classifier (and file) name
+        results_y = load([data_path 'mvpas/' subject '_preprocessed_' cfg.contrast '_' cfg.clf_type cfg.gentime '_y_results.mat']); % classifier (and file) name
     case 'SVC'
-        results = load([data_path 'mvpas/' subject '_preprocessed_' contrast '_' cfg.clf_type cfg.gentime '_results.mat']); % classifier (and file) name
+        results = load([data_path 'mvpas/' subject '_preprocessed_' cfg.contrast '_' cfg.clf_type cfg.gentime '_results.mat']); % classifier (and file) name
 end
-% plot
+
+present    = [trials.present]'; 
+visibilityPresent = [trials(present).response_visibilityCode]';
+
+% actual plot
 switch cfg.clf_type
     case 'SVR'
-        % relign predictions
-        switch contrast
+        switch cfg.contrast
             case 'targetAngle';
+                % re-infer angle from predictions in cos and sin
                 [trial_prop predict] = decode_reg2angle(...
                     results_x,....
                     results_y,...
                     [trials([trials.present]==1).orientation]);
             case 'probeAngle'
+                % re-infer angle from predictions in cos and sin
                 [trial_prop predict] = decode_reg2angle(...
                     results_x,....
                     results_y,...
                     mod([trials.orientation]+[trials.tilt]-1,6)+1);
             case '4visibilitiesPresent'
+                clear decode_error_v decode_error
                 % to be done
+                decode_error = squeeze(results.predict(1,:,:,:)) - repmat([trials(present).response_visibilityCode]',[1 110 110]);
+                % divide by visibility
+                for vis = 1:4
+                    tmp = squeeze(results.predict(1,visibilityPresent==vis,:,:)) - repmat([trials(visibilityPresent ==vis).response_visibilityCode]',[1 110 110]);
+                    decode_error_v(:,:,vis) = squeeze(mean(tmp.^2)); clear tmp
+                end
         end
         figure;
         %                 % separate visible versus invisible
@@ -48,20 +59,33 @@ switch cfg.clf_type
         
         switch cfg.gentime
             case '_tAll'
-                
-                % plot gentime on closest angle distance
-                imagesc(squeeze(trial_prop(round(end/2),:,:)));
-                set(gca,'ydir', 'normal');
-                
-                % plot p value
-                [p z] = circ_rtest(2*predict-pi);
-                imagesc(time(cfg.dims),time(cfg.dims),squeeze(-log10(p)));
-                set(gca,'ydir', 'normal');
-                
-            otherwise
-                imagesc(trial_prop);%,[0 .5]);
-                imagesc(time(cfg.dims),[],trial_prop);%,[0 .5]);
-                
+                switch cfg.contrast
+                    case {'targetAngle' 'probeAngle'}
+                        % plot gentime on closest angle distance
+                        imagesc(squeeze(trial_prop(round(end/2),:,:)));
+                        set(gca,'ydir', 'normal');
+                        
+                        % plot p value
+                        [p z] = circ_rtest(2*predict-pi);
+                        imagesc(time(cfg.dims),time(cfg.dims),squeeze(-log10(p)));
+                        set(gca,'ydir', 'normal');
+                    case '4visibilitiesPresent'
+                        % plot prediction visibility distance
+                        imagesc(time(toi),time(toi),-log10(squeeze(mean(decode_error)))),
+                        set(gca,'ydir','normal'),colorbar
+                        
+                        % divide by visibility
+                        for vis = 1:4
+                            subplot(2,2,vis),
+                            imagesc(time(toi),time(toi),decode_error_v(:,:,vis)),
+                            set(gca,'ydir','normal'),colorbar
+                            hold on, title(['vis' num2str(vis)])
+                        end
+                    otherwise
+                        imagesc(trial_prop);%,[0 .5]);
+                        imagesc(time(cfg.dims),[],trial_prop);%,[0 .5]);
+                        
+                end
         end
         
         

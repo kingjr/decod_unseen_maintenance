@@ -24,8 +24,6 @@ if 0 % silence this part if preprocessing already done
         %preproc_rejectTrials;  % to be done using fieldtrip art summary tutorial
     end
     % to be finished, and subsequently put in loop
-    
-    
     preproc_timeFrequency; % mean time frequency across all conditions
     % XXX In preproc TFoi, change the code so that it saves each FOI
     % separately

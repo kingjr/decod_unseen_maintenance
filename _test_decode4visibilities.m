@@ -19,12 +19,12 @@ for s = 1:4
     
     %% SVC classic
     
-    contrast    = '4visibilitiesPresent';
-    cfg         = [];
-    cfg.clf_type= 'SVC';
-    cfg.dims    = toi';
-    cfg.gentime = '';
-    decode_defineContrast;
+    cfg             = [];
+    cfg.contrast    = '4visibilitiesPresent';
+    cfg.clf_type    = 'SVC';
+    cfg.dims        = toi';
+    cfg.gentime     = '';
+    [class_x ~]     = decode_defineContrast(cfg,trials);
     decode_run;
 end
 %% load results
@@ -102,12 +102,12 @@ for s = 1:20
     
     
     %% SVR: trained at each time point
-    contrast = '4visibilitiesPresent';
-    cfg         = [];
-    cfg.clf_type= 'SVR';
-    cfg.dims    = toi';
-    cfg.gentime = '';
-    decode_defineContrast;
+    cfg             = [];
+    cfg.contrast    = '4visibilitiesPresent';
+    cfg.clf_type    = 'SVR';
+    cfg.dims        = toi';
+    cfg.gentime     = '';
+    [class_x ~]     = decode_defineContrast(cfg,trials);
     decode_run;
     %     plot_decode;
     
