@@ -25,11 +25,13 @@ if 0 % silence this part if preprocessing already done
     end
     % to be finished, and subsequently put in loop
     preproc_timeFrequency; % mean time frequency across all conditions
+    
     % XXX In preproc TFoi, change the code so that it saves each FOI
     % separately
     preproc_TFoi; % single trial TF but on selected frequency bands of interest
 end
 
+% this is a test for github.com
 %% within subject univariate stats
 if 0 %switch on/off
 for sbj_number = 1:length(SubjectsList)
