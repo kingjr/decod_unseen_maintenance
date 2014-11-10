@@ -15,7 +15,7 @@ switch cfg.clf_type
         cfg.namey   = [cfg.contrast '_' cfg.clf_type cfg.gentime]; % classifier (and file) name
         cfg.run_svm = true;
         % do not recompute everything but only retrieve the codes
-        if 0 ...~exist([cfg.path subject '_preprocessed_' cfg.namey '_results.mat'],'file'),
+        if 0 %~exist([cfg.path subject '_preprocessed_' cfg.namey '_results.mat'],'file'),
                 cfg.load_results = false;
             %             MEEG = binload([path 'data/' subject '/preprocessed/' subject '_preprocessed.dat'], data.Xdim);
             results     = jr_classify(file_header,class,cfg);

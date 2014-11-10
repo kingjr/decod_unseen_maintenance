@@ -1,15 +1,16 @@
 
-switch 'niccolo_ubuntu'
+switch 'D145'
     case 'D145'
-        cd('/media/niccolo/Yupi/Paris/scripts');
-        path = '/media/niccolo/Yupi/Paris/';
-        addpath('/media/niccolo/Yupi/Paris/toolboxes/JR_toolbox/');
-        addpath('/media/niccolo/Yupi/Paris/toolboxes/export_fig/');
-        addpath('/media/niccolo/Yupi/Paris/toolboxes/fieldtrip-20140123/'); ft_defaults;
-        addpath('/media/niccolo/Yupi/Paris/toolboxes/circular_stats/');
-        addpath('/media/niccolo/Yupi/Paris/toolboxes/statistics/');
-        addpath('/media/niccolo/Yupi/myfunctions');
-        addpath('/media/niccolo/Yupi/Paris/toolboxes/resampling_statistical_toolkit');
+        cd('/home/niccolo/Dropbox/DOCUP/scripts');
+        path = '/media/niccolo/My Passport/Paris/';
+        addpath(path);
+        addpath('/home/niccolo/Dropbox/DOCUP/toolboxes/JR_toolbox/');
+        addpath('/home/niccolo/Dropbox/DOCUP/toolboxes/export_fig/');
+        addpath('/home/niccolo/Dropbox/DOCUP/toolboxes/fieldtrip-20141030/'); ft_defaults;
+        addpath('/home/niccolo/Dropbox/DOCUP/toolboxes/circular_stats/');
+        addpath('/home/niccolo/Dropbox/DOCUP/toolboxes/statistics/');
+%         addpath('/media/niccolo/Yupi/myfunctions');
+%         addpath('/media/niccolo/Yupi/Paris/toolboxes/resampling_statistical_toolkit');
     case 'D145_wind'
         cd('F:/Paris/scripts');
         path = 'F:/Paris/';

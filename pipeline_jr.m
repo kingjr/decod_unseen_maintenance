@@ -31,7 +31,6 @@ if 0 % silence this part if preprocessing already done
     preproc_TFoi; % single trial TF but on selected frequency bands of interest
 end
 
-% this is a test for github.com
 %% within subject univariate stats
 if 0 %switch on/off
 for sbj_number = 1:length(SubjectsList)
@@ -64,6 +63,7 @@ univariate_erf_statsAcross;
 
 %% decoding
 for s = 1:length(SubjectsList)
+    s
     % select subject and details
     subject = SubjectsList{s};
     

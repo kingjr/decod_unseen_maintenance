@@ -43,7 +43,7 @@ for s = 1:length(SubjectsList)
     
     
     % Combine cos and sin predictions into angle
-    px = squeeze(results_x.predict-2); % remove 2 to get back to normal (i.e. this is because of the abd scripting of the decoding pipeline that does not take y<=0, so i added to so that the sin and cos are between 2 and 3
+    px = squeeze(results_x.predict-2); % remove 2 to get back to normal (i.e. this is because of the abd scripting of the decoding pipeline that does not take y<=0, so I added 2 so that the sin and cos are between 2 and 3
     py = squeeze(results_y.predict-2);
     %---- gives the predicted angle theta and the predicted radius
     [angle_predicted radius_predicted] = cart2pol(px,py); 

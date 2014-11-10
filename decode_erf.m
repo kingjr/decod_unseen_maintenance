@@ -9,18 +9,32 @@ time    = data.time{1}; % in secs
 
 %% Specify time region of interest
 % to be faster -----------------------
-toi     = find(time>-.200,1):2:find(time>1.500,1);
+toi     = find(time>-.200,1):4:find(time>1.500,1);
 
 
 %% SVC classic
 contrasts = {'targetAngle', 'probeAngle','lambda', 'responseButton','tilt', 'visibility',...
     'visibilityPresent', 'presentAbsent', 'accuracy'}; % may increase over time
 for c = 1:length(contrasts)
+    disp(['SVC: ' num2str(c)])
+    if 0
     cfg             = [];
     cfg.contrast    = contrasts{c};
     cfg.clf_type    = 'SVC';
     cfg.dims        = toi';
     cfg.gentime     = '';
+    [class ~]       = decode_defineContrast(cfg,trials);
+    decode_run;
+%     plot_decode;
+    end
+    %% SVC: time generalization
+    cfg             = [];
+    cfg.contrast    = contrasts{c};
+    cfg.clf_type    = 'SVC';
+    cfg.dims        = toi';
+    cfg.dims_tg     = repmat(toi,length(toi),1);
+    cfg.gentime     = '_tAll';
+    cfg.wsize       = 4; % careful...
     [class ~]       = decode_defineContrast(cfg,trials);
     decode_run;
 %     plot_decode;
@@ -32,6 +46,7 @@ end
 
 contrasts   = {'targetAngle','probeAngle', '4visibilitiesPresent'}; 
 for c = 1:length(contrasts)
+    disp(['SVR: ' num2str(c)])
 %     %% SVR: trained at each time point
     
 %     cfg                   = [];
