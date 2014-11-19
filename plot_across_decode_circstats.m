@@ -98,14 +98,8 @@ for mdl = 1:length(models)
         s
         %% load data
         load([path 'data/' subject '/behavior/' subject '_fixed.mat'],'trials');
-        switch models{mdl}
-            case 'target'
-                results_x = load([path 'data/' subject '/mvpas/' subject '_preprocessed_targetAngle_SVR_tAll_x_results.mat'],'predict', 'y','dims');
-                results_y = load([path 'data/' subject '/mvpas/' subject '_preprocessed_targetAngle_SVR_tAll_y_results.mat'],'predict', 'y');
-            case 'probe'
-                results_x = load([path 'data/' subject '/mvpas/' subject '_preprocessed_probeAngle_SVR_tAll_x_results.mat'],'predict', 'y','dims');
-                results_y = load([path 'data/' subject '/mvpas/' subject '_preprocessed_probeAngle_SVR_tAll_y_results.mat'],'predict', 'y');
-        end
+        results_x = load([path 'data/' subject '/mvpas/' subject '_preprocessed_' models{mdl} 'Angle_SVR_tAll_x_results.mat'],'predict', 'y','dims');
+        results_y = load([path 'data/' subject '/mvpas/' subject '_preprocessed_' models{mdl} 'Angle_SVR_tAll_y_results.mat'],'predict', 'y');
         toi = time(results_x.dims);
 
         % Combine cos and sin predictions into angle
@@ -210,8 +204,9 @@ for mdl = 1:length(models)
     
     % GAT plots
     all_tprop = squeeze(all_trialProp(round(end/2),:,:,:)); % take only peak of the tuning curve
-    all_tprop = squeeze(all_trialProp_gen(round(end/2),:,:,:));
-    a_err = reshape(angle_error,[2 3 1])%% to continue from here!!!!!!
+    all_tprop_gen = squeeze(all_trialProp_gen(round(end/2),:,:,:));
+    angle_error = shiftdim(angle_error,1);
+    rhos = shiftdim(rhos,1); %% to continue from here!!!!!!
     
     plots = {{'angle_error'} ...
         {'rhos'} ...
@@ -243,31 +238,15 @@ for mdl = 1:length(models)
         if length(plots{p})==2
             subplot(1,2,2);
             eval(['imagesc(toi,toi,squeeze(mean(' plots{p}{2} '(:,:,:),3)));']);
-            colobar; set(gca,'FontSize',24,'ydir', 'normal')
+            colorbar; set(gca,'FontSize',24,'ydir', 'normal')
             title([titles{p} ': aligned to ' models{3-mdl}]);axis image;
             ylabel('train time');xlabel('test time');
         end
     end
-    
-    figure
-    imagesc(toi,toi,mean(all_z,3));colorbar;
-    set(gca,'FontSize',24,'ydir', 'normal')
-    title('Rayleigh''s test of non-uniformity (z-stat)');
-    ylabel('train time');xlabel('test time');
-    set(gcf,'Position',get(0,'ScreenSize'))
-    % saveas(gcf,[path_images '/SVR_TAngle_Rayleigh_tAll.jpeg']);
-    
-    figure
-    imagesc(toi,toi,mean(-log10(all_p),3),[0 4]);colorbar();
-    set(gca,'FontSize',24,'ydir', 'normal')
-    title('test of non-uniformity (-log10(p) value)');
-    ylabel('train time');xlabel('test time');
-    set(gcf,'Position',get(0,'ScreenSize'))
-    % saveas(gcf,[path_images '/SVR_TAngle_pval_tAll.jpeg']);
 end
 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% %%%%%%%%%%%%%%%%%%%%%%%%%%% TO BE CLEANED AND POLISHED %%%%%%%%%%%%%%%%%
 %% all subjects probe decoding
 clear all_trialProp* all_p all_v_vis
 for s = length(SubjectsList):-1:1

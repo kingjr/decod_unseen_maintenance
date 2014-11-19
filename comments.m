@@ -100,3 +100,20 @@
 % I transformed decode_defineContrast into a function taking as inputs cfg
 % and trials. cfg structure, used by the jr_classify was added a .contrast
 % field that specify the kind of contrast under study.
+
+
+%% 2014 11 14
+% I am running the GAT for all subjects all contrasts (SVC and SVR) with a
+% time window of 4. Unfortunately RAM saturates sometimes so I have to run
+% one subject by time. I run 3 subjects and didn't manage to compute only
+% subject 3 SVC on probe Angle. Possibly I can run on Chris's supercomputer
+
+%% 2014 11 17
+% I managed to run the Probe Angle SVR generalized across time for subject
+% 3. I will now proceed to run it for subject 4. I found that target and
+% probe GAT are the most expensive in terms of RAM and they thus have to be
+% run separately for each subject starting with the lowest possible RAM
+% load.
+
+%% 2014 11 18
+ %I mnaged subject 4 probe angle gat.

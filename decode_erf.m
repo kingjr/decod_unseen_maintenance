@@ -9,7 +9,7 @@ time    = data.time{1}; % in secs
 
 %% Specify time region of interest
 % to be faster -----------------------
-toi     = find(time>-.200,1):4:find(time>1.500,1);
+toi     = find(time>-.200,1):2:find(time>1.500,1);
 
 
 %% SVC classic
