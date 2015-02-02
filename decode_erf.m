@@ -13,20 +13,21 @@ toi     = find(time>-.200,1):2:find(time>1.500,1);
 
 
 %% SVC classic
+if 0 % stop momentarily until I run all SVRs
 contrasts = {'targetAngle', 'probeAngle','lambda', 'responseButton','tilt', 'visibility',...
     'visibilityPresent', 'presentAbsent', 'accuracy'}; % may increase over time
 for c = 1:length(contrasts)
-    disp(['SVC: ' num2str(c)])
-    if 0
-    cfg             = [];
-    cfg.contrast    = contrasts{c};
-    cfg.clf_type    = 'SVC';
-    cfg.dims        = toi';
-    cfg.gentime     = '';
-    [class ~]       = decode_defineContrast(cfg,trials);
-    decode_run;
-%     plot_decode;
-    end
+%     disp(['SVC: ' num2str(c)])
+%     if 0
+%     cfg             = [];
+%     cfg.contrast    = contrasts{c};
+%     cfg.clf_type    = 'SVC';
+%     cfg.dims        = toi';
+%     cfg.gentime     = '';
+%     [class ~]       = decode_defineContrast(cfg,trials);
+%     decode_run;
+% %     plot_decode;
+%     end
     %% SVC: time generalization
     cfg             = [];
     cfg.contrast    = contrasts{c};
@@ -38,6 +39,7 @@ for c = 1:length(contrasts)
     [class ~]       = decode_defineContrast(cfg,trials);
     decode_run;
 %     plot_decode;
+end
 end
 
 %% SVR: classic
@@ -108,5 +110,9 @@ for c = 1:length(contrasts)
     
     [class_x class_y] = decode_defineContrast(cfg,trials);
     decode_run;
+    
+    % clear ram memory
+    system('sync && echo 3 | sudo tee /proc/sys/vm/drop_caches')
+    
 %     plot_decode;
 end

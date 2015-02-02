@@ -1,4 +1,4 @@
-function [trial_proportion predict_angle radius] = compute_SVR_error(results_x,results_y,angles,res)
+function [trial_proportion predict_angle radius] = recombine_SVR_prediction(results_x,results_y,angles,res)
 %[trial_proportion predict_angle radius] = decode_reg2angle(results_x,results_y,angles,res)
 % this function takes the two outputs of an SVR to transform them into
 % predicted angles and predicted radi;

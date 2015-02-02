@@ -19,6 +19,7 @@
 %name to be more explicit, 2) you should modify it in a similar philosophy
 %to decode_reg2angle_predict so that you pass predictions rather than
 %results structures.
+% 2.02.2015 Renamed as recombine_SVR_prediction.m
 
 %decode_defineContrast: check that target angle and probe angle have
 %similar length, I suspect that one removed the

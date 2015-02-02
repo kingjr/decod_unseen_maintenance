@@ -1,5 +1,5 @@
 across_subjects =[];
-for s = 1:4
+for s = 1:20
     % select subject and details
     subject = SubjectsList{s};
     
@@ -18,7 +18,6 @@ for s = 1:4
     toi     = find(time>-.050,1):5:find(time>.700,1);
     
     %% SVC classic
-    
     cfg             = [];
     cfg.contrast    = '4visibilitiesPresent';
     cfg.clf_type    = 'SVC';
@@ -26,9 +25,19 @@ for s = 1:4
     cfg.gentime     = '';
     [class_x ~]     = decode_defineContrast(cfg,trials);
     decode_run;
+    
+    %% SVR
+    cfg             = [];
+    cfg.contrast    = '4visibilitiesPresent';
+    cfg.clf_type    = 'SVR';
+    cfg.dims        = toi';
+    cfg.gentime     = '';
+    [class_x ~]     = decode_defineContrast(cfg,trials);
+    decode_run;
 end
+
 %% load results
-for s = 1:4
+for s = 1:20
     subject = SubjectsList{s};
     results=load([path 'data/' subject '/mvpas/' subject '_preprocessed_4visibilitiesPresent_SVC_results.mat']);
     for vis = 1:4
@@ -44,12 +53,6 @@ for vis=1:4
     hold on;
 end
 
-
-
-
-
-
-
 %% same with svr
 
 %% load subjects details
@@ -64,7 +67,7 @@ time    = data.time{1}; % in secs
 %% Specify time region of interest
 toi     = 1:length(time); % careful: this will be long. otherwise, only take relevant data points
 % to be faster -----------------------
-toi     = find(time>-.050,1):5:find(time>.700,1);
+toi     = find(time>-.200,1):2:find(time>1.500,1);
 
 %% SVC classic
 contrasts = {'targetAngle', 'probeAngle','lambda', 'responseButton','tilt', 'visibility',...
@@ -140,19 +143,30 @@ end
 figure();
 colors = colorGradient([1, 0, 0], [0, 1, 0], 4);
 for vis=1:4
-    plot_eb(time(toi), across_subjects(:,:,vis), colors(vis, :));
+    [hl(vis) hf(vis)] = plot_eb(time(toi), across_subjects(:,:,vis), colors(vis, :));
     hold on;
 end
+legend(cell2mat(hl),'invisible','brief glimpse','almost clear','clear','location','southwest')
+set(gca,'fontsize',15);
+xlabel('time');ylabel('SVR visibility prediction');
+title('present trials only')
+plot2svg([im_path '/4visibilitiesPresent/visibilityPrediction'])
 
-
-figure();
+figure();set(gcf,'position',get(0,'screensize'))
 for c = 1:3
     subplot(3,1,c);
     for vis=1:4
-        plot_eb(time(toi), across_subjects_c(:,:,vis,c), colors(vis, :));
+        [hl(vis) hf(vis)] = plot_eb(time(toi), across_subjects_c(:,:,vis,c), colors(vis, :));
         hold on;
+        legend(cell2mat(hl),'invisible','brief glimpse','almost clear','clear', ...
+            'location','NorthEastOutside')
+        set(gca,'fontsize',15);
+        xlabel('time');ylabel('SVR visibility prediction');
+        title(['contrast ' num2str(contrasts(c+1))])
     end
 end
+plot2svg([im_path '/4visibilitiesPresent/visibilityPrediction_by_contrast'])
+
 
 %% anova
 ntime = length(toi);
@@ -162,4 +176,38 @@ for t = 1:ntime
     [Y, GROUP] = prepare_anovan(squeeze(across_subjects_c(:,t,:,:)));
     P(:,t) = anovan(Y, GROUP, 'random', 1, 'model', 'linear', 'display', 'off');
 end
-plot(time(toi),-log10(P(2:end,:)))
+plot(time(toi),-log10(P(2:end,:)),'linewidth',3)
+set(gca,'fontsize',15)
+xlabel('time');ylabel('log_1_0 p-value');
+legend('visibility','contrast','location','northwest')
+plot2svg([im_path '/4visibilitiesPresent/anova_contrast_vs_visibility'])
+
+
+
+%% plot 4 visibility present tAll
+%% load results
+across_subjects = [];
+across_subjects_c = [];
+
+for s = 1:20
+    subject = SubjectsList{s};
+    data_path = [path 'data/' subject '/'] ;
+    file_behavior   = [data_path 'behavior/' subject '_fixed.mat'];
+    load(file_behavior, 'trials');
+    results=load([path 'data/' subject '/mvpas/' subject '_preprocessed_4visibilitiesPresent_SVR_tAll_results.mat']);
+    
+    % compute error
+    tmp = [squeeze([results.predict]) - repmat(double([results.y]'),1,length(toi),length(toi))].^2;
+    across_subjects(s,:,:) = squeeze(mean(sqrt(tmp)));
+    
+end
+
+imagesc(time(toi),time(toi),squeeze(mean(across_subjects)))
+set(gca,'ydir','normal','fontsize',15)
+colorbar
+title('mean square root error')
+xlabel('test time');ylabel('train time');
+
+plot2svg([im_path '/SVR_4visibilitiesPresent_tAll'])
+
+

@@ -3,12 +3,14 @@ switch 'D145'
     case 'D145'
         cd('/home/niccolo/Dropbox/DOCUP/scripts');
         path = '/media/niccolo/My Passport/Paris/';
+        im_path = '/media/niccolo/My Passport/Paris/images_acrossSubjs';
         addpath(path);
         addpath('/home/niccolo/Dropbox/DOCUP/toolboxes/JR_toolbox/');
         addpath('/home/niccolo/Dropbox/DOCUP/toolboxes/export_fig/');
         addpath('/home/niccolo/Dropbox/DOCUP/toolboxes/fieldtrip-20141030/'); ft_defaults;
         addpath('/home/niccolo/Dropbox/DOCUP/toolboxes/circular_stats/');
         addpath('/home/niccolo/Dropbox/DOCUP/toolboxes/statistics/');
+        addpath(genpath('/home/niccolo/Dropbox/Oxford/myfunctions/'));
 %         addpath('/media/niccolo/Yupi/myfunctions');
 %         addpath('/media/niccolo/Yupi/Paris/toolboxes/resampling_statistical_toolkit');
     case 'D145_wind'

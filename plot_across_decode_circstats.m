@@ -25,7 +25,7 @@ path_images = [path 'images_acrossSubjs'];
 %         %% get angle distance
 %         targetAngles = [trials.orientation]';
 %         targetAngles([trials.present]==0) = [];
-%         [trial_prop predict] = decode_reg2angle(results_x,results_y,targetAngles,20);
+%         [trial_prop predict] = recombine_SVR_prediction(results_x,results_y,targetAngles,20);
 %         all_trialProp(:,:,s) = trial_prop;
 %         
 %         %% stats
@@ -48,7 +48,7 @@ path_images = [path 'images_acrossSubjs'];
 %             sel = targetAngles;
 %             sel = probeAngles;
 %             sel(visibility~=vis) = NaN;
-%             [trial_prop_vis predict_vis] = decode_reg2angle(results_x,results_y,sel,6);
+%             [trial_prop_vis predict_vis] = recombine_SVR_prediction(results_x,results_y,sel,6);
 %             all_trialProp_vis(:,:,vis,s) = trial_prop_vis;
 %             % stats
 %             [p vstat] = circ_vtest(2*predict(visibility==vis,:)-pi,0);
@@ -83,7 +83,7 @@ path_images = [path 'images_acrossSubjs'];
 %     % saveas(gcf,[path_images '/SVR_TAngle_pval_vis.jpeg']);
 
 
-%% all subjects target angle decoding generalization across time
+%% all subjects target and probe angle decoding generalization across time
 % XXX Externalize function so that it become a generic prediction,
 % independently of whether models are fitted on probe or on target.
 
@@ -134,7 +134,7 @@ for mdl = 1:length(models)
         % _decodeOrientations.m
         
         % 1. ANGLE DIFFERENCE (between truth and prediction)
-        angle_error = angle_predicted - repmat(angle_truth, [1 sz(angle_predicted, [2, 3])]);
+        angle_error = angle_predicted - repmat(angle_truth', [1 sz(angle_predicted, [2, 3])]);
         angle_error = abs(mod(angle_error+pi, 2*pi)-pi);
         angle_error = mod(angle_error+pi, 2*pi)-pi;
         
@@ -142,17 +142,17 @@ for mdl = 1:length(models)
         % correlate predicted angle with true angle: not so great
         % combine the results to get a predicted angle
         % correlation between predicted angle and real angle
-        [rho p] = circ_corrcc(repmat(angle_truth, [1 sz(angle_predicted, [2, 3])]),angle_predicted);
+        [rho p] = circ_corrcc(repmat(angle_truth', [1 sz(angle_predicted, [2, 3])]),angle_predicted);
         rhos(s,:,:) = rho;
         
         %----- 3. RELIAGNMENT AND DISTRIBUTION OF ALL TRIALS
         % model trained and tested on same data
-        [trial_prop predict] = decode_reg2angle(results_x,results_y,angles,6);
+        [trial_prop predict] = recombine_SVR_prediction(results_x,results_y,angles,6);
         all_trialProp(:,:,:,s) = trial_prop;
         
         % generalize model trained on one type (eg target) to the other
         % type (eg probe)
-        [trial_prop_gen predict_gen] = decode_reg2angle(results_x,results_y,genAngles,6);
+        [trial_prop_gen predict_gen] = recombine_SVR_prediction(results_x,results_y,genAngles,6);
         all_trialProp_gen(:,:,:,s) = trial_prop_gen;
         
         %----- 4. CIRC ANALYSES (stats)
@@ -189,7 +189,7 @@ for mdl = 1:length(models)
             try
                 x.predict = results_x.predict(:,sel,:,:);
                 y.predict = results_y.predict(:,sel,:,:);
-                [trial_prop_vis predict_vis] = decode_reg2angle(x,y,angles(sel),10);
+                [trial_prop_vis predict_vis] = recombine_SVR_prediction(x,y,angles(sel),10);
                 all_trial_prop_vis(s,:,:,:,vis) = trial_prop_vis;
                 [p z] = circ_rtest(2*predict_vis-pi);
                 all_p_r_vis(s,:,:,vis) = squeeze(z);
@@ -247,9 +247,13 @@ end
 
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%% TO BE CLEANED AND POLISHED %%%%%%%%%%%%%%%%%
+% The following part is a draft for the part before that is a comprehensive
+% loop across models [probe and target] and visualization plots [different 
+% stats, correlations and prediction errors]
+
 %% all subjects probe decoding
 clear all_trialProp* all_p all_v_vis
-for s = length(SubjectsList):-1:1
+for s = length(SubjectsList):-1:11 % the first 10 subjects need to be done but it's useless given that is can be inferred from tAll
     subject = SubjectsList{s};
     s
     %% load data
@@ -260,7 +264,7 @@ for s = length(SubjectsList):-1:1
     
     %% get angle distance
     probeAngles = mod([trials.orientation]'+[trials.tilt]'-1,6)+1;
-    [trial_prop predict] = decode_reg2angle(results_x,results_y,probeAngles,20);
+    [trial_prop predict] = recombine_SVR_prediction(results_x,results_y,probeAngles,20);
     all_trialProp(:,:,s) = trial_prop;
     
     %% stats
@@ -276,7 +280,7 @@ for s = length(SubjectsList):-1:1
     for vis = 4:-1:1
         sel = probeAngles;
         sel(visibility~=vis) = NaN;
-        [trial_prop_vis predict_vis] = decode_reg2angle(results_x,results_y,sel,6);
+        [trial_prop_vis predict_vis] = recombine_SVR_prediction(results_x,results_y,sel,6);
         all_trialProp_vis(:,:,vis,s) = trial_prop_vis;
         % stats
         [p vstat] = circ_vtest(2*predict(visibility==vis,:)-pi,0);
@@ -320,10 +324,12 @@ for s = length(SubjectsList):-1:1
     
     %% get angle distance
     probeAngles = mod([trials.orientation]'+[trials.tilt]'-1,6)+1;
+    probeAngles([trials.present]==0) = [];
     targetAngles = [trials.orientation]';
-    [trial_prop predict] = decode_reg2angle(results_x,results_y,probeAngles,6);
+    targetAngles([trials.present]==0) = [];
+    [trial_prop predict] = recombine_SVR_prediction(results_x,results_y,probeAngles,6);
     % after Probe to Target realignment to target: HERE add: store values, plot etc
-    [trial_prop_P2T predict_P2T] = decode_reg2angle(results_x,results_y,targetAngles,6);
+    [trial_prop_P2T predict_P2T] = recombine_SVR_prediction(results_x,results_y,targetAngles,6);
     
     all_trialProp(:,:,:,s) = trial_prop;
     
