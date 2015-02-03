@@ -93,7 +93,7 @@ models = {'target' 'probe'};
 for mdl = 1:length(models)
     models{mdl}
     
-    clear all_trialProp* all_p
+    clear all_trialProp* all_p_* all_z_* rhos 
     for s = length(SubjectsList):-1:1
         subject = SubjectsList{s};
         s

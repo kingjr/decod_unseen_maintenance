@@ -1,3 +1,5 @@
+if 0
+%% RUN diagonal classifiers (not GAT): basically useless
 across_subjects =[];
 for s = 1:20
     % select subject and details
@@ -55,6 +57,9 @@ end
 
 %% same with svr
 
+%---------------
+end
+
 %% load subjects details
 data_path = [path 'data/' subject '/'] ;
 file_behavior   = [data_path 'behavior/' subject '_fixed.mat'];
@@ -87,9 +92,7 @@ end
 across_subjects =[];
 for s = 1:20
     %% select subject and details
-    subject = SubjectsList{s};
-    
-    
+    subject = SubjectsList{s};  
     
     %% load subjects details
     data_path = [path 'data/' subject '/'] ;
@@ -116,11 +119,9 @@ for s = 1:20
     
 end
 
-
 %% load results
 across_subjects = [];
 across_subjects_c = [];
-
 for s = 1:20
     subject = SubjectsList{s};
     data_path = [path 'data/' subject '/'] ;
@@ -140,6 +141,8 @@ for s = 1:20
     end
 end
 
+% -----------create figures
+% overall
 figure();
 colors = colorGradient([1, 0, 0], [0, 1, 0], 4);
 for vis=1:4
@@ -152,6 +155,7 @@ xlabel('time');ylabel('SVR visibility prediction');
 title('present trials only')
 plot2svg([im_path '/4visibilitiesPresent/visibilityPrediction'])
 
+% divided by contrast
 figure();set(gcf,'position',get(0,'screensize'))
 for c = 1:3
     subplot(3,1,c);
@@ -168,7 +172,7 @@ end
 plot2svg([im_path '/4visibilitiesPresent/visibilityPrediction_by_contrast'])
 
 
-%% anova
+%% anova for figure in previous section
 ntime = length(toi);
 nfactor = 3; % subjects x visibility x contrast
 P = zeros(nfactor,ntime);
@@ -184,11 +188,9 @@ plot2svg([im_path '/4visibilitiesPresent/anova_contrast_vs_visibility'])
 
 
 
-%% plot 4 visibility present tAll
+%% plot 4 visibility present GAT
 %% load results
-across_subjects = [];
-across_subjects_c = [];
-
+clear RMSD* all_p all_t
 for s = 1:20
     subject = SubjectsList{s};
     data_path = [path 'data/' subject '/'] ;
@@ -196,18 +198,35 @@ for s = 1:20
     load(file_behavior, 'trials');
     results=load([path 'data/' subject '/mvpas/' subject '_preprocessed_4visibilitiesPresent_SVR_tAll_results.mat']);
     
-    % compute error
-    tmp = [squeeze([results.predict]) - repmat(double([results.y]'),1,length(toi),length(toi))].^2;
-    across_subjects(s,:,:) = squeeze(mean(sqrt(tmp)));
+    %% different methods
+    %----- compute root mean square deviation
+    squared_difference = [squeeze([results.predict]) - repmat(double([results.y]'),1,length(toi),length(toi))].^2;
+    RMSD(s,:,:) = squeeze(mean(sqrt(squared_difference)));
     
+    %-----ttest
+    [h p ci stats] = ttest(squared_difference,0,'tail','right');
+    all_t(s,:,:) = squeeze(stats.tstat);
+    all_p(s,:,:) = -log10(squeeze(p));
 end
-
-imagesc(time(toi),time(toi),squeeze(mean(across_subjects)))
-set(gca,'ydir','normal','fontsize',15)
-colorbar
-title('mean square root error')
-xlabel('test time');ylabel('train time');
-
-plot2svg([im_path '/SVR_4visibilitiesPresent_tAll'])
-
+% -------------------plot figures
+im_path = '/home/niccolo/vboxshared/DOCUP/4visibilitiesPresent';
+plots = {'RMSD' ...
+    'all_t' ...
+    'all_p'};
+titles = {'Root Mean Square Deviation' ...
+    't statistic' ...
+    '-log10(p-value)'};
+filenames =  {'RMSD' ...
+    'tstat' ...
+    'pval'};
+for pl = 1:length(plots)
+    figure
+    set(gcf,'Position',get(0,'ScreenSize'))
+    eval(['imagesc(time(toi),time(toi),squeeze(mean(' plots{pl} ')));']);
+    colorbar
+    set(gca,'ydir','normal','fontsize',15)
+    title(titles{pl})
+    xlabel('test time');ylabel('train time');
+%     plot2svg([im_path '/SVR_4visibilitiesPresent_tAll_' filenames{pl}])
+end
 
