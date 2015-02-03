@@ -50,7 +50,7 @@ end
 % here go all contrasts whose variables are in principle continuous like
 % angle and visibility ratings.
 
-contrasts   = {'targetAngle','probeAngle', '4visibilitiesPresent' 'contrast'}; 
+contrasts   = {'targetAngle','probeAngle', '4visibilitiesPresent' 'target_contrast'}; 
 for c = 1:length(contrasts)
     disp(['SVR: ' num2str(c)])
 %     %% SVR: trained at each time point

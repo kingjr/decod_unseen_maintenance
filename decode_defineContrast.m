@@ -63,7 +63,7 @@ switch cfg.clf_type
                 class2                      = 2+sin(2*angles); % get sin (y coordinate)
                 class2([trials.present]==0) = 0; % remove absent trials
             case 'reported'
-            case 'contrast'
+            case 'target_contrast'
                 % add a tiny contrast to avoid absent trials are removed
                 class1                      = stim_contrasts([trials.contrast])+.1; 
         end
