@@ -65,6 +65,6 @@ switch cfg.clf_type
             case 'reported'
             case 'contrast'
                 % add a tiny contrast to avoid absent trials are removed
-                class1                      = contrasts([trials.contrast])+.1; 
+                class1                      = stim_contrasts([trials.contrast])+.1; 
         end
 end

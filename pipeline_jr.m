@@ -10,7 +10,7 @@ setup_paths
 setup_subjects;
 
 %% useful variables
-contrasts   = [0 .5 .75 1];
+stim_contrasts   = [0 .5 .75 1];
 angles      = [15 45 75 105 135 165];
 
 %% Preprocessing
