@@ -6,6 +6,7 @@ time = data.time{1};
 
 %% define images path 
 path_images = [path 'images_acrossSubjs'];
+im_path = '/home/niccolo/vboxshared/DOCUP/orientationDecoding';
 
 %% all subjects target angle decoding (diagonal only, thus redundant: it can be inferred from tAll)
 %     clear all_trialProp* all_p all_v_vis
@@ -164,7 +165,7 @@ for mdl = 1:length(models)
         % v test: uniformity of angle distribution around a specified angle
         % (only valid on diagonal)
         [p z] = circ_vtest(2*predict-pi,0);
-        all_p_v(:,:,s) = p;
+        all_p_v(:,:,s) = squeeze(-log10(p));
         all_z_v(:,:,s) = z;
         
         % on realigned other angle
@@ -184,7 +185,7 @@ for mdl = 1:length(models)
         visibilities = [trials(sel).response_visibilityCode];
         
         % VISIBILITY
-        for vis = 1:4
+        for vis = 4:-1:1
             sel = visibilities==vis;
             try
                 x.predict = results_x.predict(:,sel,:,:);
@@ -202,11 +203,11 @@ for mdl = 1:length(models)
         
     end
     
-    % GAT plots
+    %% GAT plots
     all_tprop = squeeze(all_trialProp(round(end/2),:,:,:)); % take only peak of the tuning curve
     all_tprop_gen = squeeze(all_trialProp_gen(round(end/2),:,:,:));
     angle_error = shiftdim(angle_error,1);
-    rhos = shiftdim(rhos,1); %% to continue from here!!!!!!
+    rhos = shiftdim(rhos,1); 
     
     plots = {{'angle_error'} ...
         {'rhos'} ...
@@ -224,25 +225,56 @@ for mdl = 1:length(models)
         ['V test for non-uniformity(-log-p)' ] ...
         ['V test for non-uniformity(v)'] ...
         };
+    file_names = {'MAD' ...
+        'circCorrelation' ...
+        'trialsProps' ...
+        'Rtest_pvalue' ...
+        'Rtest_zvalue' ...
+        'Vtest_pvalue' ...
+        'Vtest_zvalue'};
     
-    for p = 1:length(plots) % plot
+    for pl = 1:length(plots) % plot
         figure
         set(gcf,'Position',get(0,'ScreenSize'))
-        subplot(1,length(plots{p}),1);
-        eval(['imagesc(toi,toi,squeeze(mean(' plots{p}{1} '(:,:,:),3)));']);
+        subplot(1,length(plots{pl}),1);
+        eval(['imagesc(toi,toi,squeeze(mean(' plots{pl}{1} '(:,:,:),3)));']);
         colorbar;
         set(gca,'FontSize',24,'ydir', 'normal')
-        title([titles{p} ': ' models{mdl}]);axis image;
+        title([titles{pl} ': ' models{mdl}]);axis image;
         ylabel('train time');xlabel('test time');
         
-        if length(plots{p})==2
+        if length(plots{pl})==2
             subplot(1,2,2);
-            eval(['imagesc(toi,toi,squeeze(mean(' plots{p}{2} '(:,:,:),3)));']);
+            eval(['imagesc(toi,toi,squeeze(mean(' plots{pl}{2} '(:,:,:),3)));']);
             colorbar; set(gca,'FontSize',24,'ydir', 'normal')
-            title([titles{p} ': aligned to ' models{3-mdl}]);axis image;
+            title([titles{pl} ': aligned to ' models{3-mdl}]);axis image;
+            ylabel('train time');xlabel('test time');
+        end
+        plot2svg([im_path '/' models{mdl} '_tAll_' file_names{pl}]) 
+    end
+    
+    %% GAT plots divided per visibility and contrast
+    all_tprop_vis = squeeze(all_trial_prop_vis(:,round(end/2),:,:,:)); % take only peak of the tuning curve
+    
+    plots       = {'all_tprop_vis' ...
+        'all_p_r_vis'};
+    titles      = {'proportion correct' ...
+        'Rayleigh test for non-uniformity (-log-p)'};
+    file_names  = {'trialsProps_vis' ...
+        'Rtest_pvalue_vis' };
+    for pl = 1:length(plots)
+        figure
+        set(gcf,'Position',get(0,'ScreenSize'))
+        for vis = 1:4
+            subplot(2,2,vis)
+            eval(['imagesc(toi,toi,squeeze(nanmean(' plots{pl} '(:,:,:,vis))));']);
+            colorbar; set(gca,'FontSize',24,'ydir', 'normal')
+            title(titles{pl});axis image;
             ylabel('train time');xlabel('test time');
         end
     end
+    plot2svg([im_path '/' models{mdl} '_tAll_' file_names{pl}])
+    
 end
 
 
