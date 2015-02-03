@@ -40,28 +40,31 @@ switch cfg.clf_type
     case 'SVR'
         switch cfg.contrast
             case '4visibilitiesPresent'
-                class1 = [trials.response_visibilityCode];
+                class1                      = [trials.response_visibilityCode];
                 class1([trials.present]==0) = 0;
             case 'targetAngle';
-                angles                  = deg2rad([trials.orientation]*30-15); % from degrees to radians
+                angles                      = deg2rad([trials.orientation]*30-15); % from degrees to radians
                 
                 % x coordinate
-                class1                       = 2+cos(2*angles); % get cos (add 2 to get only predictor >0, otherwised used as generalized... I know I know)
-                class1([trials.present]==0)  = 0; % remove absent trials
+                class1                       = 2+cos(2*angles);             % get cos (add 2 to get only predictor >0, otherwised used as generalized... I know I know)
+                class1([trials.present]==0)  = 0;                           % remove absent trials
                 % y coordinate
                 class2                       = 2+sin(2*angles); % get sin (y coordinate)
                 class2([trials.present]==0)  = 0;% remove absent trials
                 
             case 'probeAngle'
-                angles                  = [trials.orientation]*30-15;
-                angles                  = angles+[trials.tilt]*30; % add or remove 30°
-                angles                  = mod(angles, 180);
-                angles                  = deg2rad(angles);
+                angles                      = [trials.orientation]*30-15;
+                angles                      = angles+[trials.tilt]*30; % add or remove 30°
+                angles                      = mod(angles, 180);
+                angles                      = deg2rad(angles);
                 
                 class1                      = 2+cos(2*angles); % get cos (add 2 to get only predictor >0, otherwise used as generalized... I know I know)
                 class1([trials.present]==0) = 0; % remove absent trials (not necessary for probe decoding but good for script consistency)
                 class2                      = 2+sin(2*angles); % get sin (y coordinate)
                 class2([trials.present]==0) = 0; % remove absent trials
             case 'reported'
+            case 'contrast'
+                % add a tiny contrast to avoid absent trials are removed
+                class1                      = contrasts([trials.contrast])+.1; 
         end
 end

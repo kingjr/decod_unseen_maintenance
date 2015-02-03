@@ -38,6 +38,10 @@ for c = 1:length(contrasts)
     cfg.wsize       = 4; % careful...
     [class ~]       = decode_defineContrast(cfg,trials);
     decode_run;
+    
+    % clear ram memory after each classifier
+    system('sync && echo 3 | sudo tee /proc/sys/vm/drop_caches')
+    
 %     plot_decode;
 end
 end
@@ -46,7 +50,7 @@ end
 % here go all contrasts whose variables are in principle continuous like
 % angle and visibility ratings.
 
-contrasts   = {'targetAngle','probeAngle', '4visibilitiesPresent'}; 
+contrasts   = {'targetAngle','probeAngle', '4visibilitiesPresent' 'contrast'}; 
 for c = 1:length(contrasts)
     disp(['SVR: ' num2str(c)])
 %     %% SVR: trained at each time point
@@ -111,7 +115,7 @@ for c = 1:length(contrasts)
     [class_x class_y] = decode_defineContrast(cfg,trials);
     decode_run;
     
-    % clear ram memory
+    % clear ram memory after each classifier
     system('sync && echo 3 | sudo tee /proc/sys/vm/drop_caches')
     
 %     plot_decode;
