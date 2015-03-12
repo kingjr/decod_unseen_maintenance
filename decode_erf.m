@@ -13,21 +13,23 @@ toi     = find(time>-.200,1):2:find(time>1.500,1);
 
 
 %% SVC classic
-if 0 % stop momentarily until I run all SVRs
 contrasts = {'targetAngle', 'probeAngle','lambda', 'responseButton','tilt', 'visibility',...
     'visibilityPresent', 'presentAbsent', 'accuracy'}; % may increase over time
-for c = 1:length(contrasts)
-%     disp(['SVC: ' num2str(c)])
-%     if 0
-%     cfg             = [];
-%     cfg.contrast    = contrasts{c};
-%     cfg.clf_type    = 'SVC';
-%     cfg.dims        = toi';
-%     cfg.gentime     = '';
-%     [class ~]       = decode_defineContrast(cfg,trials);
-%     decode_run;
-% %     plot_decode;
-%     end
+for c = 2%1:length(contrasts)
+    disp(['SVC: ' num2str(c)])
+    
+    cfg             = [];
+    cfg.contrast    = contrasts{c};
+    cfg.clf_type    = 'SVC';
+    cfg.dims        = toi';
+    cfg.gentime     = '';
+    [class ~]       = decode_defineContrast(cfg,trials);
+    decode_run;
+%     plot_decode;
+    
+    % clear ram memory after each classifier
+    system('sync && echo 3 | sudo tee /proc/sys/vm/drop_caches')
+    if 0
     %% SVC: time generalization
     cfg             = [];
     cfg.contrast    = contrasts{c};
@@ -43,13 +45,13 @@ for c = 1:length(contrasts)
     system('sync && echo 3 | sudo tee /proc/sys/vm/drop_caches')
     
 %     plot_decode;
-end
+    end
 end
 
 %% SVR: classic
 % here go all contrasts whose variables are in principle continuous like
 % angle and visibility ratings.
-
+if 0
 contrasts   = {'targetAngle','probeAngle', '4visibilitiesPresent' 'target_contrast'}; 
 for c = 1:length(contrasts)
     disp(['SVR: ' num2str(c)])
@@ -119,4 +121,5 @@ for c = 1:length(contrasts)
     system('sync && echo 3 | sudo tee /proc/sys/vm/drop_caches')
     
 %     plot_decode;
+end
 end

@@ -41,7 +41,7 @@ for sbj_number = 1:length(SubjectsList);
         cfg.output     = 'pow';
         cfg.foi        = logspace(log(2),log(10),70);
         cfg.toi        = -0.5:0.020:.800;
-        data     = ft_freqanalysis(cfg, data);
+        data           = ft_freqanalysis(cfg, data);
       
         
         %% store all data
@@ -113,10 +113,10 @@ ft_multiplotTFR(cfg, data)
 
 figure(3); % single subject TF on a occipital channel
 for s = 1:length(SubjectsList)
-    subplot(3,4,s);
+    subplot(4,5,s);
     imagesc(data.time, [], squeeze(mean(m(237,:,:,s),1)), [-1.5 1])
-set(gca,'ydir', 'normal', ...
-    'ytick', 1:4:length(data.freq), ...
-    'yticklabel', round(data.freq(1:4:end)))
-
+    set(gca,'ydir', 'normal', ...
+        'ytick', 1:4:length(data.freq), ...
+        'yticklabel', round(data.freq(1:4:end)))
+    
 end

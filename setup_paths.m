@@ -14,15 +14,11 @@ switch 'D145'
 %         addpath('/media/niccolo/Yupi/myfunctions');
 %         addpath('/media/niccolo/Yupi/Paris/toolboxes/resampling_statistical_toolkit');
     case 'D145_wind'
-        cd('F:/Paris/scripts');
+        cd('C:/Users/npescetelli/Dropbox/DOCUP/scripts');
         path = 'F:/Paris/';
-        addpath('F:/Paris/toolboxes/JR_toolbox/');
-        addpath('F:/Paris/toolboxes/export_fig/');
-        addpath('F:/Paris/toolboxes/fieldtrip-20140123/'); ft_defaults;
-        addpath('F:/Paris/toolboxes/circular_stats/');
-        addpath('F:/Paris/toolboxes/statistics/');
-        addpath('F:/myfunctions');
-        addpath('F:/Paris/toolboxes/resampling_statistical_toolkit');
+        addpath(genpath('C:/Users/npescetelli/Dropbox/DOCUP/toolboxes/JR_toolbox'));
+        addpath('C:/Users/npescetelli/Dropbox/DOCUP/toolboxes/circular_stats/');
+        addpath(genpath('C:/Users/npescetelli/Dropbox/Oxford/myfunctions'));
     case 'jr'
         cd('/media/DATA/Pro/Projects/Paris/Orientation/Niccolo/script/201301');
         path = '/media/My Passport/Paris 16-01-2014/';

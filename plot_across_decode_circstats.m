@@ -250,7 +250,7 @@ for mdl = 1:length(models)
             title([titles{pl} ': aligned to ' models{3-mdl}]);axis image;
             ylabel('train time');xlabel('test time');
         end
-        plot2svg([im_path '/' models{mdl} '_tAll_' file_names{pl}]) 
+        plot2svg([path_images '/' models{mdl} '_tAll_' file_names{pl}]) 
     end
     
     %% GAT plots divided per visibility and contrast
@@ -273,7 +273,7 @@ for mdl = 1:length(models)
             ylabel('train time');xlabel('test time');
         end
     end
-    plot2svg([im_path '/' models{mdl} '_tAll_' file_names{pl}])
+    plot2svg([path_images '/' models{mdl} '_tAll_' file_names{pl}])
     
 end
 

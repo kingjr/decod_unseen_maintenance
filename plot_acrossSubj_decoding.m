@@ -25,9 +25,11 @@ end
 contrasts = {'targetAngle' 'probeAngle' 'lambda', 'responseButton','tilt', 'visibility',...
     'visibilityPresent', 'presentAbsent', 'accuracy'}; % may increase over time
 colors = colorGradient([1 0 0], [0 1 0],4);
-for c =1:length(contrasts)
+for c =3:length(contrasts)
+    c
     clear all_probas all_probasb all_probas_vis
     for s = length(SubjectsList):-1:1
+        s
         %% load individual data
         subject = SubjectsList{s};
         data_path = [path 'data/' subject '/'] ;
@@ -87,59 +89,76 @@ for c =1:length(contrasts)
                 all_probasb(s,:,1) = nanmean(squeeze(results.probas(1,class==1,:,1,1))); % binary: class 1
                 all_probasb(s,:,2) = nanmean(squeeze(results.probas(1,class==2,:,1,1))); % binary: class 2
                 
-                % sort by visibility
-                [~,~,class] = unique(results.y);
-                for v =1:4
-                    %plot only class 1
-                    all_probasb_vis(s,:,v,1) = nanmean(squeeze(results.probas(1,class==1 & [trials.response_visibilityCode]'==v,:,1,1))); % binary: class 1
-                    %plot only class 2
-                    all_probasb_vis(s,:,v,2) = nanmean(squeeze(results.probas(1,class==2 & [trials.response_visibilityCode]'==v,:,1,1))); % binary: class 2
-                end
+%                 % sort by visibility
+%                 [~,~,class] = unique(results.y);
+%                 for v =1:4
+%                     %plot only class 1
+%                     all_probasb_vis(s,:,v,1) = nanmean(squeeze(results.probas(1,class==1 & [trials.response_visibilityCode]'==v,:,1,1))); % binary: class 1
+%                     %plot only class 2
+%                     all_probasb_vis(s,:,v,2) = nanmean(squeeze(results.probas(1,class==2 & [trials.response_visibilityCode]'==v,:,1,1))); % binary: class 2
+%                 end
         end
     end
     
     %% plot across subjects
     figure;
     if strcmp(contrasts{c},'targetAngle') | strcmp(contrasts{c},'probeAngle')
-        imagesc(time(cfg.dims),[],squeeze(nanmean(all_probas)));
+        imagesc(time(results.dims),[],squeeze(nanmean(all_probas)));
+        colorbar;
+        set(gca,'FontSize',24,'YTickLabel',90:-30:-90);
         xlabel('time (ms)');ylabel('angle distance');
-        set(gca,'FontSize',24,'YTickLabel',90:-30:-90);colorbar;
         title(contrasts{c})
-        saveas(gcf,[path_images contrasts{c} '.jpg']);
+%         saveas(gcf,[path_images contrasts{c} '.jpg']);
         
         % ------------ divide by visibility  -----------------------------
         figure()
         for sp = 1:2
             subplot(1,2,sp)
-            imagesc(time(cfg.dims),[],squeeze(nanmean(all_probas_vis(:,:,:,sp),1)));
+            imagesc(time(results.dims),[],squeeze(nanmean(all_probas_vis(:,:,:,sp),1)));
             xlabel('time (ms)');ylabel('angle distance');
             set(gca,'FontSize',24,'YTickLabel',90:-30:-90);
             title(contrasts{c})
-            saveas(gcf,[path_images contrasts{c} '_visInv.jpg']);
+%             saveas(gcf,[path_images contrasts{c} '_visInv.jpg']);
         end
         
     else
         % all trials 
         clf;hold on;
-        plot_eb(time(results.dims),squeeze(all_probasb(:,:,1)),[0 0 1]); % class 1
-        plot_eb(time(results.dims),squeeze(all_probasb(:,:,2)),[1 0 0]); % class 2
+        [h(1) f]=plot_eb(time(results.dims),squeeze(all_probasb(:,:,1)),[0 0 1]); % class 1
+        [h(2) f]=plot_eb(time(results.dims),squeeze(all_probasb(:,:,2)),[1 0 0]); % class 2
         set(gca,'FontSize',24),xlabel('time'),ylabel('prob')
-        title(contrasts{c})
-        saveas(gcf,[path_images contrasts{c} '.jpg']);
-        
-        % sort by visibility
-        clf;hold on;
-        for v = 1:4
-            % plot class 1 only according to visibility
-            [hl(v)]=plot_eb(time(results.dims),squeeze(all_probasb_vis(:,:,v,1)),'color',colors(v,:),'LineStyle','-');
-            % plot class 2 only according to visibility
-            plot_eb(time(results.dims),squeeze(all_probasb_vis(:,:,v,2)),'color',colors(v,:),'LineStyle','--');
+        switch contrasts{c}
+            case 'lambda'
+                legend(cell2mat(h),'lambda 30','lambda 35')
+            case 'responseButton'
+                legend(cell2mat(h),'lambda 30','lambda 35')
+            case 'tilt'
+                legend(cell2mat(h),'clockwise','anti-clockwise')
+            case 'visibility'
+                legend(cell2mat(h),'visible','invisible')
+            case 'visibilityPresent'
+                legend(cell2mat(h),'visible','invisible')
+            case 'presentAbsent'
+                legend(cell2mat(h),'present','absent')
+            case 'accuracy'
+                legend(cell2mat(h),'correct','incorrect')
         end
-        set(gca,'FontSize',24),xlabel('time'),ylabel('prob(absent)')
         title(contrasts{c})
-        legend(cell2mat(hl),'vis0','vis1','vis2','vis3')
-        set(gcf,'Position',get(0,'ScreenSize')); % maximize figure
-        saveas(gcf,[path_images contrasts{c} '_vis.jpg']);
+%         saveas(gcf,[path_images contrasts{c} '.jpg']);
+        
+%         % sort by visibility
+%         clf;hold on;
+%         for v = 1:4
+%             % plot class 1 only according to visibility
+%             [hl(v)]=plot_eb(time(results.dims),squeeze(all_probasb_vis(:,:,v,1)),'color',colors(v,:),'LineStyle','-');
+%             % plot class 2 only according to visibility
+%             plot_eb(time(results.dims),squeeze(all_probasb_vis(:,:,v,2)),'color',colors(v,:),'LineStyle','--');
+%         end
+%         set(gca,'FontSize',24),xlabel('time'),ylabel('prob(absent)')
+%         title(contrasts{c})
+%         legend(cell2mat(hl),'vis0','vis1','vis2','vis3')
+%         set(gcf,'Position',get(0,'ScreenSize')); % maximize figure
+%         saveas(gcf,[path_images contrasts{c} '_vis.jpg']);
     end
     
 end
@@ -149,7 +168,7 @@ end
 
 %% SVR: classic
 contrasts   = {'targetAngle', 'probeAngle'};
-timeg       = {'' '_t184' '_t309' '_t981' '_tAll'};
+timeg       = {'_tAll'};
 
 for c =1:length(contrasts)
     for tg = 1:5

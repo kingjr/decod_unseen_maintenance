@@ -6,33 +6,33 @@ switch cfg.clf_type
     case 'SVC'
         switch cfg.contrast
             case 'targetAngle';
-                angles                  = deg2rad([trials.orientation]*30-15); % from degrees to radians
-                angles([trials.present]==0)  = 0; % remove absent trials
-                class1 = angles;
+                angles                      = deg2rad([trials.orientation]*30-15); % from degrees to radians
+                angles([trials.present]==0) = 0; % remove absent trials
+                class1                      = angles;
             case 'probeAngle'
-                angles                  = [trials.orientation]*30-15;
-                angles                  = angles+[trials.tilt]*30; % add or remove 30°
-                class1 = angles;
+                angles                      = [trials.orientation]*30-15;
+                angles                      = angles+[trials.tilt]*30; % add or remove 30°
+                class1                      = mod(angles, 180);
             case 'responseButton'
-                class1 = [trials.response_tilt]+2;
+                class1                      = [trials.response_tilt]+2;
                 class1([trials.response_tilt]==0) = 0;
             case 'tilt'
-                class1 = [trials.tilt]+2;
-                class1([trials.tilt]==0) = 0;
+                class1                      = [trials.tilt]+2;
+                class1([trials.tilt]==0)    = 0;
             case 'visibility'
-                class1 = 1+([trials.response_visibilityCode]>1);
+                class1                      = 1+([trials.response_visibilityCode]>1);
             case 'visibilityPresent'
-                class1 = 1+([trials.response_visibilityCode]>1);
+                class1                      = 1+([trials.response_visibilityCode]>1);
                 class1([trials.present]==0) = 0;
             case 'presentAbsent'
-                class1 = [trials.present]+1;
+                class1                      = [trials.present]+1;
             case 'accuracy'
-                class1 = [trials.correct]+1;
+                class1                      = [trials.correct]+1;
                 class1(isnan([trials.correct])) = 0;
             case 'lambda'
-                class1 = [trials.lambda];
+                class1                      = [trials.lambda];
             case '4visibilitiesPresent'
-                class1 = [trials.response_visibilityCode];
+                class1                      = [trials.response_visibilityCode];
                 class1([trials.present]==0) = 0;
             case 'reported'
                 % to be done
@@ -64,6 +64,8 @@ switch cfg.clf_type
                 class2([trials.present]==0) = 0; % remove absent trials
             case 'reported'
             case 'target_contrast'
+                %define target contrasts
+                stim_contrasts   = [0 .5 .75 1];
                 % add a tiny contrast to avoid absent trials are removed
                 class1                      = stim_contrasts([trials.contrast])+.1; 
         end
