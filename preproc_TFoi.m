@@ -1,6 +1,6 @@
 %% Select subject
 for sbj_number = 1:20
-    
+    sbj_number
     sbj_initials = SubjectsList{sbj_number};
     data_path = [path 'data/' sbj_initials '/'] ;
     
@@ -32,7 +32,7 @@ for sbj_number = 1:20
         data_            = ft_preprocessing(cfg);
         
         %% TF decomposition
-        FOIs        = [6.5 10 13.5 17.5 25 65];
+        FOIs        = [6.5 9.5 12 17.5 29 70 105];
         for foi = FOIs
             method = 'mtm';
             cfg = [];
@@ -41,7 +41,7 @@ for sbj_number = 1:20
             cfg.channel    = 'MEG';
             % frequencies of interest should be defined based on literature
             cfg.foi        = foi;
-            cfg.toi        = -0.5:0.020:.800;
+            cfg.toi        = -0.5:0.020:1.500;
             switch method
                 case 'mtm' % In theory slightly better for broadband signals, but slower to compute
                     cfg.method     = 'mtmconvol';

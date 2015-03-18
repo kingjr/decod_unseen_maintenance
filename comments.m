@@ -20,6 +20,7 @@
 %to decode_reg2angle_predict so that you pass predictions rather than
 %results structures.
 % 2.02.2015 Renamed as recombine_SVR_prediction.m
+% 17.03.2015 Renamed as decode_computeSVRerror
 
 %decode_defineContrast: check that target angle and probe angle have
 %similar length, I suspect that one removed the
@@ -44,13 +45,13 @@
 %Alternatively, you can keep all trials if you have a massive computer.
 
 %preproc_TFoi: preproc single trial for frequencies of interest (typically,
-%not more than 7). This if what is going to be fed to the topographies,
+%not more than 7). This is what is going to be fed to the topographies,
 %univariate analyses, decoding etc. Please save them separately.
 
 %setup_paths: careful, we need the novel version of fieldtrip because of
 %the TF baseline (db).
 
-%tf_basic_contrast: shows topogrqphy of some basic contrast (present versus
+%_tf_basic_contrast: shows topogrqphy of some basic contrast (present versus
 %absent), plus some decoding (orientation) and GAT. This script needs to be
 %systematize and integrated with the rest of the pipeline to provide
 %topogrqphies of each contrast of each FOI, and decoding GAT of each
@@ -117,4 +118,4 @@
 % load.
 
 %% 2014 11 18
- %I mnaged subject 4 probe angle gat.
+ %I managed subject 4 probe angle gat.

@@ -2,8 +2,8 @@
 switch 'D145'
     case 'D145'
         cd('/home/niccolo/Dropbox/DOCUP/scripts');
-        path = '/media/niccolo/My Passport/Paris/';
-        im_path = '/media/niccolo/My Passport/Paris/images_acrossSubjs';
+        path = '/media/niccolo/Yupi/Paris/';
+        im_path = '/media/niccolo/Yupi/Paris/images_acrossSubjs';
         addpath(path);
         addpath('/home/niccolo/Dropbox/DOCUP/toolboxes/JR_toolbox/');
         addpath('/home/niccolo/Dropbox/DOCUP/toolboxes/export_fig/');

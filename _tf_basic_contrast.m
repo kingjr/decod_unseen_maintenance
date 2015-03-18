@@ -15,11 +15,12 @@ orientation = [trials.orientation];orientations(~present) = NaN;
 figure(1);clf;set(gcf,'color','w');
 for f =1:length(freq)
     subplot(length(freq),1,f);
-    plot_eb(time,squeeze(mean(data.powspctrm(present,:,f,:), 2)), [0 1 0]);
+    [h(1) hh(1)] = plot_eb(time,squeeze(mean(data.powspctrm(present,:,f,:), 2)), [0 1 0]);
     hold on
-    plot_eb(time,squeeze(mean(data.powspctrm(not(present),:,f,:), 2)), [1 0 0]);
-    axis tight;title(freq(f,:));box off
+    [h(2) hh(2)] = plot_eb(time,squeeze(mean(data.powspctrm(not(present),:,f,:), 2)), [1 0 0]);
+    axis tight;title(freq(f));box off
 end
+legend(cell2mat(h),'present','absent')
 
 %% Topography present vs absent
 for f = 1:length(freq)

@@ -30,8 +30,7 @@ if 0 % silence this part if preprocessing already done
     % to be finished, and subsequently put in loop
     preproc_timeFrequency; % mean time frequency across all conditions
     
-    % XXX In preproc TFoi, change the code so that it saves each FOI
-    % separately
+    % preproc_TFoi, it saves each FOI separately keeping each trial
     preproc_TFoi; % single trial TF but on selected frequency bands of interest
 end
 

@@ -195,14 +195,14 @@ for c =1:length(contrasts)
             %% relign predictions
             switch contrasts{c}
                 case 'targetAngle';
-                    [trial_prop predict] = decode_reg2angle(...
-                        results_x,....
-                        results_y,...
+                    [trial_prop predict] = decode_computeSVRerror(...
+                        results_x.predict,....
+                        results_y.predict,...
                         [trials([trials.present]==1).orientation]);
                 case 'probeAngle'
-                    [trial_prop predict] = decode_reg2angle(...
-                        results_x,....
-                        results_y,...
+                    [trial_prop predict] = decode_computeSVRerror(...
+                        results_x.predict,....
+                        results_y.predict,...
                         mod([trials.orientation]+[trials.tilt]-1,6)+1);
             end
             
@@ -222,13 +222,13 @@ for c =1:length(contrasts)
                     % invisible
                     train_angles = [trials([trials.present]==1).orientation];
                     train_angles(visible>1) = NaN;
-                    [trial_prop_invis predict] = decode_reg2angle(results_x,results_y,train_angles);
+                    [trial_prop_invis predict] = decode_computeSVRerror(results_x.predict,results_y.predict,train_angles);
                     all_prop_invis(s,:,:) = squeeze(trial_prop_invis(round(end/2),:,:));
                     
                     % visible
                     train_angles = [trials([trials.present]==1).orientation];
                     train_angles(visible<=1) = NaN;
-                    [trial_prop_vis predict] = decode_reg2angle(results_x,results_y,train_angles);
+                    [trial_prop_vis predict] = decode_computeSVRerror(results_x.predict,results_y.predict,train_angles);
                     all_prop_vis(s,:,:) = squeeze(trial_prop_vis(round(end/2),:,:));
                     
                 otherwise
@@ -239,13 +239,13 @@ for c =1:length(contrasts)
                     % invisible
                     train_angles = [trials([trials.present]==1).orientation];
                     train_angles(visible>1) = NaN;
-                    [trial_prop_invis predict] = decode_reg2angle(results_x,results_y,train_angles);
+                    [trial_prop_invis predict] = decode_computeSVRerror(results_x.predict,results_y.predict,train_angles);
                     all_prop_invis(s,:,:) = trial_prop_invis;
                     
                     % visible
                     train_angles = [trials([trials.present]==1).orientation];
                     train_angles(visible<=1) = NaN;
-                    [trial_prop_vis predict] = decode_reg2angle(results_x,results_y,train_angles);
+                    [trial_prop_vis predict] = decode_computeSVRerror(results_x.predict,results_y.predict,train_angles);
                     all_prop_vis(s,:,:) = trial_prop_vis;
                     
             end

@@ -26,7 +26,7 @@ im_path = '/home/niccolo/vboxshared/DOCUP/orientationDecoding';
 %         %% get angle distance
 %         targetAngles = [trials.orientation]';
 %         targetAngles([trials.present]==0) = [];
-%         [trial_prop predict] = recombine_SVR_prediction(results_x,results_y,targetAngles,20);
+%         [trial_prop predict] = decode_computeSVRerror(results_x.predict,results_y.predict,targetAngles,20);
 %         all_trialProp(:,:,s) = trial_prop;
 %         
 %         %% stats
@@ -49,7 +49,7 @@ im_path = '/home/niccolo/vboxshared/DOCUP/orientationDecoding';
 %             sel = targetAngles;
 %             sel = probeAngles;
 %             sel(visibility~=vis) = NaN;
-%             [trial_prop_vis predict_vis] = recombine_SVR_prediction(results_x,results_y,sel,6);
+%             [trial_prop_vis predict_vis] = decode_computeSVRerror(results_x.predict,results_y.predict,sel,6);
 %             all_trialProp_vis(:,:,vis,s) = trial_prop_vis;
 %             % stats
 %             [p vstat] = circ_vtest(2*predict(visibility==vis,:)-pi,0);
@@ -148,12 +148,12 @@ for mdl = 1:length(models)
         
         %----- 3. RELIAGNMENT AND DISTRIBUTION OF ALL TRIALS
         % model trained and tested on same data
-        [trial_prop predict] = recombine_SVR_prediction(results_x,results_y,angles,6);
+        [trial_prop predict] = decode_computeSVRerror(results_x.predict,results_y.predict,angles,6);
         all_trialProp(:,:,:,s) = trial_prop;
         
         % generalize model trained on one type (eg target) to the other
         % type (eg probe)
-        [trial_prop_gen predict_gen] = recombine_SVR_prediction(results_x,results_y,genAngles,6);
+        [trial_prop_gen predict_gen] = decode_computeSVRerror(results_x.predict,results_y.predict,genAngles,6);
         all_trialProp_gen(:,:,:,s) = trial_prop_gen;
         
         %----- 4. CIRC ANALYSES (stats)
@@ -190,7 +190,7 @@ for mdl = 1:length(models)
             try
                 x.predict = results_x.predict(:,sel,:,:);
                 y.predict = results_y.predict(:,sel,:,:);
-                [trial_prop_vis predict_vis] = recombine_SVR_prediction(x,y,angles(sel),10);
+                [trial_prop_vis predict_vis] = decode_computeSVRerror(x,y,angles(sel),10);
                 all_trial_prop_vis(s,:,:,:,vis) = trial_prop_vis;
                 [p z] = circ_rtest(2*predict_vis-pi);
                 all_p_r_vis(s,:,:,vis) = squeeze(z);
@@ -296,7 +296,7 @@ for s = length(SubjectsList):-1:11 % the first 10 subjects need to be done but i
     
     %% get angle distance
     probeAngles = mod([trials.orientation]'+[trials.tilt]'-1,6)+1;
-    [trial_prop predict] = recombine_SVR_prediction(results_x,results_y,probeAngles,20);
+    [trial_prop predict] = decode_computeSVRerror(results_x.predict,results_y.predict,probeAngles,20);
     all_trialProp(:,:,s) = trial_prop;
     
     %% stats
@@ -312,7 +312,7 @@ for s = length(SubjectsList):-1:11 % the first 10 subjects need to be done but i
     for vis = 4:-1:1
         sel = probeAngles;
         sel(visibility~=vis) = NaN;
-        [trial_prop_vis predict_vis] = recombine_SVR_prediction(results_x,results_y,sel,6);
+        [trial_prop_vis predict_vis] = decode_computeSVRerror(results_x.predict,results_y.predict,sel,6);
         all_trialProp_vis(:,:,vis,s) = trial_prop_vis;
         % stats
         [p vstat] = circ_vtest(2*predict(visibility==vis,:)-pi,0);
@@ -359,9 +359,9 @@ for s = length(SubjectsList):-1:1
     probeAngles([trials.present]==0) = [];
     targetAngles = [trials.orientation]';
     targetAngles([trials.present]==0) = [];
-    [trial_prop predict] = recombine_SVR_prediction(results_x,results_y,probeAngles,6);
+    [trial_prop predict] = decode_computeSVRerror(results_x.predict,results_y.predict,probeAngles,6);
     % after Probe to Target realignment to target: HERE add: store values, plot etc
-    [trial_prop_P2T predict_P2T] = recombine_SVR_prediction(results_x,results_y,targetAngles,6);
+    [trial_prop_P2T predict_P2T] = decode_computeSVRerror(results_x.predict,results_y.predict,targetAngles,6);
     
     all_trialProp(:,:,:,s) = trial_prop;
     

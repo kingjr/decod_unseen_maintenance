@@ -1,13 +1,20 @@
-function [trial_proportion predict_angle radius] = decode_computeSVRerror(results_x,results_y,angles,res)
-%[trial_proportion predict_angle radius] = decode_reg2angle(results_x,results_y,angles,res)
-% this function takes the two outputs of an SVR to transform them into
+function [trial_proportion predict_angle radius] = decode_computeSVRerror(predicted_x,predicted_y,angles,res)
+% This function was first called decode_reg2angle.m
+%[trial_proportion predict_angle radius] = decode_computeSVRerror(predicted_x,predicted_y,angles,res)
+% this function takes the two predictions of an SVR to transform them into
 % predicted angles and predicted radi;
+% predicted_x ans predicted_y are vectors of predictions
+% angle is the true angle.
+% the prediction error is estimated by the difference between the
+% recombined x-y prediction and the true angle.
 % the resolution (res) specify the bin width for the 2D histogram
+
+
 if nargin == 3, res = 6;end
 
 % combine two predictions
-px = squeeze(results_x.predict-2); % remove 2 to get back to normal
-py = squeeze(results_y.predict-2);
+px = squeeze(predicted_x-2); % remove 2 to get back to normal
+py = squeeze(predicted_y-2);
 [theta radius] = cart2pol(px,py); % gives the predicted angle theta and the predicted radius
 
 % realign to get single tuning curve across angles

@@ -40,7 +40,7 @@ for sbj_number = 1:length(SubjectsList);
         cfg.width      = 7;
         cfg.output     = 'pow';
         cfg.foi        = logspace(log(2),log(10),70);
-        cfg.toi        = -0.5:0.020:.800;
+        cfg.toi        = -0.5:0.020:1.500;
         data           = ft_freqanalysis(cfg, data);
       
         
@@ -61,7 +61,7 @@ end
 
 %% Plot
 % retrieve results across subjects
-m = zeros(306,69,66,length(SubjectsList));
+m = zeros(306,69,101,length(SubjectsList));
 for s = 1:length(SubjectsList)
     
     % Select subject
@@ -85,31 +85,42 @@ end
 
 % Plot average TF across all channels across all subjects
 figure(1);
+set(gcf,'Position',get(0,'ScreenSize'))
 subplot(1,2,1); % average TF response across all channels
 imagesc(data.time, [], squeeze(mean(mean(m,1),4)), [-1.5 1])
-set(gca,'ydir', 'normal', ...
+colorbar
+set(gca,'fontsize',20,'ydir', 'normal', ...
     'ytick', 1:4:length(data.freq), ...
     'yticklabel', round(data.freq(1:4:end)))
+xlabel('time')
+ylabel('frequency')
 title('mean TF across channels')
 
 subplot(1,2,2); % as TF may increase and decrease in different channels, 
 % you may want to just vizualize the tf bands where there is an induced 
 % response
 imagesc(data.time, [], squeeze(mean(log(mean(m.^2,1)),4)))
-set(gca,'ydir', 'normal', ...
+colorbar
+set(gca,'fontsize',20,'ydir', 'normal', ...
     'ytick', 1:4:length(data.freq), ...
     'yticklabel', round(data.freq(1:4:end)))
+xlabel('time')
+ylabel('frequency')
 title('mean TF^2 across channels') 
+saveas(gcf,[im_path '/averageTFacrossChansSubjs'],'png')
+saveas(gcf,'/home/niccolo/vboxshared/DOCUP/timeFrequency/averageTFacrossChansSubjs','png')
 % plot mean TF for each channel across subjects
 
 
 figure(2); % topographies across time freqs
+set(gcf,'Position',get(0,'ScreenSize'))
 data.powspctrm  = mean(m,4);
 cfg = [];
 cfg.showlabels   = 'yes';
 cfg.layout       = 'neuromag306mag';
 ft_multiplotTFR(cfg, data)
-
+saveas(gcf,[im_path '/averageTF_allChans'],'png')
+saveas(gcf,'/home/niccolo/vboxshared/DOCUP/timeFrequency/averageTF_allChans','jpeg')
 
 figure(3); % single subject TF on a occipital channel
 for s = 1:length(SubjectsList)
@@ -120,3 +131,5 @@ for s = 1:length(SubjectsList)
         'yticklabel', round(data.freq(1:4:end)))
     
 end
+saveas(gcf,[im_path '/averageTF_allSubjs'],'png')
+saveas(gcf,'/home/niccolo/vboxshared/DOCUP/timeFrequency/averageTF_allSubjs','png')
