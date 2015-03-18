@@ -74,6 +74,7 @@ for s = 1:length(SubjectsList)
     % decode_erf; 
     
     % decoding band power data (to be done and saved)
+    method = 'mtm';
     decode_power
     
     %XXX decode_timeFreq etc

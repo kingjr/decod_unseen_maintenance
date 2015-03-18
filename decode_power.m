@@ -1,6 +1,6 @@
 %% decode power
-FOIs            = [6.5 9.5 12 17.5 29 70];%105
-
+FOIs            = [6.5 9.5 12 17.5 29 70 105];
+FOIs            = [9.5 70 105]; % provisional
 %% load subjects details
 for foi = FOIs
     foi
@@ -18,7 +18,7 @@ toi     = find(time);
 %% SVC classic
 contrasts = {'targetAngle', 'probeAngle','lambda', 'responseButton','tilt', 'visibility',...
     'visibilityPresent', 'presentAbsent', 'accuracy'}; % may increase over time
-for c = 1%:length(contrasts)
+for c = 7%:length(contrasts)
     disp(['SVC: ' num2str(c)])
     
     cfg             = [];
