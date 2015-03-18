@@ -70,9 +70,12 @@ for s = 1:length(SubjectsList)
     % select subject and details
     subject = SubjectsList{s};
     
-    % decoding on event related field data
-    decode_erf;
-    %XXX decode_gamma
+    % decoding on event related field data (done and saved already)
+    % decode_erf; 
+    
+    % decoding band power data (to be done and saved)
+    decode_power
+    
     %XXX decode_timeFreq etc
 end
 
