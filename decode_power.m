@@ -1,6 +1,6 @@
 %% decode power
 FOIs            = [6.5 9.5 12 17.5 29 70 105];
-FOIs            = [9.5 70 105]; % provisional
+%FOIs            = [9.5 70 105]; % provisional
 %% load subjects details
 for foi = FOIs
     foi
@@ -16,9 +16,10 @@ time            = data.time; % in secs
 toi     = find(time);
 
 %% SVC classic
+if 1
 contrasts = {'targetAngle', 'probeAngle','lambda', 'responseButton','tilt', 'visibility',...
     'visibilityPresent', 'presentAbsent', 'accuracy'}; % may increase over time
-for c = 7%:length(contrasts)
+for c = 1:length(contrasts)
     disp(['SVC: ' num2str(c)])
     
     cfg             = [];
@@ -50,7 +51,7 @@ for c = 7%:length(contrasts)
 %     plot_decode;
     end
 end
-
+end
 %% SVR: classic
 % here go all contrasts whose variables are in principle continuous like
 % angle and visibility ratings.
@@ -121,7 +122,7 @@ for c = 1:length(contrasts)
     decode_gamma_run;
     
     % clear ram memory after each classifier
-    system('sync && echo 3 | sudo tee /proc/sys/vm/drop_caches')
+%     system('sync && echo 3 | sudo tee /proc/sys/vm/drop_caches')
     
 %     plot_decode;
 end

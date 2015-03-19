@@ -23,23 +23,25 @@ switch cfg.clf_type
             results     = jr_classify(squeeze(data.powspctrm),class,cfg);
         end
     case 'SVR'
+        cfg.load_results = false;
         switch cfg.contrast
             case {'targetAngle', 'probeAngle'}
+                cfg.nameX   = [subject '_preprocessed_' num2str(round(foi)) 'Hz'];
                 cfg.compute_probas  = false;
                 cfg.compute_predict = true;
                 
                 % predict x axis of orientation
                 cfg.namey   = [cfg.contrast '_' cfg.clf_type cfg.gentime '_x']; % classifier (and file) name
-                results_x   = jr_classify(file_binary,class_x,cfg);
+                results_x   = jr_classify(squeeze(data.powspctrm),class_x,cfg);
                 
                 % predict y axis of orientation
                 cfg.namey   = [cfg.contrast '_' cfg.clf_type cfg.gentime '_y']; % classifier (and file) name
-                results_y   = jr_classify(file_binary,class_y,cfg);
+                results_y   = jr_classify(squeeze(data.powspctrm),class_y,cfg);
             otherwise
                 cfg.compute_probas  = false;
                 cfg.compute_predict = true;
                 cfg.namey           = [cfg.contrast '_' cfg.clf_type cfg.gentime]; % classifier (and file) name
-                results             = jr_classify(file_binary,class_x,cfg);
+                results             = jr_classify(squeeze(data.powspctrm),class_x,cfg);
         end
         
 end
