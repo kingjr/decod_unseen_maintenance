@@ -54,10 +54,32 @@ def get_data(meg_fname, bhv_fname):
         event = dict()
         for key in keys:
                 event[key] = trial[key]
+        # manual new keys
+        event['orientation_target']        = np.deg2rad(event['orientation']*30-15)
+        event['orientation_probe']         = np.deg2rad((event['orientation']*30-15 + event['tilt'] * 30) % 180)
+        event['orientation_target_cos']    = np.cos(2*event['orientation_target'])
+        event['orientation_target_sin']    = np.sin(2*event['orientation_target'])
+        event['orientation_probe_cos']     = np.cos(2*event['orientation_probe'])
+        event['orientation_probe_sin']     = np.sin(2*event['orientation_probe'])
+        event['seen_unseen']               = event['response_visibilityCode'] > 1
+
+        # append to all events
         events.append(event)
     events = pd.DataFrame(events)
 
-    return epochs, events
+    # Determine unique values within each panda column
+    tmp_list=['orientation_target',
+    'orientation_probe',
+    'orientation_target_cos',
+    'orientation_target_sin',
+    'orientation_probe_cos',
+    'orientation_probe_sin',
+    ]
+    unique_values=dict()
+    for x in tmp_list:
+        unique_values[x] = np.unique(events[x])
+
+    return epochs, events, unique_values
 
 
 def resample_epochs(epochs, sfreq):
