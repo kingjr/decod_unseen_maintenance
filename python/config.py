@@ -5,7 +5,6 @@ import numpy as np
 
 import matplotlib.pyplot as plt
 import pandas as pd
-from utils import unique_values
 
 # Experiment parameters
 open_browser = True
@@ -26,10 +25,10 @@ absent = dict(cond='present', values=[0])
 
 contrasts_svc = (
     dict(name='targetAngle',
-         include=dict(cond='orientation_target', values=unique_values['orientation_target']), #these values are likely not working because not expressed in radiants
+         include=dict(cond='orientation_target', values=[15, 45, 75, 105, 135, 165]),
          exclude=[]),
     dict(name='probeAngle',
-         include=dict(cond='orientation_probe', values=[]),# find what values probe angle takes
+         include=dict(cond='orientation_probe', values=[15, 45, 75, 105, 135, 165]),
          exclude=[]),
     dict(name='4visibilitiesPresent',
          include=dict(cond='response_visibilityCode', values=[1, 2, 3, 4]),
@@ -57,22 +56,42 @@ contrasts_svc = (
 
 contrasts_svr = (
     dict(name='targetAngle_cos', # values likely to be changed
-         include=dict(cond='orientation_target_cos', values=[0, 1, 2, 3, 4, 5]), #these values are likely not working because not expressed in radiants
+         include=dict(cond='orientation_target_cos', values=[-0.99608784,
+                                                             -0.75968791,
+                                                             -0.24095905,
+                                                             -0.06633694,
+                                                             0.52532199,
+                                                             0.92175127]),
          exclude=[]),
     dict(name='targetAngle_sin',
-         include=dict(cond='orientation_target_sin', values=[0, 1, 2, 3, 4, 5]), #these values are likely not working because not expressed in radiants
+         include=dict(cond='orientation_target_sin', values=[-0.97053528,
+                                                             -0.38778164,
+                                                             0.08836869,
+                                                             0.65028784,
+                                                             0.85090352,
+                                                             0.99779728]),
          exclude=[]),
     dict(name='probeAngle_cos', # values likely to be changed
-         include=dict(cond='orientation_probe_cos', values=[0, 1, 2, 3, 4, 5]), #these values are likely not working because not expressed in radiants
+         include=dict(cond='orientation_probe_cos', values=[-0.99608784,
+                                                             -0.75968791,
+                                                             -0.24095905,
+                                                             -0.06633694,
+                                                             0.52532199,
+                                                             0.92175127]),
          exclude=[]),
     dict(name='probeAngle_sin',
-         include=dict(cond='orientation_probe_sin', values=[0, 1, 2, 3, 4, 5]), #these values are likely not working because not expressed in radiants
+         include=dict(cond='orientation_probe_sin', values=[-0.97053528,
+                                                             -0.38778164,
+                                                             0.08836869,
+                                                             0.65028784,
+                                                             0.85090352,
+                                                             0.99779728]),
          exclude=[]),
     dict(name='4visibilitiesPresent',
          include=dict(cond='response_visibilityCode', values=[1, 2, 3, 4]),
          exclude=[absent]),
     dict(name='targetContrast',
-         include=dict(cond='contrast', values=[0, .5, .75, 1]),
+         include=dict(cond='contrast', values=[0, .5, .75, 1]),#revise target contrast
          exclude=[]),
 
 )

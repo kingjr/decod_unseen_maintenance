@@ -98,4 +98,4 @@ for subject in subjects:                                                        
                     pkl_fname = op.join(data_path, subject, 'mvpas',
                                         '{}-decod_{}.pickle'.format(subject, cond_name))
 
-report.save(open_browser=open_browser)
+report.save(open_browser=True)

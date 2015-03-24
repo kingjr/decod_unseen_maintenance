@@ -91,7 +91,7 @@ for subject in subjects:                                                        
                     report.add_figs_to_section(fig, ('%s %s: (decoding)'
                             % (subject, cond_name)), subject)
 
-                    fig = gat.plot(show=False)
+                    fig = gat.plot(show=True)
                     report.add_figs_to_section(fig, ('%s %s: GAT'
                             % (subject, cond_name)), subject)
                     # Save contrast
