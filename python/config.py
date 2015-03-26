@@ -75,14 +75,14 @@ contrasts_svr = (
          include=dict(cond='response_visibilityCode', values=[1, 2, 3, 4]),
          exclude=[absent]),
     dict(name='targetContrast',
-         include=dict(cond='contrast', values=[0, .5, .75, 1]),#revise target contrast
+         include=dict(cond='targetContrast', values=[0, .5, .75, 1]),#revise target contrast
          exclude=[]),
 
 )
 
 clf_types = (
-    dict(name='SVC',values=contrasts_svc),
-    dict(name='SVR',values=contrasts_svr)
+    dict(name='SVR',values=contrasts_svr),
+    dict(name='SVC',values=contrasts_svc)
 )
 
 # Define frequencies of interest for power decoding

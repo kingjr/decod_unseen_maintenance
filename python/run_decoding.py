@@ -22,7 +22,7 @@ from config import (
 report, run_id, results_dir, logger = setup_provenance(
                     script=__file__, results_dir=results_dir)
 
-for subject in [subjects[i] for i in [19]]:#np.append(0,range(2,19))]:                 # Loop across each subject
+for subject in [subjects[i] for i in np.append(0,range(2,19))]:                 # Loop across each subject
     print(subject)
     for typ in inputTypes:                                                      # Input type defines whether we decode ERFs or frequency power
         print(typ)

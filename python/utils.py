@@ -49,6 +49,7 @@ def get_data(meg_fname, bhv_fname):
             'orientation', 'tilt', 'ttl_value',
             'present', 'time_delay', 'response_RT', 'time_feedback_on']
 
+    contrasts = [0, .5, .75, 1]
     events = list()
     for trial in trials:
         event = dict()
@@ -61,6 +62,7 @@ def get_data(meg_fname, bhv_fname):
         event['orientation_target_sin']    = np.sin(2*np.deg2rad(event['orientation_target']+7.5))#sin(2*deg2rad(angles + 7.5))
         event['orientation_probe_cos']     = np.cos(2*np.deg2rad(event['orientation_probe']+7.5))
         event['orientation_probe_sin']     = np.sin(2*np.deg2rad(event['orientation_probe']+7.5))
+        event['targetContrast']            = contrasts[event['contrast']-1]
         event['seen_unseen']               = event['response_visibilityCode'] > 1
 
         # append to all events
