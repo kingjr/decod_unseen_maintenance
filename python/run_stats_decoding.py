@@ -133,7 +133,9 @@ for typ in inputTypes:
                         np.std(scores_diag, axis=0) / np.sqrt(scores.shape[0]),
                         ax=ax, color='blue')
                 plt.show()
-                report.add_figs_to_section(fig, '%s (%s): Decoding ' % (ep['name'],
-                                           contrast['name']), ep['name'])
+                report.add_figs_to_section(fig, '%s %s (%s): Decoding ' % (typ['name'],
+                                           clf_type['name'],cond_name), typ['name'])
+        break
+    break
 
 report.save(open_browser=open_browser)
