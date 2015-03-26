@@ -90,8 +90,8 @@ freqs = [7, 10, 12, 18, 29, 70, 105]
 
 # Define type of input (erf,power etc...)
 inputTypes = (
-    dict(name='erf',values=[float('NaN')]),
-    dict(name='power',values=freqs)
+    dict(name='erf',values=[float('NaN')],clf=clf_types),
+    dict(name='power',values=freqs,clf=clf_types)
 )
 
 # Decoding preprocessing steps

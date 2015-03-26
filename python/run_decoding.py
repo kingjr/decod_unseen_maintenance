@@ -14,7 +14,6 @@ from config import (
     data_path,
     results_dir,
     subjects,
-    clf_types,
     inputTypes,
     preproc,
     decoding_params
@@ -23,7 +22,7 @@ from config import (
 report, run_id, results_dir, logger = setup_provenance(
                     script=__file__, results_dir=results_dir)
 
-for subject in [subjects[i] for i in [0,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]]:                                                        # Loop across each subject
+for subject in [subjects[i] for i in np.append(0,range(2,19))]:                 # Loop across each subject
     print(subject)
     for typ in inputTypes:                                                      # Input type defines whether we decode ERFs or frequency power
         print(typ)
@@ -32,13 +31,13 @@ for subject in [subjects[i] for i in [0,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,
 
             # define meg_path appendix
             if typ['name']=='erf':
-                meg_appendix = ''
+                fname_appendix = ''
             elif typ['name']=='power':
-                meg_appendix = op.join('_Tfoi_mtm_',freq,'Hz')
+                fname_appendix = op.join('_Tfoi_mtm_',freq,'Hz')
 
             # define paths
             meg_fname = op.join(data_path, subject, 'preprocessed', subject +
-                                '_preprocessed'+ meg_appendix)
+                                '_preprocessed'+ fname_appendix)
             bhv_fname = op.join(data_path, subject, 'behavior', subject + '_fixed.mat')
             epochs, events = get_data(meg_fname, bhv_fname)
 
@@ -50,6 +49,9 @@ for subject in [subjects[i] for i in [0,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,
             if 'crop' in preproc.keys():
                 epochs.crop(preproc['crop']['tmin'],
                             preproc['crop']['tmax'])
+
+            # Define classification types, i.e. SVR and SVC
+            clf_types = typ['clf']
 
             for clf_type in clf_types:                                           # define classifier type (SVC or SVR)
                 # retrieve contrast depending on classification type
@@ -98,7 +100,7 @@ for subject in [subjects[i] for i in [0,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,
 
                     # Save contrast
                     pkl_fname = op.join(data_path, subject, 'mvpas',
-                        '{}-decod_{}.pickle'.format(subject, cond_name))
+                        '{}-decod_{}_{}{}.pickle'.format(subject, cond_name,clf_type['name'],fname_appendix))
 
                     # Save classifier results
                     with open(pkl_fname, 'wb') as f:
