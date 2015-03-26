@@ -5,6 +5,7 @@ import os.path as op
 import numpy as np
 import pickle
 import recombine_svr_prediction
+import matplotlib.pyplot as plt
 from config import (
         subjects,
         data_path,
@@ -39,8 +40,8 @@ def cart2pol(x, y):
 
 ################################################################################
 
-
-contrasts = ('orientation_target','orientation_probe')
+subjects = [subjects[i] for i in range(20) if i not in [1]] # XXX to be be removed
+contrasts = ['orientation_target']
 for typ in inputTypes:                                                      # Input type defines whether we decode ERFs or frequency power
     print(typ)
     for freq in typ['values']:                                              # loop only once if ERF and across all frequencies of interest if frequency power
@@ -55,7 +56,7 @@ for typ in inputTypes:                                                      # In
 
             error_grand = np.array(np.zeros([20,23,23]))
             for s, subject in enumerate(subjects):
-
+                print(subject)
                 # define meg_path appendix
                 if typ['name']=='erf':
                     fname_appendix = ''
@@ -75,8 +76,10 @@ for typ in inputTypes:                                                      # In
                 path_y = op.join(data_path, subject, 'mvpas',
                     '{}-decod_{}_{}{}.pickle'.format(subject, cond_name_sin, clf_type,fname_appendix))
 
+                # recombine cos and sin predictions to obtain the predicted angle
                 predAngle, radius, trueX = recombine_svr_prediction(path_x,path_y)
 
+                # retrieve angle presented in degrees
                 trueAngle = np.rad2deg(np.arccos(trueX))
 
                 dims = predAngle.shape
@@ -86,17 +89,14 @@ for typ in inputTypes:                                                      # In
                 mn_error = error.mean(2)
 
                 error_grand[s,:,:] = mn_error
-                break
-            break
-        break
     break
 
 
 
-fig, (ax1) = plt.subplots(nrows=1, figsize=(10,10))
+fig, ax = plt.subplots(nrows=1, figsize=(10,10))
 
-ax1.imshow(mn_error, extent=[0,22,0,22], interpolation='none', origin='lower')
-ax1.set_title('Default')
+ax.imshow(error_grand.mean(0), extent=[0,22,0,22], interpolation='none', origin='lower')
+ax.set_title('Default')
 
 plt.tight_layout()
 plt.show()

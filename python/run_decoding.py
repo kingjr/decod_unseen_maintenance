@@ -21,8 +21,8 @@ from config import (
 
 report, run_id, results_dir, logger = setup_provenance(
                     script=__file__, results_dir=results_dir)
-
-for subject in [subjects[i] for i in np.append(0,range(2,19))]:                 # Loop across each subject
+subjects = [subjects[i] for i in range(21) if i == 19] # XXX to be be removed
+for s, subject in enumerate(subjects):                                          # Loop across each subject
     print(subject)
     for typ in inputTypes:                                                      # Input type defines whether we decode ERFs or frequency power
         print(typ)
@@ -79,9 +79,9 @@ for subject in [subjects[i] for i in np.append(0,range(2,19))]:                 
 
                     # Apply contrast
                     if clf_type['name']=='SVC':
-                        decoding_parameters = decoding_params[0]['values']
+                        decoding_parameters = decoding_params[0]['params']
                     elif clf_type['name']=='SVR':
-                        decoding_parameters = decoding_params[1]['values']
+                        decoding_parameters = decoding_params[1]['params']
                     gat = GeneralizationAcrossTime(**decoding_parameters)
                     gat.fit(epochs[sel], y=y[sel])
                     gat.score(epochs[sel], y=y[sel])

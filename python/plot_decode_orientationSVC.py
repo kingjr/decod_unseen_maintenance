@@ -29,12 +29,12 @@ def realign_svc_orientations(path_gat):
     return mn_probas
 
 
-
-contrasts = ('orientation_target','orientation_probe')
+subjects = [subjects[i] for i in range(20) if i not in [1, 20]] # XXX to be be removed
+contrasts = ['orientation_target']
 probas_grand=np.array(np.zeros([20,23,23]))
 for contrast in contrasts:
-    for s in np.append(0,range(2,21)):
-        print(s)
+    for s, subject in enumerate(subjects):
+        print(subject)
         subject = subjects[s]
         # Define path to retrieve classifier
         path_gat = op.join(data_path, subject, 'mvpas',
