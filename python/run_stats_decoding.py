@@ -42,7 +42,7 @@ for typ in inputTypes:
         # Loop across classifier type (SVC or SVR)
         for clf_type in clf_types:
             # Loop across contrasts
-            for contrast in clf_type['values']:
+            for contrast in clf_type['contrasts']:
 
                 # Uncomment to look at individual contrasts. contrast=contrasts[0]
                 # DATA
@@ -58,7 +58,7 @@ for typ in inputTypes:
 
                     # define path to file to be loaded
                     cond_name = contrast['include']['cond']
-                    if True:
+                    if False:
                         pkl_fname = op.join(data_path, subject, 'mvpas',
                             '{}-decod_{}.pickle'.format(subject, cond_name))
                     else:
@@ -107,7 +107,7 @@ for typ in inputTypes:
                                show=False)
                 ax = fig.axes[0]
                 ax.contour(x, y, p_values < alpha, colors='black', levels=[0])
-                plt.show()
+                #plt.show()
                 report.add_figs_to_section(fig, '%s %s (%s): Decoding ' % (typ['name'],
                                            clf_type['name'],cond_name), typ['name'])
 
@@ -128,7 +128,7 @@ for typ in inputTypes:
                 plot_eb(times, np.mean(scores_diag, axis=0),
                         np.std(scores_diag, axis=0) / np.sqrt(scores.shape[0]),
                         ax=ax, color='blue')
-                plt.show()
+                #plt.show()
                 report.add_figs_to_section(fig, '%s %s (%s): Decoding ' % (typ['name'],
                                            clf_type['name'],cond_name), typ['name'])
         break

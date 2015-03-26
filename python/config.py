@@ -81,8 +81,8 @@ contrasts_svr = (
 )
 
 clf_types = (
-    dict(name='SVR',contrasts=contrasts_svr),
-    dict(name='SVC',contrasts=contrasts_svc)
+    dict(name='SVC',contrasts=contrasts_svc),
+    dict(name='SVR',contrasts=contrasts_svr)
 )
 
 # Define frequencies of interest for power decoding
@@ -95,7 +95,7 @@ inputTypes = (
 )
 
 # Decoding preprocessing steps
-preproc = dict(decim=4, crop=dict(tmin=0., tmax=0.700))
+preproc = dict(decim=4, crop=dict(tmin=-.200, tmax=0.700))
 
 # Decoding parameters
 from sklearn.preprocessing import StandardScaler
