@@ -81,8 +81,8 @@ contrasts_svr = (
 )
 
 clf_types = (
-    dict(name='SVR',values=contrasts_svr),
-    dict(name='SVC',values=contrasts_svc)
+    dict(name='SVR',contrasts=contrasts_svr),
+    dict(name='SVC',contrasts=contrasts_svc)
 )
 
 # Define frequencies of interest for power decoding
@@ -116,6 +116,6 @@ decoding_params_svr = dict(n_jobs=-1, clf=clf)
 
 # Define decoding parameters
 decoding_params = (
-    dict(name='SVC',values=decoding_params_svc),
-    dict(name='SVR',values=decoding_params_svr),
+    dict(name='SVC',params=decoding_params_svc),
+    dict(name='SVR',params=decoding_params_svr),
 )

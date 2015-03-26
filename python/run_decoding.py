@@ -49,15 +49,9 @@ for subject in [subjects[i] for i in np.append(0,range(2,19))]:                 
                 epochs.crop(preproc['crop']['tmin'],
                             preproc['crop']['tmax'])
 
-            # Define classification types, i.e. SVR and SVC
-            clf_types = typ['clf']
-
-            for clf_type in clf_types:                                           # define classifier type (SVC or SVR)
-                # retrieve contrast depending on classification type
-                contrasts=clf_type['values']                                    # each classifier type has different contrasts
-
-                # Apply each contrast
-                for contrast in contrasts:
+            for clf_type in typ['clf']:                                           # define classifier type (SVC or SVR)
+                # Apply to each contrast
+                for contrast in clf_type['contrasts']:
                     #contrast = contrasts # remove once you loop across all contrasts
                     print(contrast)
                     # Find excluded trials
@@ -97,7 +91,8 @@ for subject in [subjects[i] for i in np.append(0,range(2,19))]:                 
                     report.add_figs_to_section(fig,
                         ('%s %s: (decoding)' % (subject, cond_name)), subject)
 
-                    fig = gat.plot(show=False)
+                    gat.plot(vmin=np.min(gat.scores_), vmax=np.max(gat.scores_),
+                             show=False)
                     report.add_figs_to_section(fig,
                         ('%s %s: GAT' % (subject, cond_name)), subject)
 

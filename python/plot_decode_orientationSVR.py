@@ -53,7 +53,8 @@ for typ in inputTypes:                                                      # In
             # Define classifier type
             clf_type = 'SVR'
 
-            for subject in [subjects[i] for i in np.append(0,range(2,19))]:
+            error_grand = np.array(np.zeros([20,23,23]))
+            for s, subject in enumerate(subjects):
 
                 # define meg_path appendix
                 if typ['name']=='erf':
@@ -78,9 +79,24 @@ for typ in inputTypes:                                                      # In
 
                 trueAngle = np.rad2deg(np.arccos(trueX))
 
-                error = -np.log(predAngle - trueAngle)
+                dims = predAngle.shape
+                error = ((predAngle.squeeze() - np.tile(trueAngle,np.append(dims[0:2],1)) % 360) - 180 ) ** 2
 
+                # compute truth-prediction square error
+                mn_error = error.mean(2)
+
+                error_grand[s,:,:] = mn_error
                 break
             break
         break
     break
+
+
+
+fig, (ax1) = plt.subplots(nrows=1, figsize=(10,10))
+
+ax1.imshow(mn_error, extent=[0,22,0,22], interpolation='none', origin='lower')
+ax1.set_title('Default')
+
+plt.tight_layout()
+plt.show()

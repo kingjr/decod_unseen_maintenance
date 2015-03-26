@@ -41,7 +41,7 @@ for contrast in contrasts:
             '{}-decod_{}.pickle'.format(subject, contrast))
 
         probas = realign_svc_orientations(path_gat)
-        probas_grand[s,:,:] = probas[::-1,:]
+        probas_grand[s,:,:] = probas
         # # Show insividual subjects imagesc plots
         # fig, (ax1) = plt.subplots(nrows=1, figsize=(6,10))
         #
@@ -53,10 +53,10 @@ for contrast in contrasts:
 
     # Plot grand average across subjects
     gravg_probas = probas_grand.mean(0)
-    fig, (ax1) = plt.subplots(nrows=1, figsize=(10,10))
+    fig, ax = plt.subplots(nrows=1, figsize=(10,10))
 
-    ax1.matshow(gravg_probas, extent=[0,22,0,22])
-    ax1.set_title('Default')
+    ax.imshow(gravg_probas, extent=[0,22,0,22], interpolation='none', origin='lower')
+    ax.set_title('Default')
 
     plt.tight_layout()
     plt.show()

@@ -26,6 +26,7 @@ from config import (
 report, run_id, results_dir, logger = setup_provenance(
     script=__file__, results_dir=results_dir)
 
+subjects = [subjects[i] for i in range(21) if i not in [1, 20]] # XXX to be be removed
 
 # Apply contrast to ERFs or frequency power
 for typ in inputTypes:
@@ -40,19 +41,14 @@ for typ in inputTypes:
 
         # Loop across classifier type (SVC or SVR)
         for clf_type in clf_types:
-
-            # Define contrast of interest within each classification type
-            contrasts=clf_type['values']
-
             # Loop across contrasts
-            for contrast in contrasts:
+            for contrast in clf_type['values']:
+
                 # Uncomment to look at individual contrasts. contrast=contrasts[0]
                 # DATA
                 for s, subject in enumerate(subjects):
-                    if s==1 or s==19:
-                        continue
                     print('load GAT %s %s %s %s %s' %
-                        (subject, contrast['name'], clf_type['name'],typ['name'], freq))
+                        (subject, clf_type['name'], contrast['name'],typ['name'], freq))
 
                     # define meg_path appendix
                     if typ['name']=='erf':
