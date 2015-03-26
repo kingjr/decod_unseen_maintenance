@@ -46,10 +46,10 @@ for typ in inputTypes:
 
             # Loop across contrasts
             for contrast in contrasts:
-
+                # Uncomment to look at individual contrasts. contrast=contrasts[0]
                 # DATA
                 for s, subject in enumerate(subjects):
-                    if s==1:
+                    if s==1 or s==19:
                         continue
                     print('load GAT %s %s %s %s %s' %
                         (subject, contrast['name'], clf_type['name'],typ['name'], freq))
@@ -112,8 +112,8 @@ for typ in inputTypes:
                 ax = fig.axes[0]
                 ax.contour(x, y, p_values < alpha, colors='black', levels=[0])
                 plt.show()
-                report.add_figs_to_section(fig, '%s (%s): GAT' % (ep['name'],
-                                           contrast['name']), ep['name'])
+                report.add_figs_to_section(fig, '%s %s (%s): Decoding ' % (typ['name'],
+                                           clf_type['name'],cond_name), typ['name'])
 
                 # ------ Plot Decoding
                 fig = gat.plot_diagonal(show=False)
