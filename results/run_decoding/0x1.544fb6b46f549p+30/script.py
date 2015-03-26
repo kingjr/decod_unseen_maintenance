@@ -22,7 +22,7 @@ from config import (
 report, run_id, results_dir, logger = setup_provenance(
                     script=__file__, results_dir=results_dir)
 
-for subject in [subjects[i] for i in np.append(0,range(2,19))]:                 # Loop across each subject
+for subject in [subjects[i] for i in [19]]:#np.append(0,range(2,19))]:                 # Loop across each subject
     print(subject)
     for typ in inputTypes:                                                      # Input type defines whether we decode ERFs or frequency power
         print(typ)
@@ -36,7 +36,7 @@ for subject in [subjects[i] for i in np.append(0,range(2,19))]:                 
                 fname_appendix = op.join('_Tfoi_mtm_',freq,'Hz')
 
             # define paths
-            meg_fname = op.join(data_path, subject, 'preprocessed', subject + '_preprocessed' + fname_appendix)
+            fname_fname = op.join(data_path, subject, 'preprocessed', subject + '_preprocessed' + fname_appendix)
             bhv_fname = op.join(data_path, subject, 'behavior', subject + '_fixed.mat')
             epochs, events = get_data(meg_fname, bhv_fname)
 

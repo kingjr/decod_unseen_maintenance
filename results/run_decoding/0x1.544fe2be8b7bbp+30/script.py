@@ -36,9 +36,9 @@ for subject in [subjects[i] for i in np.append(0,range(2,19))]:                 
                 fname_appendix = op.join('_Tfoi_mtm_',freq,'Hz')
 
             # define paths
-            meg_fname = op.join(data_path, subject, 'preprocessed', subject + '_preprocessed' + fname_appendix)
+            fname_fname = op.join(data_path, subject, 'preprocessed', subject + '_preprocessed' + fname_appendix)
             bhv_fname = op.join(data_path, subject, 'behavior', subject + '_fixed.mat')
-            epochs, events = get_data(meg_fname, bhv_fname)
+            epochs, events = get_data(fname_fname, bhv_fname)
 
             # preprocess data for memory issue
             if 'resample' in preproc.keys():
