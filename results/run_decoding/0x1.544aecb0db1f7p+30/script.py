@@ -23,7 +23,7 @@ from config import (
 report, run_id, results_dir, logger = setup_provenance(
                     script=__file__, results_dir=results_dir)
 
-for subject in [subjects[i] for i in [0,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]]:                                                        # Loop across each subject
+for subject in [subjects[i] for i in [0, 2, 3]]:                                                        # Loop across each subject
     print(subject)
     for typ in inputTypes:                                                      # Input type defines whether we decode ERFs or frequency power
         print(typ)
@@ -53,11 +53,11 @@ for subject in [subjects[i] for i in [0,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,
 
             for clf_type in clf_types:                                           # define classifier type (SVC or SVR)
                 # retrieve contrast depending on classification type
-                contrasts=clf_type['values']                                    # each classifier type has different contrasts
+                contrasts=clf_type['values'][4]                                    # each classifier type has different contrasts
 
                 # Apply each contrast
                 for contrast in contrasts:
-                    #contrast = contrasts # remove once you loop across all contrasts
+                    contrast = contrasts
                     print(contrast)
                     # Find excluded trials
                     exclude = np.any([events[x['cond']]==ii
@@ -101,9 +101,9 @@ for subject in [subjects[i] for i in [0,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,
                         '{}-decod_{}.pickle'.format(subject, cond_name))
 
                     # Save classifier results
-                    with open(pkl_fname, 'wb') as f:
+                    with open(pkl_fname, 'w') as f:
                         pickle.dump([gat, contrast], f)
-
+                    break
                 break
             break
         break

@@ -26,7 +26,7 @@ absent = dict(cond='present', values=[0])
 contrasts_svc = (
     dict(name='targetAngle',
          include=dict(cond='orientation_target', values=[15, 45, 75, 105, 135, 165]),
-         exclude=[]),
+         exclude=[absent]),
     dict(name='probeAngle',
          include=dict(cond='orientation_probe', values=[15, 45, 75, 105, 135, 165]),
          exclude=[]),
@@ -56,37 +56,21 @@ contrasts_svc = (
 
 contrasts_svr = (
     dict(name='targetAngle_cos', # values likely to be changed
-         include=dict(cond='orientation_target_cos', values=[-0.99608784,
-                                                             -0.75968791,
-                                                             -0.24095905,
-                                                             -0.06633694,
-                                                             0.52532199,
-                                                             0.92175127]),
-         exclude=[]),
+         include=dict(cond='orientation_target_cos',
+                        values=np.cos(2*np.deg2rad([x+7.5 for x in [15, 45, 75, 105, 135, 165]]))),
+         exclude=[absent]),
     dict(name='targetAngle_sin',
-         include=dict(cond='orientation_target_sin', values=[-0.97053528,
-                                                             -0.38778164,
-                                                             0.08836869,
-                                                             0.65028784,
-                                                             0.85090352,
-                                                             0.99779728]),
-         exclude=[]),
+         include=dict(cond='orientation_target_sin',
+                        values=np.sin(2*np.deg2rad([x+7.5 for x in [15, 45, 75, 105, 135, 165]]))),
+         exclude=[absent]),
     dict(name='probeAngle_cos', # values likely to be changed
-         include=dict(cond='orientation_probe_cos', values=[-0.99608784,
-                                                             -0.75968791,
-                                                             -0.24095905,
-                                                             -0.06633694,
-                                                             0.52532199,
-                                                             0.92175127]),
-         exclude=[]),
+         include=dict(cond='orientation_probe_cos',
+                        values=np.cos(2*np.deg2rad([x+7.5 for x in [15, 45, 75, 105, 135, 165]]))),
+         exclude=[absent]),
     dict(name='probeAngle_sin',
-         include=dict(cond='orientation_probe_sin', values=[-0.97053528,
-                                                             -0.38778164,
-                                                             0.08836869,
-                                                             0.65028784,
-                                                             0.85090352,
-                                                             0.99779728]),
-         exclude=[]),
+         include=dict(cond='orientation_probe_sin',
+                        values=np.sin(2*np.deg2rad([x+7.5 for x in [15, 45, 75, 105, 135, 165]]))),
+         exclude=[absent]),
     dict(name='4visibilitiesPresent',
          include=dict(cond='response_visibilityCode', values=[1, 2, 3, 4]),
          exclude=[absent]),
@@ -118,6 +102,6 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import Pipeline
 from sklearn.svm import SVC
 scaler = StandardScaler()
-svc = SVC(C=1, kernel='linear', probability=True)
+svc = SVC(C=1, kernel='linear', probability=True, class_weight='auto')
 clf = Pipeline([('scaler', scaler), ('svc', svc)])
 decoding_params = dict(n_jobs=-1, clf=clf, predict_type='predict_proba')

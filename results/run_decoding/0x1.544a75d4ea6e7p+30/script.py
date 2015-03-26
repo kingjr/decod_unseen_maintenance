@@ -23,7 +23,7 @@ from config import (
 report, run_id, results_dir, logger = setup_provenance(
                     script=__file__, results_dir=results_dir)
 
-for subject in subjects:                                                        # Loop across each subject
+for subject in [subjects[i] for i in [0, 2, 3]]:                                                        # Loop across each subject
     print(subject)
     for typ in inputTypes:                                                      # Input type defines whether we decode ERFs or frequency power
         print(typ)
@@ -88,14 +88,18 @@ for subject in subjects:                                                        
 
                     # Plot
                     fig = gat.plot_diagonal(show=False)
-                    report.add_figs_to_section(fig, ('%s %s: (decoding)'
-                            % (subject, cond_name)), subject)
+                    report.add_figs_to_section(fig,
+                        ('%s %s: (decoding)' % (subject, cond_name)), subject)
 
                     fig = gat.plot(show=False)
-                    report.add_figs_to_section(fig, ('%s %s: GAT'
-                            % (subject, cond_name)), subject)
+                    report.add_figs_to_section(fig,
+                        ('%s %s: GAT' % (subject, cond_name)), subject)
                     # Save contrast
                     pkl_fname = op.join(data_path, subject, 'mvpas',
-                                        '{}-decod_{}.pickle'.format(subject, cond_name))
+                        '{}-decod_{}.pickle'.format(subject, cond_name))
+                    break
+                break
+            break
+        break
 
 report.save(open_browser=open_browser)

@@ -57,10 +57,10 @@ def get_data(meg_fname, bhv_fname):
         # manual new keys
         event['orientation_target']        = event['orientation']*30-15
         event['orientation_probe']         = (event['orientation']*30-15 + event['tilt'] * 30) % 180
-        event['orientation_target_cos']    = np.cos(event['orientation_target'])
-        event['orientation_target_sin']    = np.sin(event['orientation_target'])
-        event['orientation_probe_cos']     = np.cos(event['orientation_probe'])
-        event['orientation_probe_sin']     = np.sin(event['orientation_probe'])
+        event['orientation_target_cos']    = np.cos(2*np.deg2rad(event['orientation_target']+7.5))#cos(2*deg2rad(angles + 7.5))
+        event['orientation_target_sin']    = np.sin(2*np.deg2rad(event['orientation_target']+7.5))#sin(2*deg2rad(angles + 7.5))
+        event['orientation_probe_cos']     = np.cos(2*np.deg2rad(event['orientation_probe']+7.5))
+        event['orientation_probe_sin']     = np.sin(2*np.deg2rad(event['orientation_probe']+7.5))
         event['seen_unseen']               = event['response_visibilityCode'] > 1
 
         # append to all events

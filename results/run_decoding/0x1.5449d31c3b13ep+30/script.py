@@ -85,7 +85,7 @@ for subject in subjects:                                                        
                     gat = GeneralizationAcrossTime(**decoding_params)
                     gat.fit(epochs[sel], y=y[sel])
                     gat.score(epochs[sel], y=y[sel])
-
+                    0/0
                     # Plot
                     fig = gat.plot_diagonal(show=False)
                     report.add_figs_to_section(fig, ('%s %s: (decoding)'

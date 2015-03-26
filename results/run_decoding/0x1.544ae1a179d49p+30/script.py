@@ -2,7 +2,7 @@ import os.path as op
 
 import scipy.io as sio
 import numpy as np
-
+import pickle
 import mne
 from mne.decoding import GeneralizationAcrossTime
 
@@ -23,7 +23,7 @@ from config import (
 report, run_id, results_dir, logger = setup_provenance(
                     script=__file__, results_dir=results_dir)
 
-for subject in subjects:                                                        # Loop across each subject
+for subject in [subjects[i] for i in [0, 2, 3]]:                                                        # Loop across each subject
     print(subject)
     for typ in inputTypes:                                                      # Input type defines whether we decode ERFs or frequency power
         print(typ)
@@ -54,6 +54,7 @@ for subject in subjects:                                                        
             for clf_type in clf_types:                                           # define classifier type (SVC or SVR)
                 # retrieve contrast depending on classification type
                 contrasts=clf_type['values']                                    # each classifier type has different contrasts
+                contrasts=contrasts[4]
 
                 # Apply each contrast
                 for contrast in contrasts:
@@ -73,7 +74,7 @@ for subject in subjects:                                                        
                     sel = np.any(include,axis=0) * (exclude==False)
                     sel = np.where(sel)[0]
 
-                    # reduce number or trials if too many
+                    # reduce number or trials if too many XXX just for speed, remove
                     if len(sel) > 400:
                         import random
                         random.shuffle(sel)
@@ -88,14 +89,23 @@ for subject in subjects:                                                        
 
                     # Plot
                     fig = gat.plot_diagonal(show=False)
-                    report.add_figs_to_section(fig, ('%s %s: (decoding)'
-                            % (subject, cond_name)), subject)
+                    report.add_figs_to_section(fig,
+                        ('%s %s: (decoding)' % (subject, cond_name)), subject)
 
                     fig = gat.plot(show=False)
-                    report.add_figs_to_section(fig, ('%s %s: GAT'
-                            % (subject, cond_name)), subject)
+                    report.add_figs_to_section(fig,
+                        ('%s %s: GAT' % (subject, cond_name)), subject)
+
                     # Save contrast
                     pkl_fname = op.join(data_path, subject, 'mvpas',
-                                        '{}-decod_{}.pickle'.format(subject, cond_name))
+                        '{}-decod_{}.pickle'.format(subject, cond_name))
 
-report.save(open_browser=True)
+                    # Save classifier results
+                    with open(pkl_fname, 'w') as f:
+                        pickle.dump([gat, contrast], f)
+                    break
+                break
+            break
+        break
+
+report.save(open_browser=open_browser)
