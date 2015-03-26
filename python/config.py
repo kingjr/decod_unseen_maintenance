@@ -102,6 +102,20 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import Pipeline
 from sklearn.svm import SVC
 scaler = StandardScaler()
+# SVC
 svc = SVC(C=1, kernel='linear', probability=True, class_weight='auto')
 clf = Pipeline([('scaler', scaler), ('svc', svc)])
-decoding_params = dict(n_jobs=-1, clf=clf, predict_type='predict_proba')
+decoding_params_svc = dict(n_jobs=-1, clf=clf, predict_type='predict_proba')
+
+#SVR
+from sklearn.svm import SVR
+scaler = StandardScaler()
+svr = SVR(C=1, kernel='linear')
+clf = Pipeline([('scaler', scaler), ('svr', svr)])
+decoding_params_svr = dict(n_jobs=-1, clf=clf)
+
+# Define decoding parameters
+decoding_params = (
+    dict(name='SVC',values=decoding_params_svc),
+    dict(name='SVR',values=decoding_params_svr),
+)
