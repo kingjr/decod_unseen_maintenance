@@ -26,7 +26,7 @@ from config import (
 report, run_id, results_dir, logger = setup_provenance(
     script=__file__, results_dir=results_dir)
 
-subjects = [subjects[i] for i in range(21) if i not in [1, 20]] # XXX to be be removed
+subjects = [subjects[i] for i in range(20)] # XXX to be be removed
 
 # Apply contrast to ERFs or frequency power
 for typ in inputTypes:

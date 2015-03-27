@@ -40,7 +40,7 @@ def cart2pol(x, y):
 
 ################################################################################
 
-subjects = [subjects[i] for i in range(20) if i not in [1]] # XXX to be be removed
+subjects = [subjects[i] for i in range(20) # XXX to be be removed
 contrasts = ['orientation_target']
 for typ in inputTypes:                                                      # Input type defines whether we decode ERFs or frequency power
     print(typ)

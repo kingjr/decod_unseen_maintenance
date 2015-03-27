@@ -29,7 +29,7 @@ def realign_svc_orientations(path_gat):
     return mn_probas
 
 
-subjects = [subjects[i] for i in range(20) if i not in [1, 20]] # XXX to be be removed
+subjects = [subjects[i] for i in range(20)] # XXX to be be removed
 contrasts = ['orientation_target']
 probas_grand=np.array(np.zeros([20,23,23]))
 for contrast in contrasts:
