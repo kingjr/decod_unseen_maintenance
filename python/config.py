@@ -81,8 +81,8 @@ contrasts_svr = (
 )
 
 clf_types = (
-    dict(name='SVC',contrasts=contrasts_svc),
-    dict(name='SVR',contrasts=contrasts_svr)
+    dict(name='SVR',contrasts=contrasts_svr),
+    dict(name='SVC',contrasts=contrasts_svc)
 )
 
 # Define frequencies of interest for power decoding

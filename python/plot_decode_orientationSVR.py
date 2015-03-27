@@ -6,6 +6,11 @@ import numpy as np
 import pickle
 import recombine_svr_prediction
 import matplotlib.pyplot as plt
+from pycircstat import (
+        rayleigh,
+        omnibus,
+        vtest
+)
 from config import (
         subjects,
         data_path,
@@ -27,7 +32,7 @@ def recombine_svr_prediction(path_x,path_y):
         gat, contrast = pickle.load(f)
     y = np.array(gat.y_pred_)
 
-    # cartesian 2 polar transformation
+    # cartesian 2 polar (radians) transformation
     angle, radius = cart2pol(x, y)
 
     return (angle, radius, true_x)
@@ -40,7 +45,7 @@ def cart2pol(x, y):
 
 ################################################################################
 
-subjects = [subjects[i] for i in range(20) # XXX to be be removed
+#subjects = [subjects[i] for i in range(20) # XXX to be be removed
 contrasts = ['orientation_target']
 for typ in inputTypes:                                                      # Input type defines whether we decode ERFs or frequency power
     print(typ)
@@ -54,7 +59,16 @@ for typ in inputTypes:                                                      # In
             # Define classifier type
             clf_type = 'SVR'
 
-            error_grand = np.array(np.zeros([20,23,23]))
+            # initialize statistics measures
+            error_grand = np.array(np.zeros([20,29,29]))
+            p_rayleigh = np.array(np.zeros([20,29,29]))
+            z_rayleigh = np.array(np.zeros([20,29,29]))
+            p_omni = np.array(np.zeros([20,29,29]))
+            m_omni = np.array(np.zeros([20,29,29]))
+            v_vtest = np.array(np.zeros([20,29,29]))
+            p_vtest = np.array(np.zeros([20,29,29]))
+
+            # loop across subjects
             for s, subject in enumerate(subjects):
                 print(subject)
                 # define meg_path appendix
@@ -76,27 +90,46 @@ for typ in inputTypes:                                                      # In
                 path_y = op.join(data_path, subject, 'mvpas',
                     '{}-decod_{}_{}{}.pickle'.format(subject, cond_name_sin, clf_type,fname_appendix))
 
-                # recombine cos and sin predictions to obtain the predicted angle
+                # recombine cos and sin predictions to obtain the predicted angle in radians
                 predAngle, radius, trueX = recombine_svr_prediction(path_x,path_y)
 
-                # retrieve angle presented in degrees
+                # retrieve angle presented in radians
                 trueAngle = np.rad2deg(np.arccos(trueX))
 
+                # Compute several measures to estimate goodness of fit
+                ######################MEAN SQUARED ERROR########################
                 dims = predAngle.shape
-                error = ((predAngle.squeeze() - np.tile(trueAngle,np.append(dims[0:2],1)) % 360) - 180 ) ** 2
+                error = ((predAngle.squeeze() - np.tile(trueAngle,np.append(dims[0:2],1)) % (2*np.pi)) - np.pi ) ** 2
 
                 # compute truth-prediction square error
-                mn_error = error.mean(2)
+                error_grand[s,:,:] = error.mean(2)
 
-                error_grand[s,:,:] = mn_error
+                ################ RAYLEIGH TEST CIRCULR  ########################
+                p_rayleigh[s,:,:], z_rayleigh[s,:,:] = rayleigh(2*predAngle.squeeze()-np.pi,axis=2)
+
+                ###############  OMNIBUS TEST  #################################
+                p_omni[s,:,:], m_omni[s,:,:] = omnibus(2*predAngle.squeeze()-np.pi,axis=2)
+
+                ################## V-TEST ######################################
+                p_vtest[s,:,:], v_vtest[s,:,:] = vtest(2*predAngle.squeeze()-np.pi,0,axis=2)
     break
 
+plt.subplot(2, 2, 1)
+plt.imshow(error_grand[0,:,:], interpolation='none', origin='lower')
+plt.title('squared error')
+plt.colorbar()
 
+plt.subplot(2, 2, 2)
+plt.imshow(z_rayleigh[0,:,:], interpolation='none', origin='lower')
+plt.title('rayleigh')
+plt.colorbar()
 
-fig, ax = plt.subplots(nrows=1, figsize=(10,10))
+plt.subplot(2, 2, 3)
+plt.imshow(m_omni[0,:,:], interpolation='none', origin='lower')
+plt.title('omnibus test')
+plt.colorbar()
 
-ax.imshow(error_grand.mean(0), extent=[0,22,0,22], interpolation='none', origin='lower')
-ax.set_title('Default')
-
-plt.tight_layout()
-plt.show()
+plt.subplot(2, 2, 4)
+plt.imshow(v_vtest[0,:,:], interpolation='none', origin='lower')
+plt.title('V- test')
+plt.colorbar()

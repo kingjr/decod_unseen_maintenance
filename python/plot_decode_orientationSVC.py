@@ -31,14 +31,18 @@ def realign_svc_orientations(path_gat):
 
 subjects = [subjects[i] for i in range(20)] # XXX to be be removed
 contrasts = ['orientation_target']
-probas_grand=np.array(np.zeros([20,23,23]))
+probas_grand=np.array(np.zeros([20,29,29]))
 for contrast in contrasts:
     for s, subject in enumerate(subjects):
         print(subject)
         subject = subjects[s]
+        fname_appendix=''
+        
+        cond_name = contrast
+
         # Define path to retrieve classifier
         path_gat = op.join(data_path, subject, 'mvpas',
-            '{}-decod_{}.pickle'.format(subject, contrast))
+            '{}-decod_{}_{}{}.pickle'.format(subject, cond_name,'SVC',fname_appendix))
 
         probas = realign_svc_orientations(path_gat)
         probas_grand[s,:,:] = probas
