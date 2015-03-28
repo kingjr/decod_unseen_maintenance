@@ -33,7 +33,7 @@ def recombine_svr_prediction(path_x,path_y):
     y = np.array(gat.y_pred_)
 
     # cartesian 2 polar (radians) transformation
-    angle, radius = cart2pol(x, y)
+    radius, angle = cart2pol(x, y)
 
     return (angle, radius, true_x)
 
