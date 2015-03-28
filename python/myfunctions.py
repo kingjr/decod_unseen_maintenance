@@ -6,6 +6,13 @@ Niccolo Pescetelli niccolo.pescetelli@psy.ox.ac.uk
 
 
 def recombine_svr_prediction(path_x,path_y):
+    """
+    This function takes the paths of two classifiers SVR predictions, typically
+    sine and cosine of an angle, and combine them into a predicted angle in
+    radians
+    """
+    import pickle
+    import numpy as np
 
     #load first regressor (cosine)
     with open(path_x) as f:
@@ -20,11 +27,12 @@ def recombine_svr_prediction(path_x,path_y):
 
     # cartesian 2 polar (radians) transformation
     radius, angle = cart2pol(x, y)
-
+    angle = (angle % (2 * np.pi)) - np.pi
     return (angle, radius, true_x)
 
 
 def cart2pol(x, y):
+    import numpy as np
     rho = np.sqrt(x**2 + y**2)
     phi = np.arctan2(y, x)
     return(rho, phi)

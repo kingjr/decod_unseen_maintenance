@@ -9,7 +9,8 @@ import matplotlib.pyplot as plt
 from pycircstat import (
         rayleigh,
         omnibus,
-        vtest
+        vtest,
+        corrcc
 )
 from config import (
         subjects,
@@ -93,34 +94,47 @@ for typ in inputTypes:
                 error_grand[s, :, :] = error.mean(2)
 
                 ################ RAYLEIGH TEST CIRCULR  ########################
-                p_rayleigh[s, :, :], z_rayleigh[s, :, :] = rayleigh(2 *
-                                            predAngle.squeeze() - np.pi, axis=2)
+                p_rayleigh[s, :, :], z_rayleigh[s, :, :] = rayleigh(
+                                            predAngle.squeeze(), axis=2)
 
                 ###############  OMNIBUS TEST  #################################
-                p_omni[s, :, :], m_omni[s, :, :] = omnibus(2 *
-                                            predAngle.squeeze() - np.pi, axis=2)
+                p_omni[s, :, :], m_omni[s, :, :] = omnibus(
+                                            predAngle.squeeze(), axis=2)
 
                 ################## V-TEST ######################################
-                p_vtest[s, :, :], v_vtest[s, :, :] = vtest(2 *
-                                         predAngle.squeeze() - np.pi, 0, axis=2)
+                p_vtest[s, :, :], v_vtest[s, :, :] = vtest(
+                                         predAngle.squeeze(), 0, axis=2)
+
+                ##################### CIRCULAR CORRLELATION ####################
+                p_corr[s, :, :], r_corr[s, :, :] = corrcc(
+                                         predAngle.squeeze(),
+                                         np.tile(trueAngle,
+                                                np.append(dims[0:2],1)),
+                                         axis = 2)
+
     break
 
-plt.subplot(2, 2, 1)
+plt.subplot(2, 3, 1)
 plt.imshow(error_grand[0,:,:], interpolation='none', origin='lower')
 plt.title('squared error')
 plt.colorbar()
 
-plt.subplot(2, 2, 2)
+plt.subplot(2, 3, 2)
 plt.imshow(z_rayleigh[0,:,:], interpolation='none', origin='lower')
 plt.title('rayleigh')
 plt.colorbar()
 
-plt.subplot(2, 2, 3)
+plt.subplot(2, 3, 3)
 plt.imshow(m_omni[0,:,:], interpolation='none', origin='lower')
 plt.title('omnibus test')
 plt.colorbar()
 
-plt.subplot(2, 2, 4)
+plt.subplot(2, 3, 4)
 plt.imshow(v_vtest[0,:,:], interpolation='none', origin='lower')
 plt.title('V- test')
+plt.colorbar()
+
+plt.subplot(2, 3, 5)
+plt.imshow(r_corr[0,:,:], interpolation='none', origin='lower')
+plt.title('Circ-correlation')
 plt.colorbar()

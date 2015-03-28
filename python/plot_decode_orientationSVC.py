@@ -25,8 +25,7 @@ def realign_svc_orientations(path_gat):
         p = prediction[:,:,:,i]
         probas[:,:,sel,:] = p[:,:,sel,:]
     mn = probas.mean(2)
-    mn_probas = mn[:,:,0]
-    return mn_probas
+    return mn
 
 
 subjects = [subjects[i] for i in range(20)] # XXX to be be removed
@@ -37,7 +36,7 @@ for contrast in contrasts:
         print(subject)
         subject = subjects[s]
         fname_appendix=''
-        
+
         cond_name = contrast
 
         # Define path to retrieve classifier
@@ -56,7 +55,7 @@ for contrast in contrasts:
         # plt.show()
 
     # Plot grand average across subjects
-    gravg_probas = probas_grand.mean(0)
+    gravg_probas = probas_grand.mean(axis=0)
     fig, ax = plt.subplots(nrows=1, figsize=(10,10))
 
     ax.imshow(gravg_probas, extent=[0,22,0,22], interpolation='none', origin='lower')

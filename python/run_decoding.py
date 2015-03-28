@@ -21,7 +21,7 @@ from config import (
 
 report, run_id, results_dir, logger = setup_provenance(
                     script=__file__, results_dir=results_dir)
-#subjects = [subjects[i] for i in range(20) if (i==1 or i==19)] # XXX to be be removed
+subjects = [subjects[i] for i in range(20) if (i > 11 and i < 16)] # XXX to be be removed
 for s, subject in enumerate(subjects):                                          # Loop across each subject
     print(subject)
     for typ in inputTypes:                                                      # Input type defines whether we decode ERFs or frequency power
