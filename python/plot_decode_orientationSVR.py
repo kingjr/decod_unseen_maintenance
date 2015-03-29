@@ -42,14 +42,15 @@ for typ in inputTypes:
             clf_type = 'SVR'
 
             # initialize statistics measures
-            error_grand = np.array(np.zeros([20,29,29]))
-            p_rayleigh = np.array(np.zeros([20,29,29]))
-            z_rayleigh = np.array(np.zeros([20,29,29]))
-            p_omni = np.array(np.zeros([20,29,29]))
-            m_omni = np.array(np.zeros([20,29,29]))
-            v_vtest = np.array(np.zeros([20,29,29]))
-            p_vtest = np.array(np.zeros([20,29,29]))
-
+            init_var = np.array(np.zeros([20,29,29]))
+            error_grand     = init_var
+            p_rayleigh      = init_var
+            z_rayleigh      = init_var
+            p_omni          = init_var
+            m_omni          = init_var
+            v_vtest         = init_var
+            p_vtest         = init_var
+            r_corr          = init_var
             # loop across subjects
             for s, subject in enumerate(subjects):
                 print(subject)
@@ -82,13 +83,13 @@ for typ in inputTypes:
                                                                     path_y)
 
                 # retrieve angle presented in radians
-                trueAngle = np.arccos(trueX)
+                trueAngle = (np.arccos(trueX) * 2) - np.pi
 
                 # Compute several measures to estimate goodness of fit
                 ######################MEAN SQUARED ERROR########################
                 dims = predAngle.shape
-                error = ((predAngle.squeeze() - np.tile(trueAngle,
-                            np.append(dims[0:2],1)) % (2*np.pi)) - np.pi ) ** 2
+                error = (predAngle.squeeze() - np.tile(trueAngle,
+                            np.append(dims[0:2],1))) ** 2
 
                 # compute truth-prediction square error
                 error_grand[s, :, :] = error.mean(2)
@@ -106,35 +107,33 @@ for typ in inputTypes:
                                          predAngle.squeeze(), 0, axis=2)
 
                 ##################### CIRCULAR CORRLELATION ####################
-                p_corr[s, :, :], r_corr[s, :, :] = corrcc(
-                                         predAngle.squeeze(),
-                                         np.tile(trueAngle,
-                                                np.append(dims[0:2],1)),
-                                         axis = 2)
+                r_corr[s, :, :] = corrcc(predAngle.squeeze(),
+                                    np.tile(trueAngle,
+                                    np.append(dims[0:2],1)), axis = 2)
 
     break
 
 plt.subplot(2, 3, 1)
-plt.imshow(error_grand[0,:,:], interpolation='none', origin='lower')
+plt.imshow(error_grand.mean(axis=0), interpolation='none', origin='lower')
 plt.title('squared error')
 plt.colorbar()
 
 plt.subplot(2, 3, 2)
-plt.imshow(z_rayleigh[0,:,:], interpolation='none', origin='lower')
+plt.imshow(z_rayleigh.mean(axis=0), interpolation='none', origin='lower')
 plt.title('rayleigh')
 plt.colorbar()
 
 plt.subplot(2, 3, 3)
-plt.imshow(m_omni[0,:,:], interpolation='none', origin='lower')
+plt.imshow(m_omni.mean(axis=0), interpolation='none', origin='lower')
 plt.title('omnibus test')
 plt.colorbar()
 
 plt.subplot(2, 3, 4)
-plt.imshow(v_vtest[0,:,:], interpolation='none', origin='lower')
+plt.imshow(v_vtest.mean(axis=0), interpolation='none', origin='lower')
 plt.title('V- test')
 plt.colorbar()
 
 plt.subplot(2, 3, 5)
-plt.imshow(r_corr[0,:,:], interpolation='none', origin='lower')
+plt.imshow(r_corr.mean(axis=0), interpolation='none', origin='lower')
 plt.title('Circ-correlation')
 plt.colorbar()
