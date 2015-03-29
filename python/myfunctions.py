@@ -26,16 +26,18 @@ def recombine_svr_prediction(path_x,path_y):
     y = np.array(gat.y_pred_)
 
     # cartesian 2 polar (radians) transformation
-    radius, angle = cart2pol(x, y)
+    angle, radius = cart2pol(x, y)
+
+    # take only values within 2 pi radians
     angle = (angle % (2 * np.pi)) - np.pi
     return (angle, radius, true_x)
 
 
 def cart2pol(x, y):
     import numpy as np
-    rho = np.sqrt(x**2 + y**2)
-    phi = np.arctan2(y, x)
-    return(rho, phi)
+    radius = np.sqrt(x**2 + y**2)
+    theta = np.arctan2(y, x)
+    return(theta,radius)
 
 def realign_angle(gat, dims, angles = [15, 45, 75, 105, 135, 165] ):
     """
