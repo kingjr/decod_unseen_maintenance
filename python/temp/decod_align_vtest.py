@@ -4,13 +4,18 @@ import numpy as np
 import matplotlib.pyplot as plt
 from pycircstat import vtest, rayleigh
 from config import (subjects, data_path)
-from myfunctions import realign_angle
+from myfunctions import realign_angle, cart2pol
+
+# tmp
+subjects=[subjects[i] for i in range(10)]
 
 # This is the stats across trials, but really we only need to apply a similar
 # thing across subjects.
 p_val = list()
-angle_error_across = np.zeros([29, 29, 400, 20])
-for subject in subjects:
+angle_error_across  = np.zeros([29, 29, 400, 20])
+dist_cosine         = np.zeros([29, 29, 400, 6])
+dist_sine           = np.zeros([29, 29, 400, 6])
+for s, subject in enumerate(subjects):
     print(subject)
     path_gat = op.join(data_path, subject, 'mvpas',
         '{}-decod_{}_{}.pickle'.format(subject, 'orientation_target', 'SVC'))
@@ -26,17 +31,29 @@ for subject in subjects:
     # realign to 4th angle category
     probas = realign_angle(gat, dims)
 
+    # transform distance from true angle into sine and cosine angle distance
+    angles = [15, 45, 75, 105, 135, 165]
+    for i in range(n_categories):
+        dist_cosine[:,:,:,i] = np.cos(2*np.deg2rad(i * 30))
+        dist_sine[:,:,:,i] = np.sin(2*np.deg2rad(i * 30))
+
     # transform 6 categories into single angle: there are two options here,
     # try it on the pilot subject, and use weighted mean if the two are
     # equivalent
     prob2angle = 'most_likely_angle'
     if prob2angle == 'most_likely_angle':
-        angle_errors = np.argmax(probas, axis=3) * np.pi / 3 + np.pi / 6
+        cos_errors = np.argmax(dist_cosine, axis=3) * np.pi / 3 + np.pi / 6
+        sin_errors = np.argmax(dist_sine, axis=3) * np.pi / 3 + np.pi / 6
     elif prob2angle == 'weighted_mean':
         operator = np.tile(np.arange(n_categories),
                          (1, n_time, n_trials)).transpose((1, 2, 0))
-        weighted_errors = np.prod(probas, operator)* np.pi / 3 - np.pi / 6
-        angle_errors = np.mean(weighted_errors, axis=1)
+        weighted_errors_cos = np.prod(dist_cosine, operator)* np.pi / 3 - np.pi / 6
+        weighted_errors_sin = np.prod(dist_sine, operator)* np.pi / 3 - np.pi / 6
+        cos_errors = np.mean(weighted_errors_cos, axis=1)
+        sin_errors = np.mean(weighted_errors_sin, axis=1)
+
+    # Recombine cosine and sine into an angle error
+    _, angle_errors = cart2pol(cos_errors, sin_errors)
 
     ####### STATS WITHIN SUBJECTS
     # Apply v test and retrieve statistics that is independent of the number of
