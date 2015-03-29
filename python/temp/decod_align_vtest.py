@@ -40,20 +40,16 @@ for s, subject in enumerate(subjects):
     # transform 6 categories into single angle: there are two options here,
     # try it on the pilot subject, and use weighted mean if the two are
     # equivalent
-    prob2angle = 'most_likely_angle'
+    prob2angle = 'weighted_mean'
     if prob2angle == 'most_likely_angle':
-        cos_errors = np.argmax(dist_cosine, axis=3) * np.pi / 3 + np.pi / 6
-        sin_errors = np.argmax(dist_sine, axis=3) * np.pi / 3 + np.pi / 6
+        angle_errors = np.argmax(probas, axis=3) * np.pi / 3 + np.pi / 6
     elif prob2angle == 'weighted_mean':
         operator = np.tile(np.arange(n_categories),
                          (1, n_time, n_trials)).transpose((1, 2, 0))
-        weighted_errors_cos = np.prod(dist_cosine, operator)* np.pi / 3 - np.pi / 6
-        weighted_errors_sin = np.prod(dist_sine, operator)* np.pi / 3 - np.pi / 6
-        cos_errors = np.mean(weighted_errors_cos, axis=1)
-        sin_errors = np.mean(weighted_errors_sin, axis=1)
-
-    # Recombine cosine and sine into an angle error
-    _, angle_errors = cart2pol(cos_errors, sin_errors)
+        weighted_errors = np.prod(probas, operator)* np.pi / 3 - np.pi / 6
+        x = np.mean(np.cos(weighted_errors),  axis=1)
+        y = np.mean(np.sin(weighted_errors), axis=1)
+        angle_errors, radius = cart2pol(x,y)
 
     ####### STATS WITHIN SUBJECTS
     # Apply v test and retrieve statistics that is independent of the number of
