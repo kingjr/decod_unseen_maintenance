@@ -45,10 +45,10 @@ for s, subject in enumerate(subjects):
         angle_errors = np.argmax(probas, axis=3) * np.pi / 3 + np.pi / 6
     elif prob2angle == 'weighted_mean':
         operator = np.tile(np.arange(n_categories),
-                         (1, n_time, n_trials)).transpose((1, 2, 0))
-        weighted_errors = np.prod(probas, operator)* np.pi / 3 - np.pi / 6
-        x = np.mean(np.cos(weighted_errors),  axis=1)
-        y = np.mean(np.sin(weighted_errors), axis=1)
+                         (n_time, n_time, n_trials, 1))
+        weighted_errors = (probas * operator)* np.pi / 3 - np.pi / 6
+        x = np.mean(np.cos(weighted_errors),  axis=3)
+        y = np.mean(np.sin(weighted_errors), axis=3)
         angle_errors, radius = cart2pol(x,y)
 
     ####### STATS WITHIN SUBJECTS
