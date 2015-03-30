@@ -26,7 +26,7 @@ from config import (
 report, run_id, results_dir, logger = setup_provenance(
     script=__file__, results_dir=results_dir)
 
-subjects = [subjects[i] for i in range(20)] # XXX to be be removed
+#subjects = [subjects[i] for i in range(20)] # XXX to be be removed
 
 # Apply contrast to ERFs or frequency power
 for typ in inputTypes:
@@ -36,11 +36,8 @@ for typ in inputTypes:
     for freq in typ['values']:
         print(freq)
 
-        # Define classification types available to loop across (SVR and SVC)
-        clf_types=typ['clf']
-
         # Loop across classifier type (SVC or SVR)
-        for clf_type in clf_types:
+        for clf_type in typ['clf']:
             # Loop across contrasts
             for contrast in clf_type['contrasts']:
 
@@ -126,7 +123,7 @@ for typ in inputTypes:
                                             color='orange')
 
                 plot_eb(times, np.mean(scores_diag, axis=0),
-                        np.std(scores_diag, axis=0) / np.sqrt(scores.shape[0]),
+                        np.std(scores_diag, axis=0) / np.sqrt(scores.shape[2]),
                         ax=ax, color='blue')
                 #plt.show()
                 report.add_figs_to_section(fig, '%s %s (%s): Decoding ' % (typ['name'],
