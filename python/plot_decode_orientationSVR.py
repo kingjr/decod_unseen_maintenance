@@ -60,12 +60,12 @@ for typ in inputTypes:
                 elif typ['name']=='power':
                     fname_appendix = op.join('_Tfoi_mtm_',freq,'Hz')
 
-                # load behavioral data
-                meg_fname = op.join(data_path, subject, 'preprocessed',
-                                    subject + '_preprocessed' + fname_appendix)
-                bhv_fname = op.join(data_path, subject, 'behavior',
-                                    subject + '_fixed.mat')
-                epochs, events = get_data(meg_fname, bhv_fname)
+                # # load behavioral data
+                # meg_fname = op.join(data_path, subject, 'preprocessed',
+                #                     subject + '_preprocessed' + fname_appendix)
+                # bhv_fname = op.join(data_path, subject, 'behavior',
+                #                     subject + '_fixed.mat')
+                # epochs, events = get_data(meg_fname, bhv_fname)
 
                 # Define path to retrieve cosine classifier
                 path_x = op.join(data_path, subject, 'mvpas',
@@ -113,27 +113,27 @@ for typ in inputTypes:
 
     break
 
-plt.subplot(2, 3, 1)
+plt.subplot(231)
 plt.imshow(error_grand.mean(axis=0), interpolation='none', origin='lower')
 plt.title('squared error')
 plt.colorbar()
 
-plt.subplot(2, 3, 2)
+plt.subplot(232)
 plt.imshow(z_rayleigh.mean(axis=0), interpolation='none', origin='lower')
 plt.title('rayleigh')
 plt.colorbar()
 
-plt.subplot(2, 3, 3)
+plt.subplot(233)
 plt.imshow(m_omni.mean(axis=0), interpolation='none', origin='lower')
 plt.title('omnibus test')
 plt.colorbar()
 
-plt.subplot(2, 3, 4)
+plt.subplot(234)
 plt.imshow(v_vtest.mean(axis=0), interpolation='none', origin='lower')
 plt.title('V- test')
 plt.colorbar()
 
-plt.subplot(2, 3, 5)
+plt.subplot(235)
 plt.imshow(r_corr.mean(axis=0), interpolation='none', origin='lower')
 plt.title('Circ-correlation')
 plt.colorbar()
