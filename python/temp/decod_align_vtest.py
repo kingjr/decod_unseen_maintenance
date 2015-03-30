@@ -70,12 +70,12 @@ for s, subject in enumerate(subjects):
 plt.subplot(221)
 plt.imshow(-mean(mean(angle_error_across_weighted,axis=2),axis=2),interpolation='none',origin='lower')
 plt.colorbar()
-plt.title('weighted error')
+plt.title('weighted negative error')
 
 plt.subplot(222)
 plt.imshow(-mean(mean(angle_error_across_argmax,axis=2),axis=2),interpolation='none',origin='lower')
 plt.colorbar()
-plt.title('argmax error')
+plt.title('argmax negative error')
 
 # plot average Rayleigh p value
 plt.subplot(223)
@@ -88,7 +88,7 @@ plt.title('mean p-val Rayleigh')
 
 ## STATS ACROSS SUBJECTS - tentative, dubious method XXX
 plt.subplot(224)
-p, z = rayleigh(angle_error_across, axis=2, d=20)
+p, z = rayleigh(angle_error_across_weighted, axis=2, d=20)
 plt.imshow(np.mean(z, axis=2), origin='lower',interpolation='none')
 plt.colorbar()
 plt.title('z Rayleigh (dubious method)')
