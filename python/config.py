@@ -54,22 +54,30 @@ contrasts_svc = (
 
 )
 
+# Define what values an orientation SVR should predict
+if True:
+    x = np.cos(2*np.deg2rad([x+7.5 for x in [15, 45, 75, 105, 135, 165]]))
+    y = np.sin(2*np.deg2rad([x+7.5 for x in [15, 45, 75, 105, 135, 165]]))
+else:
+    x = abs((2*(angles + 7.5) % 360)/180 - 1)
+    y = abs(((2*(angles + 7.5) + 90) % 360)/180 - 1)
+
 contrasts_svr = (
     dict(name='targetAngle_cos', # values likely to be changed
          include=dict(cond='orientation_target_cos',
-                        values=np.cos(2*np.deg2rad([x+7.5 for x in [15, 45, 75, 105, 135, 165]]))),
+                        values=x),
          exclude=[absent]),
     dict(name='targetAngle_sin',
          include=dict(cond='orientation_target_sin',
-                        values=np.sin(2*np.deg2rad([x+7.5 for x in [15, 45, 75, 105, 135, 165]]))),
+                        values=y),
          exclude=[absent]),
     dict(name='probeAngle_cos', # values likely to be changed
          include=dict(cond='orientation_probe_cos',
-                        values=np.cos(2*np.deg2rad([x+7.5 for x in [15, 45, 75, 105, 135, 165]]))),
+                        values=x),
          exclude=[absent]),
     dict(name='probeAngle_sin',
          include=dict(cond='orientation_probe_sin',
-                        values=np.sin(2*np.deg2rad([x+7.5 for x in [15, 45, 75, 105, 135, 165]]))),
+                        values=y),
          exclude=[absent]),
     dict(name='4visibilitiesPresent',
          include=dict(cond='response_visibilityCode', values=[1, 2, 3, 4]),
