@@ -15,13 +15,14 @@ from config import (
     results_dir,
     subjects,
     inputTypes,
+    clf_types,
     preproc,
     decoding_params
 )
 
 report, run_id, results_dir, logger = setup_provenance(
                     script=__file__, results_dir=results_dir)
-subjects = [subjects[i] for i in range(20) if (i > 11 and i < 16)] # XXX to be be removed
+
 for s, subject in enumerate(subjects):                                          # Loop across each subject
     print(subject)
     for typ in inputTypes:                                                      # Input type defines whether we decode ERFs or frequency power
@@ -49,7 +50,8 @@ for s, subject in enumerate(subjects):                                          
                 epochs.crop(preproc['crop']['tmin'],
                             preproc['crop']['tmax'])
 
-            for clf_type in typ['clf']:                                           # define classifier type (SVC or SVR)
+            # define classifier type (SVC or SVR)
+            for clf_type in clf_types:
                 # Apply to each contrast
                 for contrast in clf_type['contrasts']:
                     #contrast = contrasts # remove once you loop across all contrasts
@@ -98,14 +100,11 @@ for s, subject in enumerate(subjects):                                          
 
                     # Save contrast
                     pkl_fname = op.join(data_path, subject, 'mvpas',
-                        '{}-decod_{}_{}{}.pickle'.format(subject, cond_name,clf_type['name'],fname_appendix))
+                        '{}-decod_{}_{}{}.pickle'.format(subject, contrast['name'], clf_type['name'],fname_appendix))
 
                     # Save classifier results
                     with open(pkl_fname, 'wb') as f:
-                        pickle.dump([gat, contrast], f)
+                        pickle.dump([gat, contrast, sel, events], f)
 
-                break
-            break
-        break
 
 report.save(open_browser=open_browser)
