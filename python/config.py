@@ -89,8 +89,8 @@ contrasts_svr = (
 )
 
 clf_types = (
-    dict(name='SVR',contrasts=contrasts_svr),
-    dict(name='SVC',contrasts=contrasts_svc)
+    dict(name='SVC',contrasts=contrasts_svc),
+    dict(name='SVR',contrasts=contrasts_svr)
 )
 
 # Define frequencies of interest for power decoding
@@ -98,8 +98,8 @@ freqs = [7, 10, 12, 18, 29, 70, 105]
 
 # Define type of input (erf,power etc...)
 inputTypes = (
-    dict(name='erf',values=[float('NaN')],clf=clf_types),
-    dict(name='power',values=freqs,clf=clf_types)
+    dict(name='erf',values=[float('NaN')]),
+    dict(name='power',values=freqs)
 )
 
 # Decoding preprocessing steps
@@ -110,6 +110,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import Pipeline
 from sklearn.svm import SVC
 scaler = StandardScaler()
+
 # SVC
 svc = SVC(C=1, kernel='linear', probability=True, class_weight='auto')
 clf = Pipeline([('scaler', scaler), ('svc', svc)])
@@ -127,3 +128,11 @@ decoding_params = (
     dict(name='SVC',params=decoding_params_svc),
     dict(name='SVR',params=decoding_params_svr),
 )
+
+
+# # UNCOMMENT TO SUBSELECTION FOR FAST PROCESSING
+# #
+# subjects = [subjects[9]]
+# inputTypes = [inputTypes[0]]
+# clf_types = [dict(name='SVC',contrasts=[contrasts_svc[4]])]
+# preproc = dict(decim=8, crop=dict(tmin=0, tmax=0.400))
