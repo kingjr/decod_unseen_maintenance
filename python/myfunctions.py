@@ -50,9 +50,11 @@ def recombine_svr_prediction(path_x,path_y, res=10):
         # relign across angle categories
         predict_error[:,:,sel] = ((predict_angle[:, :, sel] - 2 * a) / 2) % np.pi
 
+    # define bin_edges
+    bin_edges = lambda m, M, n: np.arange(m+(M-m)/n/2,(M+(M-m)/n/2),(M-m)/n)
     # compute proportion of trials correctly predicted
     N = histogramnd(predict_error.squeeze() - np.pi/2,
-                                    bins=borns(-np.pi,np.pi/2,res+1),
+                                    bins=bin_edges(-np.pi,np.pi/2,res+1),
                                     axis=2)
     # extract frequencies
     trial_freq = N[0]
@@ -90,10 +92,6 @@ def recombine_svr_prediction(path_x,path_y, res=10):
 # % get proportion of trials
 # trial_proportion = trial_proportion./repmat(sum(trial_proportion),[size(trial_proportion,1),1,1]);
 
-
-def borns(m, M, n):
-    out = np.arange(m+(M-m)/n/2,(M+(M-m)/n/2),(M-m)/n)
-    return out
 
 def cart2pol(x, y):
     radius = np.sqrt(x ** 2 + y ** 2)
