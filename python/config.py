@@ -9,7 +9,7 @@ import pandas as pd
 # Experiment parameters
 open_browser = True
 base_path = op.dirname(op.dirname(__file__))
-data_path = op.join(base_path, '/media', 'Paris', 'data')
+data_path = op.join(base_path, '/media', 'ParisPy', 'data')
 script_path = '/home/niccolo/Dropbox/DOCUP/scripts/python/'
 results_dir = op.join(base_path, 'results')
 if not op.exists(results_dir):
