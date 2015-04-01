@@ -54,7 +54,7 @@ def recombine_svr_prediction(path_x,path_y, res=10):
     bin_edges = lambda m, M, n: np.arange(m+(M-m)/n/2,(M+(M-m)/n/2),(M-m)/n)
     # compute proportion of trials correctly predicted
     N = histogramnd(predict_error.squeeze() - np.pi/2,
-                                    bins=bin_edges(-np.pi,np.pi/2,res+1),
+                                    bins=bin_edges(-np.pi/2,np.pi/2,res+1),
                                     axis=2)
     # extract frequencies
     trial_freq = N[0]
