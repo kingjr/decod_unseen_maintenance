@@ -66,7 +66,7 @@ def recombine_svr_prediction(path_x,path_y, res=10):
     # compute the proportion of trials in each bin
     trial_prop = trial_freq / totals.astype(np.float).transpose([1, 2, 0])
 
-    return (theta, radius, trueX, trial_prop)
+    return (theta, trueX, trial_prop)
 
 # The way it is done in Matlab XXX to be removed
 #
