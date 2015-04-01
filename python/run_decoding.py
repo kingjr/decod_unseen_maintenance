@@ -12,6 +12,7 @@ from meeg_preprocessing import setup_provenance
 from config import (
     open_browser,
     data_path,
+    results_path,
     results_dir,
     subjects,
     inputTypes,
@@ -72,10 +73,10 @@ for s, subject in enumerate(subjects):                                          
                     sel = np.where(sel)[0]
 
                     # reduce number or trials if too many XXX just for speed, remove
-                    if len(sel) > 400:
-                        import random
-                        random.shuffle(sel)
-                        sel = sel[0:400]
+                    # if len(sel) > 400:
+                    #     import random
+                    #     random.shuffle(sel)
+                    #     sel = sel[0:400]
 
                     y = np.array(events[cond_name].tolist())
 
@@ -99,7 +100,7 @@ for s, subject in enumerate(subjects):                                          
                         ('%s %s: GAT' % (subject, cond_name)), subject)
 
                     # Save contrast
-                    pkl_fname = op.join(data_path, subject, 'mvpas',
+                    pkl_fname = op.join(results_path, subject, 'mvpas',
                         '{}-decod_{}_{}{}.pickle'.format(subject, contrast['name'], clf_type['name'],fname_appendix))
 
                     # Save classifier results
