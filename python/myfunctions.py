@@ -16,49 +16,44 @@ def recombine_svr_prediction(path_x,path_y, res=10):
     """
 
     # define angles in degrees
-    angles = np.linspace(15, 165, 6)
+    angles = np.deg2rad(np.linspace(15, 165, 6))
 
     #load first regressor (cosine)
     with open(path_x) as f:
-        gat, contrast = pickle.load(f)
-    x = np.array(gat.y_pred_)
-    # retrieve true predictor (eg. true cosine)
-    trueX = gat.y_train_
+        gatx, contrast, _, _ = pickle.load(f)
+    x = np.array(gatx.y_pred_)
 
     #load second regressor (sine)
     with open(path_y) as f:
-        gat, contrast = pickle.load(f)
-    y = np.array(gat.y_pred_)
+        gaty, contrast, _, events = pickle.load(f)
+    y = np.array(gaty.y_pred_)
 
     # cartesian 2 polar (radians) transformation
-    theta, radius = cart2pol(x, y)
+    theta, _ = cart2pol(x, y)
 
     # take only values within 0 to 2 pi radians range
-    theta = (theta % (2 * np.pi))
+    predict_angle = (np.squeeze(theta) % (2 * np.pi)) + np.pi
 
-    # define dimensions of theta
-    dims = theta.shape
+    # true angle in degrees
+    # XXX CAREFUL, HERE IT WORKS BECAUSE ORIENTATIONS GO FROM 0 to 180
+    # retrieve true predictor (eg. true cosine)
+    trueX = gatx.y_train_# try to remove from return?
+    true_angle = np.arccos(trueX)
 
     # realign to get single tuning curve across angles
-    predict_angle = np.zeros(dims);
+    predict_error = np.zeros(predict_angle.shape)
+    r = lambda i: np.round(100000 * i) / 100000  # to avoid float error
     for a in angles:
-        # true angle in radians
-        true_rad = np.arccos(trueX)
-        # true angle in degrees
-        true_deg = np.rad2deg(true_rad)
-        # round values
-        true_angle = np.round(true_deg)
-
         # select trials with angles a
-        sel = true_angle == a
+        # XXX this is soon to be replaced by the new classification.
+        sel = r(true_angle) == r(a)
         # relign across angle categories
-        predict_angle[:,:,sel,0] = ((np.pi + theta[:,:,sel,0] - 2*np.deg2rad(a))
-                                    / 2) % np.pi
+        predict_error[:,:,sel] = ((predict_angle[:, :, sel] - 2 * a) / 2) % np.pi
 
     # compute proportion of trials correctly predicted
-    N = histogramnd(predict_angle.squeeze() - np.pi/2,
+    N = histogramnd(predict_error.squeeze() - np.pi/2,
                                     bins=borns(-np.pi,np.pi/2,res+1),
-                                    axis = 2)
+                                    axis=2)
     # extract frequencies
     trial_freq = N[0]
 
@@ -76,20 +71,20 @@ def recombine_svr_prediction(path_x,path_y, res=10):
 # The way it is done in Matlab XXX to be removed
 #
 # % realign to get single tuning curve across angles
-# predict_angle = [];
+# predict_error = [];
 # for a = 6:-1:1
 #     % select trials with angles a
 #     sel = angles==a;
 #     % relign across angle categories
-#     predict_angle(sel,:,:) = mod((pi+mod(theta(sel,:,:),2*pi)-2*deg2rad(-15+30*a))/2,pi);
+#     predict_error(sel,:,:) = mod((pi+mod(theta(sel,:,:),2*pi)-2*deg2rad(-15+30*a))/2,pi);
 # end
 # sel = isnan(angles);
-# predict_angle(sel,:,:) = NaN;
+# predict_error(sel,:,:) = NaN;
 #
 #
 # % compute proportion of trials correctly predicted
-# trial_proportion = hist(predict_angle-pi/2,borns(-pi/2,pi/2,res));
-# trial_proportion = reshape(trial_proportion,[size(trial_proportion,1) size(predict_angle,2) size(predict_angle,3)]);
+# trial_proportion = hist(predict_error-pi/2,borns(-pi/2,pi/2,res));
+# trial_proportion = reshape(trial_proportion,[size(trial_proportion,1) size(predict_error,2) size(predict_error,3)]);
 # trial_proportion(1,:,:) = trial_proportion(1,:,:)+trial_proportion(end,:,:);
 # trial_proportion(end,:,:) = trial_proportion(1,:,:);
 # % get proportion of trials
@@ -101,9 +96,9 @@ def borns(m, M, n):
     return out
 
 def cart2pol(x, y):
-    radius = np.sqrt(x**2 + y**2)
+    radius = np.sqrt(x ** 2 + y ** 2)
     theta = np.arctan2(y, x)
-    return(theta,radius)
+    return(theta, radius)
 
 def realign_angle(gat, dims, angles = [15, 45, 75, 105, 135, 165] ):
     """
