@@ -16,6 +16,7 @@ import matplotlib.pyplot as plt
 from config import (
                     subjects,
                     data_path,
+                    results_path,
                     inputTypes,
                     clf_types,
 )
@@ -29,10 +30,8 @@ from myfunctions import (
 # -----------------SVR----------------------------------------------------------
 # input type is ERF (for now)
 inputType=inputTypes[0]
-
 # classifier type is SVR
-clf_type = clf_types[1]
-
+clf_type = clf_types[0]
 # input type is target orientation sine and cosine (for now...)
 contrast = clf_type['contrasts'][0:2]
 
@@ -45,15 +44,15 @@ for s, subject in enumerate(subjects):
     print(subject)
     # load individual data
     # XXX contrast[0]['include']['cond'] should be changed into contrast[0]['name']
-    path_x = op.join(data_path, subject, 'mvpas',
-        '{}-decod_{}_{}.pickle'.format(subject, contrast[0]['include']['cond'], 'SVR'))
+    path_x = op.join(results_path, subject, 'mvpas',
+        '{}-decod_{}_{}.pickle'.format(subject, contrast[0]['name'], 'SVR'))
 
-    path_y = op.join(data_path, subject, 'mvpas',
-        '{}-decod_{}_{}.pickle'.format(subject, contrast[1]['include']['cond'], 'SVR'))
+    path_y = op.join(results_path, subject, 'mvpas',
+        '{}-decod_{}_{}.pickle'.format(subject, contrast[1]['name'], 'SVR'))
 
     ###### PREPROC
     # recombine cosine and sine predictions
-    predAngle, _, trueX, trial_prop = recombine_svr_prediction(path_x, path_y,res)
+    predAngle, trueX, trial_prop = recombine_svr_prediction(path_x, path_y,res)
 
     trial_proportion[s,:,:,:] = trial_prop
 
