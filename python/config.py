@@ -9,8 +9,9 @@ import pandas as pd
 # Experiment parameters
 open_browser = True
 base_path = op.dirname(op.dirname(__file__))
-data_path = op.join(base_path, '/media', 'ParisPy', 'data')
+data_path = op.join(base_path, '/media', 'Paris', 'data')
 script_path = '/home/niccolo/Dropbox/DOCUP/scripts/python/'
+results_path = op.join(base_path, '/media', 'ParisPy', 'data')
 results_dir = op.join(base_path, 'results')
 if not op.exists(results_dir):
     os.mkdir(results_dir)
@@ -56,28 +57,28 @@ contrasts_svc = (
 
 # Define what values an orientation SVR should predict
 if True:
-    x = np.cos(2*np.deg2rad([x+7.5 for x in [15, 45, 75, 105, 135, 165]]))
-    y = np.sin(2*np.deg2rad([x+7.5 for x in [15, 45, 75, 105, 135, 165]]))
+    cosx = np.cos(2*np.deg2rad([x+7.5 for x in [15, 45, 75, 105, 135, 165]]))
+    sinx = np.sin(2*np.deg2rad([x+7.5 for x in [15, 45, 75, 105, 135, 165]]))
 else:
-    x = abs((2*(angles + 7.5) % 360)/180 - 1)
-    y = abs(((2*(angles + 7.5) + 90) % 360)/180 - 1)
+    cosx = abs((2*(angles + 7.5) % 360)/180 - 1)
+    sinx = abs(((2*(angles + 7.5) + 90) % 360)/180 - 1)
 
 contrasts_svr = (
     dict(name='targetAngle_cos', # values likely to be changed
          include=dict(cond='orientation_target_cos',
-                        values=x),
+                        values=cosx),
          exclude=[absent]),
     dict(name='targetAngle_sin',
          include=dict(cond='orientation_target_sin',
-                        values=y),
+                        values=sinx),
          exclude=[absent]),
     dict(name='probeAngle_cos', # values likely to be changed
          include=dict(cond='orientation_probe_cos',
-                        values=x),
+                        values=cosx),
          exclude=[absent]),
     dict(name='probeAngle_sin',
          include=dict(cond='orientation_probe_sin',
-                        values=y),
+                        values=sinx),
          exclude=[absent]),
     dict(name='4visibilitiesPresent',
          include=dict(cond='response_visibilityCode', values=[1, 2, 3, 4]),
@@ -132,7 +133,7 @@ decoding_params = (
 
 # # UNCOMMENT TO SUBSELECTION FOR FAST PROCESSING
 # #
-# subjects = [subjects[9]]
-# inputTypes = [inputTypes[0]]
-# clf_types = [dict(name='SVC',contrasts=[contrasts_svc[4]])]
+subjects = [subjects[9]]
+inputTypes = [inputTypes[0]]
+clf_types = [dict(name='SVR',contrasts=contrasts_svr[0:2])]
 # preproc = dict(decim=8, crop=dict(tmin=0, tmax=0.400))
