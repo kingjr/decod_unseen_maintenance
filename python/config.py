@@ -135,5 +135,5 @@ decoding_params = (
 # #
 #subjects = [subjects[9]]
 inputTypes = [inputTypes[0]]
-clf_types = [dict(name='SVR',contrasts=contrasts_svr[0:2])]
+clf_types = [dict(name='SVC',contrasts=[contrasts_svc[0]])]
 # preproc = dict(decim=8, crop=dict(tmin=0, tmax=0.400))
