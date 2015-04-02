@@ -20,7 +20,7 @@ from config import (
                     inputTypes,
                     clf_types,
 )
-from myfunctions import (
+from postproc_functions import (
                     realign_angle,
                     recombine_svr_prediction,
                     cart2pol,
@@ -32,7 +32,7 @@ from myfunctions import (
 inputType=inputTypes[0]
 # classifier type is SVR
 clf_type = clf_types[0]
-# input type is target orientation sine and cosine (for now...)
+# contrast is target orientation sine and cosine (for now...)
 contrast = clf_type['contrasts'][0:2]
 
 # initialize variables
@@ -60,4 +60,40 @@ for s, subject in enumerate(subjects):
 trial_prop_diag = np.array([trial_proportion[:,t,t,:] for t in np.arange(trial_proportion.shape[1])])
 trial_prop_diag = trial_prop_diag.transpose([1,2,0])
 
-imshow(trial_prop_diag.mean(axis=0))
+plt.imshow(trial_prop_diag.mean(axis=0), interpolation='none', origin='lower')
+
+
+#-----------------------SVC-----------------------------------------------------
+# classifier type is SVR
+clf_type = clf_types[0]
+
+# contrast is target orientation (for now...)
+contrast = clf_type['contrasts'][0]
+
+
+for s, subject in enumerate(subjects):
+    print(subject)
+    # define individual data path
+    path = op.join(results_path,subject,'mvpas',
+        '{}-decod_{}_{}.pickle'.format(subject,contrast['name'],'SVC'))
+
+    # load individual data
+    with open(path) as f:
+        gat, contrast, _, events = pickle.load(f)
+
+    ##### PREPROC
+    # realign angle
+    probas = realign_angle(gat)
+
+    # initialize across subjects array if first subject
+    if s == 0:
+        dims = np.array(shape(probas))
+        PROBAS_diag = np.zeros(np.append(len(subjects),
+                                            dims[[1,3]]))
+
+    # store individual data into across data array
+    PROBAS_diag[s,:,:] = np.mean([probas[t,t,:,:] for t in arange(29)],axis=1)
+
+# plot average tuning curve across subjects on diagonal
+PROBAS_diag=PROBAS_diag.transpose([0,2,1])
+plt.imshow(np.mean(PROBAS_diag,axis=0),interpolation='none')
