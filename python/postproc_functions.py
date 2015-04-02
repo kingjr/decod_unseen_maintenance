@@ -98,7 +98,7 @@ def cart2pol(x, y):
     theta = np.arctan2(y, x)
     return(theta, radius)
 
-def realign_angle(gat, dims, angles = [15, 45, 75, 105, 135, 165] ):
+def realign_angle(gat, angles = [15, 45, 75, 105, 135, 165] ):
     """
     This function realign classes output by a classifier so to give a
     distance in terms of categories of the predicted class and the real class.
@@ -108,6 +108,8 @@ def realign_angle(gat, dims, angles = [15, 45, 75, 105, 135, 165] ):
     Output:
     probas : a time x time x trials x class array
     """
+    # define dimensionality of the data
+    dims = shape(gat.y_pred_)
     # realign to 4th angle category
     probas = np.zeros(dims)
     n_classes = len(angles)
