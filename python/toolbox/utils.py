@@ -1,5 +1,5 @@
 import numpy as np
-
+import matplotlib.pyplot as plt
 def plot_eb(x, y, yerr, ax=None, alpha=0.3, color=None, line_args=dict(),
             err_args=dict()):
     """
