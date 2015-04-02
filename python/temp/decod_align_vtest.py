@@ -16,12 +16,15 @@ import numpy as np
 
 import matplotlib.pyplot as plt
 from pycircstat import vtest, rayleigh
+from mne.stats import spatio_temporal_cluster_1samp_test
 
 from config import (subjects, results_path)
+from toolbox.utils import plot_eb, fill_betweenx_discontinuous
 from postproc_functions import realign_angle, cart2pol, plot_circ_hist
 
 # This is the stats across trials, but really we only need to apply a similar
 # thing across subjects. This is done in orientation_stats_across.py
+Z, V, p_values_v, p_values_z, angle_errors = list(), list(), list(), list(), list()
 for s, subject in enumerate(subjects):
     print(subject)
 
@@ -39,61 +42,101 @@ for s, subject in enumerate(subjects):
 
     n_time, n_test_time, n_trials, n_categories = dims = np.shape(gat.y_pred_)
     # initialize variables if first subject
-    if s == 0:
-        p_val = list()
-        M=list()
-        dims_=np.array(dims)
-        angle_error_across_w = np.zeros(np.append(dims_[[0,1,2]],len(subjects)))
+    dims_=np.array(dims)
 
-    # realign to 4th angle category
+    # realign to 0th angle category
     probas = realign_angle(gat)
 
     # transform 6 categories into single angle: there are two options here,
     # try it on the pilot subject, and use weighted mean if the two are
     # equivalent
-    operator = np.tile(np.arange(n_categories),
-                     (n_time, n_time, n_trials, 1))
-    weighted_errors = (probas * operator)* np.pi / 3 - np.pi / 6
-    x = np.mean(np.cos(weighted_errors),  axis=3)
-    y = np.mean(np.sin(weighted_errors), axis=3)
-    angle_errors_w, radius = cart2pol(x,y)
+    weighted_mean = True
+    if weighted_mean:
+        # multiply category ind (1, 2, 3, ) by angle, remove pi to be between
+        # -pi and pi and remove pi/6 to center on 0
+        operator = np.arange(n_categories) * np.pi / 3 + np.pi / 6
+        operator = np.tile(operator, (n_time, n_time, n_trials, 1))
+        # average angles: # XXX THEORETICALLY INCORRECT
+        angle_error = np.mean(probas * operator, axis=3)
+        # XXX NB we should average in complex space but somehow it doesnt work
+        #xy = np.mean(probas * (np.cos(operator) + 1j *sin(operator)), axis=3)
+        #angle_error, _ = cart2pol(real(xy), imag(xy))
+    else:
+        angle_error = np.argmax(probas, axis=3) * np.pi / 3 - np.pi / 6
 
     ####### STATS WITHIN SUBJECTS
     # Apply v test and retrieve statistics that is independent of the number of
     # trials.
-    p_val_v, V = vtest(angle_errors_w, 0, axis=2) # trials x time
+    p_val_v, v = vtest(angle_error, 0, axis=2) # trials x time
 
     # apply Rayleigh test (better for of diagonal with distribution shifts, e.g.
     # on the n200, the prediction may reverse)
-    p_val_ray, Z = rayleigh(angle_errors_w, axis=2) # trials x time
+    p_val_z, z = rayleigh(angle_error, axis=2) # trials x time
 
     # append scores
-    M.append([V,Z])
-    p_val.append([p_val_v, p_val_ray])
+    V.append(v)
+    Z.append(z)
+    p_values_v.append(p_val_v)
+    p_values_z.append(p_val_z)
+    angle_errors.append(np.mean(angle_error, axis=2))
 
-    ####### STATS ACROSS SUBJECTS
-    # apply Rayleigh test (better for of diagonal with distribution shifts, e.g.
-    # on the n200, the prediction may reverse)
-    # angle_error_across_w[:, :, :, s] = angle_errors_w
 
+# A)
 # plot error, ie class distance
 plt.subplot(221)
-plt.imshow(-mean(mean(angle_error_across_w,axis=2),axis=2),interpolation='none',origin='lower')
+plt.imshow(mean(angle_errors,axis=0),interpolation='none',origin='lower')
 plt.colorbar()
 plt.title('weighted negative error')
 
-# plot average Rayleigh p value
-plt.subplot(222)
-mean_p_vals = np.zeros((n_time, n_test_time, len(subjects)))
-for s, subject in enumerate(subjects):
-    mean_p_vals[:, :, s] = np.array(p_val[s][0])
-plt.imshow(np.mean(mean_p_vals, axis=2), origin='lower',interpolation='none')
-plt.colorbar()
-plt.title('mean p-val Rayleigh')
+# B)
+# define X
+X = np.array(angle_errors) - np.pi / 6.
 
-## STATS ACROSS SUBJECTS - tentative, dubious method XXX
-plt.subplot(223)
-p, z = rayleigh(angle_error_across_w, axis=2, d=20)
-plt.imshow(np.mean(z, axis=2), origin='lower',interpolation='none')
-plt.colorbar()
-plt.title('z Rayleigh (dubious method)')
+# stats across subjects
+alpha = 0.05
+n_permutations = 2 ** 11
+threshold = dict(start=1., step=.2)
+
+# ------ Run stats
+T_obs_, clusters, p_values, _ = spatio_temporal_cluster_1samp_test(
+                                       X,
+                                       out_type='mask',
+                                       n_permutations=n_permutations,
+                                       connectivity=None,
+                                       threshold=threshold,
+                                       n_jobs=-1)
+
+# ------ combine clusters and retrieve min p_values for each feature
+p_values = np.min(np.logical_not(clusters) +
+                  [clusters[c] * p for c, p in enumerate(p_values)],
+                  axis=0)
+x, y = np.meshgrid(gat.train_times['times_'],
+                   gat.test_times_['times_'][0],
+                   copy=False, indexing='xy')
+
+
+# PLOT
+# ------ Plot GAT
+gat.scores_ = np.mean(angle_errors, axis=0)
+fig = gat.plot(vmin=np.min(gat.scores_), vmax=np.max(gat.scores_),
+               show=False)
+ax = fig.axes[0]
+ax.contour(x, y, p_values < alpha, colors='black', levels=[0])
+plt.show()
+
+# ------ Plot Decoding
+times = gat.train_times['times_']
+scores_diag = np.transpose([np.array(angle_errors)[:, t, t] for t in range(len(times))])
+fig, ax = plt.subplots(1)
+plot_eb(times, np.mean(scores_diag, axis=0),
+        np.std(scores_diag, axis=0) / np.sqrt(scores_diag.shape[0]),
+        color='blue', ax=ax)
+ymin, ymax = ax.get_ylim()
+sig_times = times[np.where(np.diag(p_values) < alpha)[0]]
+sfreq = (times[1] - times[0]) / 1000
+fill_betweenx_discontinuous(ax, ymin, ymax, sig_times, freq=sfreq,
+                            color='gray', alpha=.3)
+ax.axhline(np.pi/6, color='k', linestyle='--', label="Chance level")
+ax.set_xlabel('Time (s)')
+ax.set_ylabel('Angle error')
+plt.show()
