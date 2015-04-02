@@ -109,7 +109,7 @@ def realign_angle(gat, angles = [15, 45, 75, 105, 135, 165] ):
     probas : a time x time x trials x class array
     """
     # define dimensionality of the data
-    dims = shape(gat.y_pred_)
+    dims = np.array(np.shape(gat.y_pred_))
     # realign to 4th angle category
     probas = np.zeros(dims)
     n_classes = len(angles)
@@ -118,6 +118,8 @@ def realign_angle(gat, angles = [15, 45, 75, 105, 135, 165] ):
         prediction = np.array(gat.y_pred_)
         order = np.array(range(a,n_classes)+range(0,(a)))
         probas[:, :, sel, :] = prediction[:, :, sel, :][:, :, :, order]
+        # shift so that the correct class is in the middle
+    #probas = probas[:,:,:,np.append(np.arange(4,n_classes),np.arange(0,4))]
     return probas
 
 def plot_circ_hist(alpha, bins=10, measure='radians'):
