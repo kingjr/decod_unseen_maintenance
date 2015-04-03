@@ -54,7 +54,7 @@ def recombine_svr_prediction(path_x,path_y, res=10):
     theta, _ = cart2pol(x, y)
 
     # take only values within 0 to 2 pi radians range
-    predict_angle = (np.squeeze(theta) % (2 * np.pi)) + np.pi
+    predict_angle = (np.squeeze(theta) % (2 * np.pi))
 
     # true angle in degrees
     # XXX CAREFUL, HERE IT WORKS BECAUSE ORIENTATIONS GO FROM 0 to 180
@@ -81,9 +81,10 @@ def recombine_svr_prediction(path_x,path_y, res=10):
     # extract frequencies
     trial_freq = N[0]
 
-    # Wrap around first and last bin
-    trial_freq[1,:,:] = trial_freq[1,:,:]+trial_freq[-1,:,:]
-    trial_freq[-1,:,:] = trial_freq[1,:,:]
+    # Wrap around first and last bin if identical
+    if False:
+        trial_freq[1,:,:] = trial_freq[1,:,:]+trial_freq[-1,:,:]
+        trial_freq[-1,:,:] = trial_freq[1,:,:]
 
     #compute totals
     totals = np.tile(np.sum(trial_freq,axis=2),[res,1,1])
