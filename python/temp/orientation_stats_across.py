@@ -22,7 +22,7 @@ from config import (subjects, results_path)
 from toolbox.utils import plot_eb, fill_betweenx_discontinuous
 from postproc_functions import (realign_angle,
                                 cart2pol,
-                                recombine_svr_prediction, 
+                                recombine_svr_prediction,
                                 plot_circ_hist
 )
 
@@ -149,6 +149,7 @@ plt.show()
 
 # ------------------------------------------------------------------------------
 # -------------------------------SVR--------------------------------------------
+Z, V, p_values_v, p_values_z, angle_errors = list(), list(), list(), list(), list()
 for s, subject in enumerate(subjects):
     print(subject)
 
@@ -171,4 +172,79 @@ for s, subject in enumerate(subjects):
     predAngle, trueX, trial_prop = recombine_svr_prediction(path_x,
                                                             path_y, res = 30)
 
-    #
+    # squeeze
+    predAngle=predAngle.squeeze()
+
+    # compute true angle
+    true_angle = np.arccos(trueX) * 2 - np.pi
+
+    # compute prediction error
+    angle_error = true_angle - predAngle
+
+    ####### STATS WITHIN SUBJECTS
+    # Apply v test and retrieve statistics that is independent of the number of
+    # trials.
+    p_val_v, v = vtest(angle_error, 0, axis=2) # trials x time
+
+    # apply Rayleigh test (better for of diagonal with distribution shifts, e.g.
+    # on the n200, the prediction may reverse)
+    p_val_z, z = rayleigh(angle_error, axis=2) # trials x time
+
+    # append scores
+    V.append(v)
+    Z.append(z)
+    p_values_v.append(p_val_v)
+    p_values_z.append(p_val_z)
+    angle_errors.append(np.mean(angle_error, axis=2))
+
+# define X
+X = np.array(angle_errors)
+
+# stats across subjects
+alpha = 0.05
+n_permutations = 2 ** 11
+threshold = dict(start=1., step=.2)
+
+# ------ Run stats
+T_obs_, clusters, p_values, _ = spatio_temporal_cluster_1samp_test(
+                                       X,
+                                       out_type='mask',
+                                       n_permutations=n_permutations,
+                                       connectivity=None,
+                                       threshold=threshold,
+                                       n_jobs=-1)
+
+# ------ combine clusters and retrieve min p_values for each feature
+p_values = np.min(np.logical_not(clusters) +
+                  [clusters[c] * p for c, p in enumerate(p_values)],
+                  axis=0)
+x, y = np.meshgrid(gat.train_times['times_'],
+                   gat.test_times_['times_'][0],
+                   copy=False, indexing='xy')
+
+
+# PLOT
+# ------ Plot GAT
+gat.scores_ = np.mean(angle_errors, axis=0)
+fig = gat.plot(vmin=np.min(gat.scores_), vmax=np.max(gat.scores_),
+               show=False)
+ax = fig.axes[0]
+ax.contour(x, y, p_values < alpha, colors='black', levels=[0])
+plt.show()
+
+# ------ Plot Decoding
+times = gat.train_times['times_']
+scores_diag = np.transpose([np.array(angle_errors)[:, t, t] for t in range(len(times))])
+fig, ax = plt.subplots(1)
+plot_eb(times, np.mean(scores_diag, axis=0),
+        np.std(scores_diag, axis=0) / np.sqrt(scores_diag.shape[0]),
+        color='blue', ax=ax)
+ymin, ymax = ax.get_ylim()
+sig_times = times[np.where(np.diag(p_values) < alpha)[0]]
+sfreq = (times[1] - times[0]) / 1000
+fill_betweenx_discontinuous(ax, ymin, ymax, sig_times, freq=sfreq,
+                            color='gray', alpha=.3)
+ax.axhline(np.pi/6, color='k', linestyle='--', label="Chance level")
+ax.set_xlabel('Time (s)')
+ax.set_ylabel('Angle error')
+plt.show()
