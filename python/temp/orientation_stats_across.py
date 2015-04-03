@@ -20,8 +20,14 @@ from mne.stats import spatio_temporal_cluster_1samp_test
 
 from config import (subjects, results_path)
 from toolbox.utils import plot_eb, fill_betweenx_discontinuous
-from postproc_functions import realign_angle, cart2pol, plot_circ_hist
+from postproc_functions import (realign_angle,
+                                cart2pol,
+                                recombine_svr_prediction, 
+                                plot_circ_hist
+)
 
+# ------------------------------------------------------------------------------
+# ------------------------------------SVC---------------------------------------
 # This is the stats across trials, but really we only need to apply a similar
 # thing across subjects. This is done in orientation_stats_across.py
 Z, V, p_values_v, p_values_z, angle_errors = list(), list(), list(), list(), list()
@@ -140,3 +146,29 @@ ax.axhline(np.pi/6, color='k', linestyle='--', label="Chance level")
 ax.set_xlabel('Time (s)')
 ax.set_ylabel('Angle error')
 plt.show()
+
+# ------------------------------------------------------------------------------
+# -------------------------------SVR--------------------------------------------
+for s, subject in enumerate(subjects):
+    print(subject)
+
+    # define results path
+    path_x = op.join(results_path, subject, 'mvpas',
+        '{}-decod_{}_{}.pickle'.format(subject, 'targetAngle_cos', 'SVR'))
+
+    path_y = op.join(results_path, subject, 'mvpas',
+        '{}-decod_{}_{}.pickle'.format(subject, 'targetAngle_sin', 'SVR'))
+
+    # read GAT data
+    with open(path_x) as f:
+        gat, contrast, _, events = pickle.load(f)
+
+    # read GAT data
+    with open(path_y) as f:
+        gat, contrast, _, events = pickle.load(f)
+
+    # recombine cos and sin predictions into one predicted angle
+    predAngle, trueX, trial_prop = recombine_svr_prediction(path_x,
+                                                            path_y, res = 30)
+
+    #
