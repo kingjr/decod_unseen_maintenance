@@ -15,6 +15,28 @@ def recombine_svr_prediction(path_x,path_y, res=10):
     radians
     """
 
+    # The way it is done in Matlab XXX to be removed
+    #
+    # % realign to get single tuning curve across angles
+    # predict_error = [];
+    # for a = 6:-1:1
+    #     % select trials with angles a
+    #     sel = angles==a;
+    #     % relign across angle categories
+    #     predict_error(sel,:,:) = mod((pi+mod(theta(sel,:,:),2*pi)-2*deg2rad(-15+30*a))/2,pi);
+    # end
+    # sel = isnan(angles);
+    # predict_error(sel,:,:) = NaN;
+    #
+    #
+    # % compute proportion of trials correctly predicted
+    # trial_proportion = hist(predict_error-pi/2,borns(-pi/2,pi/2,res));
+    # trial_proportion = reshape(trial_proportion,[size(trial_proportion,1) size(predict_error,2) size(predict_error,3)]);
+    # trial_proportion(1,:,:) = trial_proportion(1,:,:)+trial_proportion(end,:,:);
+    # trial_proportion(end,:,:) = trial_proportion(1,:,:);
+    # % get proportion of trials
+    # trial_proportion = trial_proportion./repmat(sum(trial_proportion),[size(trial_proportion,1),1,1]);
+
     # define angles in degrees
     angles = np.deg2rad(np.linspace(15, 165, 6))
 
@@ -69,29 +91,6 @@ def recombine_svr_prediction(path_x,path_y, res=10):
     trial_prop = trial_freq / totals.astype(np.float).transpose([1, 2, 0])
 
     return (theta, trueX, trial_prop)
-
-# The way it is done in Matlab XXX to be removed
-#
-# % realign to get single tuning curve across angles
-# predict_error = [];
-# for a = 6:-1:1
-#     % select trials with angles a
-#     sel = angles==a;
-#     % relign across angle categories
-#     predict_error(sel,:,:) = mod((pi+mod(theta(sel,:,:),2*pi)-2*deg2rad(-15+30*a))/2,pi);
-# end
-# sel = isnan(angles);
-# predict_error(sel,:,:) = NaN;
-#
-#
-# % compute proportion of trials correctly predicted
-# trial_proportion = hist(predict_error-pi/2,borns(-pi/2,pi/2,res));
-# trial_proportion = reshape(trial_proportion,[size(trial_proportion,1) size(predict_error,2) size(predict_error,3)]);
-# trial_proportion(1,:,:) = trial_proportion(1,:,:)+trial_proportion(end,:,:);
-# trial_proportion(end,:,:) = trial_proportion(1,:,:);
-# % get proportion of trials
-# trial_proportion = trial_proportion./repmat(sum(trial_proportion),[size(trial_proportion,1),1,1]);
-
 
 def cart2pol(x, y):
     radius = np.sqrt(x ** 2 + y ** 2)
