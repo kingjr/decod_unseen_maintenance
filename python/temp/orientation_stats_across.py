@@ -30,7 +30,7 @@ from postproc_functions import (realign_angle,
 # ------------------------------------SVC---------------------------------------
 # This is the stats across trials, but really we only need to apply a similar
 # thing across subjects. This is done in orientation_stats_across.py
-Z, V, p_values_v, p_values_z, angle_errors = list(), list(), list(), list(), list()
+Z, V, p_values_v, p_values_z, angle_errors, angle_errors_vis = list(), list(), list(), list(), list(), list()
 for s, subject in enumerate(subjects):
     print(subject)
 
@@ -85,6 +85,11 @@ for s, subject in enumerate(subjects):
     p_values_v.append(p_val_v)
     p_values_z.append(p_val_z)
     angle_errors.append(np.mean(angle_error, axis=2))
+
+    # divide by visibility
+    for vis in [range(4) + 1]:
+        angle_errors_vis.append(np.mean(
+                angle_error[:,:,events['response_visibilityCode']==vis],axis=2))
 
 
 # A)
@@ -149,7 +154,7 @@ plt.show()
 
 # ------------------------------------------------------------------------------
 # -------------------------------SVR--------------------------------------------
-Z, V, p_values_v, p_values_z, angle_errors = list(), list(), list(), list(), list()
+Z, V, p_values_v, p_values_z, angle_errors, angle_errors_vis = list(), list(), list(), list(), list(), list()
 for s, subject in enumerate(subjects):
     print(subject)
 
@@ -162,24 +167,28 @@ for s, subject in enumerate(subjects):
 
     # read GAT data
     with open(path_x) as f:
-        gat, contrast, _, events = pickle.load(f)
+        gatx, contrast, sel, events = pickle.load(f)
 
     # read GAT data
     with open(path_y) as f:
-        gat, contrast, _, events = pickle.load(f)
+        gaty, contrast, sel, events = pickle.load(f)
+
+    n_time, n_test_time, n_trials, n_categories = dims = np.shape(gaty.y_pred_)
+    # initialize variables if first subject
+    dims_=np.array(dims)
 
     # recombine cos and sin predictions into one predicted angle
-    predAngle, trueX, trial_prop = recombine_svr_prediction(path_x,
-                                                            path_y, res = 30)
+    predAngle, trueX, trial_prop = recombine_svr_prediction(gatx,
+                                                            gaty, res = 30)
 
     # squeeze
     predAngle=predAngle.squeeze()
 
     # compute true angle
-    true_angle = np.arccos(trueX) * 2 - np.pi
+    true_angle = np.arccos(trueX) * 2
 
     # compute prediction error
-    angle_error = true_angle - predAngle
+    angle_error = ((predAngle - true_angle) / 2) % np.pi
 
     ####### STATS WITHIN SUBJECTS
     # Apply v test and retrieve statistics that is independent of the number of
@@ -197,8 +206,18 @@ for s, subject in enumerate(subjects):
     p_values_z.append(p_val_z)
     angle_errors.append(np.mean(angle_error, axis=2))
 
+    # divide by visibility
+    if s ==0:
+        angle_errors_vis = np.zeros([len(subjects), n_time, n_test_time, 4])
+    for vis in arange(4):
+        angle_errors_vis[s,:,:,vis] = np.mean(angle_error[:,:,events['response_visibilityCode'][sel]==vis+1],axis=2)
+
+
 # define X
-X = np.array(angle_errors)
+angle_errors = np.array(angle_errors)
+X = angle_errors - np.pi /2.
+# use last loaded gat object as a template
+gat = gaty
 
 # stats across subjects
 alpha = 0.05
@@ -230,6 +249,8 @@ fig = gat.plot(vmin=np.min(gat.scores_), vmax=np.max(gat.scores_),
                show=False)
 ax = fig.axes[0]
 ax.contour(x, y, p_values < alpha, colors='black', levels=[0])
+ax.set_xlabel('Test time')
+ax.set_ylabel('Train time')
 plt.show()
 
 # ------ Plot Decoding
@@ -246,5 +267,62 @@ fill_betweenx_discontinuous(ax, ymin, ymax, sig_times, freq=sfreq,
                             color='gray', alpha=.3)
 ax.axhline(np.pi/6, color='k', linestyle='--', label="Chance level")
 ax.set_xlabel('Time (s)')
-ax.set_ylabel('Angle error')
+ax.set_ylabel('Angle error (radians)')
 plt.show()
+
+
+""" Divide by visibility"""
+# -- Divide by visibility
+for vis in arange(4):
+    # define X
+    angle_errors_vis = np.array(angle_errors_vis)
+    X = angle_errors_vis[:,:,:,vis] - np.pi /2.
+
+    # ------ Run stats
+    T_obs_, clusters, p_values, _ = spatio_temporal_cluster_1samp_test(
+                                           X,
+                                           out_type='mask',
+                                           n_permutations=n_permutations,
+                                           connectivity=None,
+                                           threshold=threshold,
+                                           n_jobs=-1)
+
+    # ------ combine clusters and retrieve min p_values for each feature
+    p_values = np.min(np.logical_not(clusters) +
+                      [clusters[c] * p for c, p in enumerate(p_values)],
+                      axis=0)
+    x, y = np.meshgrid(gat.train_times['times_'],
+                       gat.test_times_['times_'][0],
+                       copy=False, indexing='xy')
+
+
+    # PLOT
+    # ------ Plot GAT
+    plt.figure(1)
+    plt.subplot(4,1,vis+1)
+    gat.scores_ = np.mean(angle_errors, axis=0)
+    gat.plot(vmin=np.min(gat.scores_), vmax=np.max(gat.scores_),
+                   show=False)
+    plt.contour(x, y, p_values < alpha, colors='black', levels=[0])
+    plt.xlabel('Test time')
+    plt.ylabel('Train time')
+    plt.show()
+
+    # ------ Plot Decoding
+    times = gat.train_times['times_']
+    scores_diag = np.transpose([np.array(angle_errors)[:, t, t] for t in range(len(times))])
+    plt.figure(2)
+    plt.subplots(4,1,vis+1)
+    ax = plt.gca()
+    plot_eb(times, np.mean(scores_diag, axis=0),
+            np.std(scores_diag, axis=0) / np.sqrt(scores_diag.shape[0]),
+            color='blue', ax=ax)
+    ymin, ymax = ax.get_ylim()
+    sig_times = times[np.where(np.diag(p_values) < alpha)[0]]
+    sfreq = (times[1] - times[0]) / 1000
+    fill_betweenx_discontinuous(ax, ymin, ymax, sig_times, freq=sfreq,
+                                color='gray', alpha=.3)
+    ax.axhline(np.pi/6, color='k', linestyle='--', label="Chance level")
+    ax.set_xlabel('Time (s)')
+    ax.set_ylabel('Angle error (radians)')
+    plt.show()
