@@ -46,9 +46,7 @@ for s, subject in enumerate(subjects):
     with open(path_gat) as f:
         gat, contrast, _, events = pickle.load(f)
 
-    n_time, n_test_time, n_trials, n_categories = dims = np.shape(gat.y_pred_)
-    # initialize variables if first subject
-    dims_=np.array(dims)
+    n_time, n_test_time, n_trials, n_categories = np.shape(gat.y_pred_)
 
     # realign to 0th angle category
     probas = realign_angle(gat)
@@ -173,22 +171,10 @@ for s, subject in enumerate(subjects):
     with open(path_y) as f:
         gaty, contrast, sel, events = pickle.load(f)
 
-    n_time, n_test_time, n_trials, n_categories = dims = np.shape(gaty.y_pred_)
-    # initialize variables if first subject
-    dims_=np.array(dims)
+    n_time, n_test_time, n_trials, n_categories = np.shape(gaty.y_pred_)
 
     # recombine cos and sin predictions into one predicted angle
-    predAngle, trueX, trial_prop = recombine_svr_prediction(gatx,
-                                                            gaty, res = 30)
-
-    # squeeze
-    predAngle=predAngle.squeeze()
-
-    # compute true angle
-    true_angle = np.arccos(trueX) * 2
-
-    # compute prediction error
-    angle_error = ((predAngle - true_angle) / 2) % np.pi
+    predict_angle, true_angle, angle_error = recombine_svr_prediction(gatx, gaty)
 
     ####### STATS WITHIN SUBJECTS
     # Apply v test and retrieve statistics that is independent of the number of
@@ -209,8 +195,8 @@ for s, subject in enumerate(subjects):
     # divide by visibility
     if s ==0:
         angle_errors_vis = np.zeros([len(subjects), n_time, n_test_time, 4])
-    for vis in arange(4):
-        angle_errors_vis[s,:,:,vis] = np.mean(angle_error[:,:,events['response_visibilityCode'][sel]==vis+1],axis=2)
+    for v, vis in enumerate(arange(1, 5)):
+        angle_errors_vis[s,:,:,v] = np.mean(angle_error[:,:,events['response_visibilityCode'][sel]==vis],axis=2)
 
 
 # define X
@@ -275,7 +261,6 @@ plt.show()
 # -- Divide by visibility
 for vis in arange(4):
     # define X
-    angle_errors_vis = np.array(angle_errors_vis)
     X = angle_errors_vis[:,:,:,vis] - np.pi /2.
 
     # ------ Run stats
@@ -298,21 +283,18 @@ for vis in arange(4):
 
     # PLOT
     # ------ Plot GAT
-    plt.figure(1)
-    plt.subplot(4,1,vis+1)
-    gat.scores_ = np.mean(angle_errors, axis=0)
+    gat.scores_ = np.mean(angle_errors_vis[:,:,:,vis], axis=0)
     gat.plot(vmin=np.min(gat.scores_), vmax=np.max(gat.scores_),
-                   show=False)
+                   show=False, title=vis)
     plt.contour(x, y, p_values < alpha, colors='black', levels=[0])
     plt.xlabel('Test time')
     plt.ylabel('Train time')
     plt.show()
 
     # ------ Plot Decoding
+    plt.figure()
     times = gat.train_times['times_']
-    scores_diag = np.transpose([np.array(angle_errors)[:, t, t] for t in range(len(times))])
-    plt.figure(2)
-    plt.subplots(4,1,vis+1)
+    scores_diag = np.transpose([angle_errors_vis[:, t, t,vis] for t in range(len(times))])
     ax = plt.gca()
     plot_eb(times, np.mean(scores_diag, axis=0),
             np.std(scores_diag, axis=0) / np.sqrt(scores_diag.shape[0]),
