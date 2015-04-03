@@ -8,7 +8,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def recombine_svr_prediction(path_x,path_y, res=10):
+def recombine_svr_prediction(path_x,path_y, res=40):
     """
     This function takes the paths of two classifiers SVR predictions, typically
     sine and cosine of an angle, and combine them into a predicted angle in
