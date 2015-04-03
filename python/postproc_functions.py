@@ -8,7 +8,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def recombine_svr_prediction(path_x,path_y, res=40):
+def recombine_svr_prediction(gatx,gaty, res=40):
     """
     This function takes the paths of two classifiers SVR predictions, typically
     sine and cosine of an angle, and combine them into a predicted angle in
@@ -41,13 +41,9 @@ def recombine_svr_prediction(path_x,path_y, res=40):
     angles = np.deg2rad(np.linspace(15, 165, 6))
 
     #load first regressor (cosine)
-    with open(path_x) as f:
-        gatx, contrast, _, _ = pickle.load(f)
     x = np.array(gatx.y_pred_)
 
     #load second regressor (sine)
-    with open(path_y) as f:
-        gaty, contrast, _, events = pickle.load(f)
     y = np.array(gaty.y_pred_)
 
     # cartesian 2 polar (radians) transformation
