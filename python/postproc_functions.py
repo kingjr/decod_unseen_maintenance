@@ -6,7 +6,8 @@ Niccolo Pescetelli niccolo.pescetelli@psy.ox.ac.uk
 import pickle
 import numpy as np
 import matplotlib.pyplot as plt
-
+from mne.stats import spatio_temporal_cluster_1samp_test
+from toolbox.utils import (plot_eb, fill_betweenx_discontinuous)
 
 def recombine_svr_prediction(gatx, gaty):
     """
