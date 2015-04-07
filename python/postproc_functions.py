@@ -65,7 +65,7 @@ def realign_angle(gat, angles = [15, 45, 75, 105, 135, 165] ):
     #probas = probas[:,:,:,np.append(np.arange(4,n_classes),np.arange(0,4))]
     return probas
 
-def hist_tuning_curve(predict_error):
+def hist_tuning_curve(angle_error, bins=30):
         # define bin_edges
         bin_edges = lambda m, M, n: np.arange(m+(M-m)/n/2,(M+(M-m)/n/2),(M-m)/n)
         # compute proportion of trials correctly predicted
