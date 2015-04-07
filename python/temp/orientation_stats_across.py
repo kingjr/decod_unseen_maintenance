@@ -260,7 +260,8 @@ for s, subject in enumerate(subjects):
     if s ==0:
         angle_errors_vis = np.zeros([len(subjects), n_time, n_test_time, 4])
     for v, vis in enumerate(arange(1, 5)):
-        angle_errors_vis[s,:,:,v] = np.mean(angle_error[:,:,events['response_visibilityCode'][sel]==vis] ** 2,axis=2)
+        indx = np.array(events['response_visibilityCode'][sel]==vis)
+        angle_errors_vis[s,:,:,v] = np.mean(angle_error[:,:,indx] ** 2,axis=2)
 
 
 # define X
@@ -356,9 +357,10 @@ for vis in arange(4):
     plt.show()
 
     # ------ Plot Decoding
-    plt.figure()
     times = gat.train_times['times_']
     scores_diag = np.transpose([angle_errors_vis[:, t, t,vis] for t in range(len(times))])
+    plt.figure(2)
+    plt.subplot(4,1,vis+1)
     ax = plt.gca()
     plot_eb(times, np.mean(scores_diag, axis=0),
             np.std(scores_diag, axis=0) / np.sqrt(scores_diag.shape[0]),
@@ -368,7 +370,7 @@ for vis in arange(4):
     sfreq = (times[1] - times[0]) / 1000
     fill_betweenx_discontinuous(ax, ymin, ymax, sig_times, freq=sfreq,
                                 color='gray', alpha=.3)
-    ax.axhline(np.pi/6, color='k', linestyle='--', label="Chance level")
+    ax.axhline(np.pi/6., color='k', linestyle='--', label="Chance level")
     ax.set_xlabel('Time (s)')
     ax.set_ylabel('Angle error (radians)')
     plt.show()
