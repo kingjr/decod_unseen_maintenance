@@ -336,3 +336,5 @@ def cluster_test_main(gat, A, baseline = np.pi/6,
     ax.set_ylabel(ylabel)
     #plt.title(title)
     plt.show()
+
+def cluster_test_interaction(gats):
