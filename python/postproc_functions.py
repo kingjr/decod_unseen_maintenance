@@ -66,7 +66,6 @@ def realign_angle(gat, angles = [15, 45, 75, 105, 135, 165] ):
     return probas
 
 def hist_tuning_curve(angle_errors, res=30):
-    #from postproc_functions import histogramnd
 
     # define bin_edges
     bin_edges = lambda m, M, n: np.arange(m+(M-m)/n/2,(M+(M-m)/n/2),(M-m)/n)
