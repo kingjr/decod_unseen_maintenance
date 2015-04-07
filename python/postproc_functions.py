@@ -263,3 +263,76 @@ def __hist1d(aw, edges, decimal, weighted, normed):
     count[i] = flatcount
 
     return count
+
+def cluster_test_main(gat, A, baseline = np.pi/6,
+                        alpha = 0.05, n_permutations = 2 ** 11,
+                        threshold = dict(start=1., step=.2), lims=None,
+                        ylabel='Performance', title=None):
+    """This function takes as inputs one array X and computes cluster analysis
+    and plots associated graphs.
+    Input:
+    gat: gat object is used only to retrieve useful information to plot, like
+        time points and gat.plot functions.
+        gat.scores_ is replaced by X
+    X: ndimensional array representing gat or diagonal performance.
+        If A is diagonal, its dimensions should be n_subjects * n_time
+        If A is GAT, its dimensions should be n_subjects * n_time * n_time
+    baseline: chance level to test against.
+        pi/6 for circular data and 0 for deviations are normally used
+    """
+    # check that X is array otherwise convert
+    if not(type(A).__module__ == np.__name__):
+        A = np.array(A)
+
+    # define X
+    X = A - baseline
+
+    # define time points
+    times = gat.train_times['times_']
+
+    # ------ Run stats
+    T_obs_, clusters, p_values, _ = spatio_temporal_cluster_1samp_test(
+                                           X,
+                                           out_type='mask',
+                                           n_permutations=n_permutations,
+                                           connectivity=None,
+                                           threshold=threshold,
+                                           n_jobs=-1)
+
+    # ------ combine clusters and retrieve min p_values for each feature
+    p_values = np.min(np.logical_not(clusters) +
+                      [clusters[c] * p for c, p in enumerate(p_values)],
+                      axis=0)
+    x, y = np.meshgrid(gat.train_times['times_'],
+                       gat.test_times_['times_'][0],
+                       copy=False, indexing='xy')
+
+
+    # PLOT
+    # ------ Plot GAT
+    gat.scores_ = np.mean(A, axis=0)
+    if lims==None:
+        lims = [np.min(gat.scores_),np.max(gat.scores_)]
+    fig = gat.plot(vmin=lims[0], vmax=lims[1],
+                   show=False)
+    ax = fig.axes[0]
+    ax.contour(x, y, p_values < alpha, colors='black', levels=[0])
+    #plt.title(title)
+    plt.show()
+
+    # ------ Plot Decoding
+    scores_diag = np.transpose([A[:, t, t] for t in range(len(times))])
+    fig, ax = plt.subplots(1)
+    plot_eb(times, np.mean(scores_diag, axis=0),
+            np.std(scores_diag, axis=0) / np.sqrt(scores_diag.shape[0]),
+            color='blue', ax=ax)
+    ymin, ymax = ax.get_ylim()
+    sig_times = times[np.where(np.diag(p_values) < alpha)[0]]
+    sfreq = (times[1] - times[0]) / 1000
+    fill_betweenx_discontinuous(ax, ymin, ymax, sig_times, freq=sfreq,
+                                color='gray', alpha=.3)
+    ax.axhline(baseline, color='k', linestyle='--', label="Chance level")
+    ax.set_xlabel('Time (s)')
+    ax.set_ylabel(ylabel)
+    #plt.title(title)
+    plt.show()
