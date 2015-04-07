@@ -125,8 +125,11 @@ plt.imshow(np.roll(tuning_diag,2,axis=0),interpolation='none')
 plt.colorbar()
 
 # plot each VISIBILITY
-for vis in range(1,5):
-    tuning_diag_vis=np.mean(tuning_diag_vis.transpose([0,2,1]),axis=0)
+tuning_diag_vis_ = np.mean(tuning_diag_vis.transpose([0,1,3,2]),axis=0)
+lims = [np.min(tuning_diag_vis_), np.max(tuning_diag_vis_)]
+for v, vis in enumerate(range(1,5)):
     plt.subplot(4,1,vis)
-    plt.imshow(np.roll(tuning_diag_vis,2,axis=0),interpolation='none')
+    plt.imshow(np.roll(tuning_diag_vis_[v,:,:],2,axis=0),
+                interpolation='none', vmin=lims[0], vmax=lims[1])
+    plt.title(vis)
     plt.colorbar()
