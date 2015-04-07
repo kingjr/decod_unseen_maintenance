@@ -34,7 +34,6 @@ def recombine_svr_prediction(gatx, gaty):
     n_t = len(gatx.test_times_['times_'][0])
     true_angles = np.tile(true_angle, (n_T, n_t, 1))
     angle_errors = (predict_angles - true_angles + pi) % (2 * pi) - pi
-
     return predict_angles, true_angle, angle_errors
 
 def cart2pol(x, y):
@@ -65,6 +64,28 @@ def realign_angle(gat, angles = [15, 45, 75, 105, 135, 165] ):
         # shift so that the correct class is in the middle
     #probas = probas[:,:,:,np.append(np.arange(4,n_classes),np.arange(0,4))]
     return probas
+
+def hist_tuning_curve(predict_error):
+        # define bin_edges
+        bin_edges = lambda m, M, n: np.arange(m+(M-m)/n/2,(M+(M-m)/n/2),(M-m)/n)
+        # compute proportion of trials correctly predicted
+        N = histogramnd(predict_error.squeeze() - np.pi/2,
+                                        bins=bin_edges(-np.pi/2,np.pi/2,res+1),
+                                        axis=2)
+        # extract frequencies
+        trial_freq = N[0]
+
+        # Wrap around first and last bin if identical
+        if False:
+            trial_freq[1,:,:] = trial_freq[1,:,:]+trial_freq[-1,:,:]
+            trial_freq[-1,:,:] = trial_freq[1,:,:]
+
+        #compute totals
+        totals = np.tile(np.sum(trial_freq,axis=2),[res,1,1])
+        # compute the proportion of trials in each bin
+        trial_prop = trial_freq / totals.astype(np.float).transpose([1, 2, 0])
+
+        return trial_prop
 
 def plot_circ_hist(alpha, bins=10, measure='radians'):
     """
