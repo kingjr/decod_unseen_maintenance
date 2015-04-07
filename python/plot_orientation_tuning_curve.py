@@ -24,16 +24,19 @@ from postproc_functions import (
                     realign_angle,
                     recombine_svr_prediction,
                     cart2pol,
-                    plot_circ_hist
+                    plot_circ_hist,
+                    hist_tuning_curve
 )
 
+"""
 # -----------------SVR----------------------------------------------------------
+"""
 # input type is ERF (for now)
 inputType=inputTypes[0]
 # classifier type is SVR
 clf_type = clf_types[1]
 # contrast is target orientation sine and cosine (for now...)
-contrast = clf_type['contrasts'][0:2]
+contrasts = clf_type['contrasts'][0:2]
 
 # loop across subjects
 for s, subject in enumerate(subjects):
@@ -41,20 +44,30 @@ for s, subject in enumerate(subjects):
 
     # initialize variables if first subject
     if s == 0:
-        res = 20
+        res = 40
         trial_proportion = np.zeros([len(subjects),29,29,res])
 
-    # load individual data
+    # define data path
     path_x = op.join(results_path, subject, 'mvpas',
-        '{}-decod_{}_{}.pickle'.format(subject, contrast[0]['name'], 'SVR'))
+        '{}-decod_{}_{}.pickle'.format(subject, contrasts[0]['name'], 'SVR'))
 
     path_y = op.join(results_path, subject, 'mvpas',
-        '{}-decod_{}_{}.pickle'.format(subject, contrast[1]['name'], 'SVR'))
+        '{}-decod_{}_{}.pickle'.format(subject, contrasts[1]['name'], 'SVR'))
+
+    # load individual data
+    with open(path_x) as f:
+        gatx, contrast, sel, events = pickle.load(f)
+    with open(path_y) as f:
+        gaty, contrast, sel, events = pickle.load(f)
 
     ###### PREPROC
     # recombine cosine and sine predictions
-    predAngle, trueX, trial_prop = recombine_svr_prediction(path_x, path_y,res)
+    _, _, angle_errors = recombine_svr_prediction(gatx, gaty)
 
+    # compute trial proportion
+    trial_prop = hist_tuning_curve(angle_errors, res=res)
+
+    # concatenate individual data
     trial_proportion[s,:,:,:] = trial_prop
 
 # plot average tuning curve across subjects on the diagonal
@@ -66,7 +79,10 @@ plt.figure()
 plt.imshow(trial_prop_diag.mean(axis=0), interpolation='none', origin='lower')
 plt.colorbar()
 
+
+"""
 #-----------------------SVC-----------------------------------------------------
+"""
 # classifier type is SVC
 clf_type = clf_types[0]
 # contrast is target orientation (for now...)
