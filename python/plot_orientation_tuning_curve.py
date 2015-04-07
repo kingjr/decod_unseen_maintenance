@@ -44,11 +44,6 @@ contrasts = clf_type['contrasts'][0:2]
 for s, subject in enumerate(subjects):
     print(subject)
 
-    # initialize variables if first subject
-    if s == 0:
-        res = 40
-        trial_proportion = np.zeros([len(subjects),29,29,res])
-
     # define data path
     path_x = op.join(results_path, subject, 'mvpas',
         '{}-decod_{}_{}.pickle'.format(subject, contrasts[0]['name'], 'SVR'))
@@ -62,6 +57,13 @@ for s, subject in enumerate(subjects):
     with open(path_y) as f:
         gaty, contrast, sel, events = pickle.load(f)
 
+    # initialize variables if first subject
+    if s == 0:
+        res = 15
+        dims = shape(gatx.y_pred_)[0:3]
+        trial_prop_diag = np.zeros([len(subjects),dims[0],res])
+        trial_prop_v_diag = np.zeros([len(subjects),dims[0],res,4])
+
     ###### PREPROC
     # recombine cosine and sine predictions
     _, _, angle_errors = recombine_svr_prediction(gatx, gaty)
@@ -70,17 +72,34 @@ for s, subject in enumerate(subjects):
     trial_prop = hist_tuning_curve(angle_errors, res=res)
 
     # concatenate individual data
-    trial_proportion[s,:,:,:] = trial_prop
+    trial_prop_diag[s,:,:] = np.array([trial_prop[t,t,:]
+                                                for t in range(dims[0])])
 
-# plot average tuning curve across subjects on the diagonal
-trial_prop_diag = np.array([trial_proportion[:,t,t,:]
-                                for t in np.arange(trial_proportion.shape[1])])
-trial_prop_diag = trial_prop_diag.transpose([1,2,0])
+    # divide by visibility
+    for v,vis in enumerate(range(1,5)):
+        idx = events['response_visibilityCode'][sel]==vis
+        trial_prop_v = hist_tuning_curve(angle_errors[:,:,idx],res=res)
+        trial_prop_v_diag[s,:,:,v] = np.array([trial_prop_v[t,t,:]
+                                                for t in range(dims[0])])
+
+# plot AVERAGE tuning curve across subjects on the diagonal
+trial_prop_diag_ = trial_prop_diag.transpose([0,2,1])
 
 plt.figure()
-plt.imshow(trial_prop_diag.mean(axis=0), interpolation='none', origin='lower')
+plt.imshow(trial_prop_diag_.mean(axis=0), interpolation='none', origin='lower')
 plt.colorbar()
 
+# divide by VISIBILITY
+trial_prop_v_diag_ = np.mean(trial_prop_v_diag.transpose([0,2,1,3]), axis=0)
+lims = [np.min(trial_prop_v_diag_), np.max(trial_prop_v_diag_)]
+plt.figure(2)
+for v, vis in enumerate(range(1,5)):
+    print(vis)
+    plt.subplot(4,1,vis)
+    plt.imshow(trial_prop_v_diag_[:,:,v], interpolation='none',origin='lower',
+                                        vmin= lims[0], vmax=lims[1])
+    plt.title(vis)
+    plt.colorbar()
 
 """
 #-----------------------SVC-----------------------------------------------------
