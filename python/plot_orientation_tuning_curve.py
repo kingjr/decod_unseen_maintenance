@@ -59,7 +59,7 @@ for s, subject in enumerate(subjects):
 
     # initialize variables if first subject
     if s == 0:
-        res = 7
+        res = 70
         dims = shape(gatx.y_pred_)[0:3]
         trial_prop_diag = np.zeros([len(subjects),dims[0],res])
         trial_prop_v_diag = np.zeros([len(subjects),dims[0],res,4])
@@ -88,7 +88,7 @@ for s, subject in enumerate(subjects):
 # plot AVERAGE tuning curve across subjects on the diagonal
 trial_prop_diag_ = trial_prop_diag.transpose([0,2,1])
 
-plt.figure()
+plt.figure(1)
 plt.imshow(trial_prop_diag_.mean(axis=0), interpolation='none', origin='lower')
 plt.colorbar()
 
@@ -98,12 +98,12 @@ trial_prop_v_diag__ = trial_prop_v_diag[0:19,:,:,:]
 
 # average and plot
 trial_prop_v_diag_ = np.nanmedian(trial_prop_v_diag__.transpose([0,2,1,3]), axis=0)
-lims = [np.min(trial_prop_v_diag_), np.max(trial_prop_v_diag_)]
+lims = [np.min(trial_prop_v_diag_[:,:,3]), np.max(trial_prop_v_diag_[:,:,3])]
 plt.figure(2)
 for v, vis in enumerate(range(1,5)):
     plt.subplot(4,1,vis)
     plt.imshow(trial_prop_v_diag_[0:19,:,v], interpolation='none',origin='lower',
-                                        vmin= lims[0], vmax=lims[1])
+                                        vmin= .120, vmax=.160)
     plt.title(vis)
     plt.colorbar()
 
@@ -146,13 +146,14 @@ for s, subject in enumerate(subjects):
 
 # plot AVERAGE tuning curve across subjects on diagonal
 tuning_diag=np.mean(tuning_diag.transpose([0,2,1]),axis=0)
-plt.figure()
+plt.figure(3)
 plt.imshow(np.roll(tuning_diag,2,axis=0),interpolation='none')
 plt.colorbar()
 
 # plot each VISIBILITY
 tuning_diag_vis_ = np.mean(tuning_diag_vis.transpose([0,1,3,2]),axis=0)
 lims = [np.min(tuning_diag_vis_), np.max(tuning_diag_vis_)]
+plt.figure(4)
 for v, vis in enumerate(range(1,5)):
     plt.subplot(4,1,vis)
     plt.imshow(np.roll(tuning_diag_vis_[v,:,:],2,axis=0),
