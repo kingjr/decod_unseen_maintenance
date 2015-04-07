@@ -24,7 +24,8 @@ from postproc_functions import (
                                 realign_angle,
                                 cart2pol,
                                 recombine_svr_prediction,
-                                plot_circ_hist
+                                plot_circ_hist,
+                                cluster_test_main
 )
 
 
@@ -129,7 +130,7 @@ for clf_type in clf_types:
 
     """ Divide by visibility"""
     # -- Divide by visibility
-    for vis in arange(4):
+    for vis in range(4):
         # define A (non corrected measure)
         A = np.array(angle_errors_vis[0:19,:,:,vis])
 
