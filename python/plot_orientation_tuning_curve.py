@@ -28,11 +28,13 @@ from postproc_functions import (
                     hist_tuning_curve
 )
 
+
+# define input type: it is ERF (for now)
+inputType=inputTypes[0]
+
 """
 # -----------------SVR----------------------------------------------------------
 """
-# input type is ERF (for now)
-inputType=inputTypes[0]
 # classifier type is SVR
 clf_type = clf_types[1]
 # contrast is target orientation sine and cosine (for now...)
@@ -96,7 +98,7 @@ for s, subject in enumerate(subjects):
 
     # load individual data
     with open(path) as f:
-        gat, contrast, _, events = pickle.load(f)
+        gat, contrast, sel, events = pickle.load(f)
 
     ##### PREPROC
     # realign angle
@@ -106,15 +108,25 @@ for s, subject in enumerate(subjects):
     if s == 0:
         dims = np.array(shape(probas))
         tuning_diag = np.zeros(np.append(len(subjects), dims[[1,3]]))
-        #PROBAS = np.zeros(np.append(len(subjects),dims))
+        tuning_diag_vis = np.zeros(np.append([len(subjects),4], dims[[1,3]]))
 
-    # store individual data into across data array
-    #PROBAS[s,:,:,:] = np.append(np.mean(probas, axis = 2))
     # store tuning curve along diagonal
-    tuning_diag[s,:,:] = np.mean([probas[t,t,:,:] for t in arange(29)],axis=1)
+    tuning_diag[s,:,:] = np.mean([probas[t,t,:,:] for t in arange(dims[0])],axis=1)
 
-# plot average tuning curve across subjects on diagonal
+    # divide by visibility
+    for v,vis in enumerate(range(1,5)):
+        subsel = [probas[t,t,events['response_visibilityCode'][sel]==vis,:] for t in arange(dims[0])]
+        tuning_diag_vis[s,v,:,:] = np.mean(subsel,axis=1)
+
+# plot AVERAGE tuning curve across subjects on diagonal
 tuning_diag=np.mean(tuning_diag.transpose([0,2,1]),axis=0)
 plt.figure()
 plt.imshow(np.roll(tuning_diag,2,axis=0),interpolation='none')
 plt.colorbar()
+
+# plot each VISIBILITY
+for vis in range(1,5):
+    tuning_diag_vis=np.mean(tuning_diag_vis.transpose([0,2,1]),axis=0)
+    plt.subplot(4,1,vis)
+    plt.imshow(np.roll(tuning_diag_vis,2,axis=0),interpolation='none')
+    plt.colorbar()
