@@ -25,7 +25,7 @@ from config import (
 subject = subjects[9]
 
 # PREPROC
-preproc = dict(decim=4, crop=dict(tmin=-.100, tmax=0.500))
+preproc = dict(decim=1, crop=dict(tmin=-.100, tmax=0.500))
 
 meg_fname = op.join(data_path, subject, 'preprocessed', subject + '_preprocessed')
 bhv_fname = op.join(data_path, subject, 'behavior', subject + '_fixed.mat')
