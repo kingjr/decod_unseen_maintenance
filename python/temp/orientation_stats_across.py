@@ -62,7 +62,7 @@ for s, subject in enumerate(subjects):
         # -pi and pi and remove pi/6 to center on 0
         operator = np.arange(n_categories) * np.pi / 3 + np.pi / 6
         operator = np.tile(operator, (n_time, n_time, n_trials, 1))
-        # average angles: # XXX THEORETICALLY INCORRECT
+        # average angles: XXX THEORETICALLY INCORRECT
         angle_error = np.mean(probas * operator, axis=3)
         # XXX NB we should average in complex space but somehow it doesnt work
         #xy = np.mean(probas * (np.cos(operator) + 1j *sin(operator)), axis=3)
@@ -90,7 +90,8 @@ for s, subject in enumerate(subjects):
     if s ==0:
         angle_errors_vis = np.zeros([len(subjects), n_time, n_test_time, 4])
     for v, vis in enumerate(arange(1, 5)):
-        angle_errors_vis[s,:,:,v] = np.mean(angle_error[:,:,events['response_visibilityCode'][sel]==vis],axis=2)
+        indx = np.array(events['response_visibilityCode'][sel]==vis)
+        angle_errors_vis[s,:,:,v] = np.mean(angle_error[:,:,indx],axis=2)
 
 
 # A)
@@ -160,8 +161,7 @@ for vis in arange(4):
     X = np.array(angle_errors_vis[0:19,:,:,vis]) - np.pi /6.
 
     # bound to common scale
-    lims = [np.min(np.mean(angle_errors_vis,axis=0)),
-            np.max(np.mean(angle_errors_vis,axis=0))]
+    lims = [np.min(X), np.max(X)]
 
     # ------ Run stats
     T_obs_, clusters, p_values, _ = spatio_temporal_cluster_1samp_test(
@@ -184,7 +184,7 @@ for vis in arange(4):
     # PLOT
     # ------ Plot GAT
     gat.scores_ = np.mean(angle_errors_vis[0:19,:,:,vis], axis=0)
-    gat.plot(vmin=lims[0], vmax=lims[1],
+    gat.plot(vmin=np.min(gat.scores_), vmax=np.max(gat.scores_),
                    show=False, title=vis)
     plt.contour(x, y, p_values < alpha, colors='black', levels=[0])
     # plt.xlabel('Test time')
