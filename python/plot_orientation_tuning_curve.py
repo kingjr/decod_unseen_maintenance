@@ -114,7 +114,7 @@ for s, subject in enumerate(subjects):
     tuning_diag[s,:,:] = np.mean([probas[t,t,:,:] for t in arange(29)],axis=1)
 
 # plot average tuning curve across subjects on diagonal
-tuning_diag=tuning_diag.transpose([0,2,1])
+tuning_diag=np.mean(tuning_diag.transpose([0,2,1]),axis=0)
 plt.figure()
-plt.imshow(np.mean(tuning_diag,axis=0),interpolation='none')
+plt.imshow(np.roll(tuning_diag,2,axis=0),interpolation='none')
 plt.colorbar()
