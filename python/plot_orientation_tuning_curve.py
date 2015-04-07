@@ -59,7 +59,7 @@ for s, subject in enumerate(subjects):
 
     # initialize variables if first subject
     if s == 0:
-        res = 70
+        res = 6
         dims = shape(gatx.y_pred_)[0:3]
         trial_prop_diag = np.zeros([len(subjects),dims[0],res])
         trial_prop_v_diag = np.zeros([len(subjects),dims[0],res,4])
@@ -103,7 +103,7 @@ plt.figure(2)
 for v, vis in enumerate(range(1,5)):
     plt.subplot(4,1,vis)
     plt.imshow(trial_prop_v_diag_[0:19,:,v], interpolation='none',origin='lower',
-                                        vmin= .120, vmax=.160)
+                                        vmin= lims[0], vmax=lims[1])
     plt.title(vis)
     plt.colorbar()
 
