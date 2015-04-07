@@ -65,27 +65,28 @@ def realign_angle(gat, angles = [15, 45, 75, 105, 135, 165] ):
     #probas = probas[:,:,:,np.append(np.arange(4,n_classes),np.arange(0,4))]
     return probas
 
-def hist_tuning_curve(angle_error, bins=30):
-        # define bin_edges
-        bin_edges = lambda m, M, n: np.arange(m+(M-m)/n/2,(M+(M-m)/n/2),(M-m)/n)
-        # compute proportion of trials correctly predicted
-        N = histogramnd(predict_error.squeeze() - np.pi/2,
-                                        bins=bin_edges(-np.pi/2,np.pi/2,res+1),
-                                        axis=2)
-        # extract frequencies
-        trial_freq = N[0]
+def hist_tuning_curve(angle_error, res=30):
+    #from postproc_functions import histogramnd
 
-        # Wrap around first and last bin if identical
-        if False:
-            trial_freq[1,:,:] = trial_freq[1,:,:]+trial_freq[-1,:,:]
-            trial_freq[-1,:,:] = trial_freq[1,:,:]
+    # define bin_edges
+    bin_edges = lambda m, M, n: np.arange(m+(M-m)/n/2,(M+(M-m)/n/2),(M-m)/n)
+    # compute proportion of trials correctly predicted
+    N = histogramnd(angle_error.squeeze() - np.pi/2,
+                                    bins=bin_edges(-np.pi/2,np.pi/2,res+1),
+                                    axis=2)
+    # extract frequencies
+    trial_freq = N[0]
 
-        #compute totals
-        totals = np.tile(np.sum(trial_freq,axis=2),[res,1,1])
-        # compute the proportion of trials in each bin
-        trial_prop = trial_freq / totals.astype(np.float).transpose([1, 2, 0])
+    # Wrap around first and last bin if identical
+    if False:
+        trial_freq[1,:,:] = trial_freq[1,:,:]+trial_freq[-1,:,:]
+        trial_freq[-1,:,:] = trial_freq[1,:,:]
 
-        return trial_prop
+    #compute totals
+    totals = np.tile(np.sum(trial_freq,axis=2),[res,1,1])
+    # compute the proportion of trials in each bin
+    trial_prop = trial_freq / totals.astype(np.float).transpose([1, 2, 0])
+    return trial_prop
 
 def plot_circ_hist(alpha, bins=10, measure='radians'):
     """
