@@ -59,7 +59,7 @@ for s, subject in enumerate(subjects):
 
     # initialize variables if first subject
     if s == 0:
-        res = 15
+        res = 7
         dims = shape(gatx.y_pred_)[0:3]
         trial_prop_diag = np.zeros([len(subjects),dims[0],res])
         trial_prop_v_diag = np.zeros([len(subjects),dims[0],res,4])
@@ -78,9 +78,12 @@ for s, subject in enumerate(subjects):
     # divide by visibility
     for v,vis in enumerate(range(1,5)):
         idx = np.array(events['response_visibilityCode'][sel]==vis)
-        trial_prop_v = hist_tuning_curve(angle_errors[:,:,idx],res=res)
-        trial_prop_v_diag[s,:,:,v] = np.array([trial_prop_v[t,t,:]
+        # HACK to avoid problems with last subject
+        if s != 19:
+            trial_prop_v = hist_tuning_curve(angle_errors[:,:,idx],res=res)
+            trial_prop_v_diag[s,:,:,v] = np.array([trial_prop_v[t,t,:]
                                                 for t in range(dims[0])])
+        else: break
 
 # plot AVERAGE tuning curve across subjects on the diagonal
 trial_prop_diag_ = trial_prop_diag.transpose([0,2,1])
@@ -90,12 +93,16 @@ plt.imshow(trial_prop_diag_.mean(axis=0), interpolation='none', origin='lower')
 plt.colorbar()
 
 # divide by VISIBILITY
-trial_prop_v_diag_ = np.mean(trial_prop_v_diag.transpose([0,2,1,3]), axis=0)
+# HACK to avoid problems with last subject
+trial_prop_v_diag__ = trial_prop_v_diag[0:19,:,:,:]
+
+# average and plot
+trial_prop_v_diag_ = np.nanmedian(trial_prop_v_diag__.transpose([0,2,1,3]), axis=0)
 lims = [np.min(trial_prop_v_diag_), np.max(trial_prop_v_diag_)]
 plt.figure(2)
 for v, vis in enumerate(range(1,5)):
     plt.subplot(4,1,vis)
-    plt.imshow(trial_prop_v_diag_[:,:,v], interpolation='none',origin='lower',
+    plt.imshow(trial_prop_v_diag_[0:19,:,v], interpolation='none',origin='lower',
                                         vmin= lims[0], vmax=lims[1])
     plt.title(vis)
     plt.colorbar()
