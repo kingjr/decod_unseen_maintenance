@@ -77,7 +77,7 @@ for s, subject in enumerate(subjects):
 
     # divide by visibility
     for v,vis in enumerate(range(1,5)):
-        idx = events['response_visibilityCode'][sel]==vis
+        idx = np.array(events['response_visibilityCode'][sel]==vis)
         trial_prop_v = hist_tuning_curve(angle_errors[:,:,idx],res=res)
         trial_prop_v_diag[s,:,:,v] = np.array([trial_prop_v[t,t,:]
                                                 for t in range(dims[0])])
@@ -94,7 +94,6 @@ trial_prop_v_diag_ = np.mean(trial_prop_v_diag.transpose([0,2,1,3]), axis=0)
 lims = [np.min(trial_prop_v_diag_), np.max(trial_prop_v_diag_)]
 plt.figure(2)
 for v, vis in enumerate(range(1,5)):
-    print(vis)
     plt.subplot(4,1,vis)
     plt.imshow(trial_prop_v_diag_[:,:,v], interpolation='none',origin='lower',
                                         vmin= lims[0], vmax=lims[1])
@@ -134,7 +133,8 @@ for s, subject in enumerate(subjects):
 
     # divide by visibility
     for v,vis in enumerate(range(1,5)):
-        subsel = [probas[t,t,events['response_visibilityCode'][sel]==vis,:] for t in arange(dims[0])]
+        idx = np.array(events['response_visibilityCode'][sel]==vis)
+        subsel = [probas[t,t,idx,:] for t in arange(dims[0])]
         tuning_diag_vis[s,v,:,:] = np.mean(subsel,axis=1)
 
 # plot AVERAGE tuning curve across subjects on diagonal
