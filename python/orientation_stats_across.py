@@ -104,14 +104,20 @@ for clf_type in clf_types:
         Z.append(z)
         p_values_v.append(p_val_v)
         p_values_z.append(p_val_z)
-        angle_errors.append(np.mean(angle_error, axis=2))
+        if clf_type['name']=='SVC':
+            angle_errors.append(np.mean(angle_error, axis=2))
+        elif clf_type['name']=='SVR':
+            angle_errors.append(np.mean(angle_error ** 2, axis=2))
 
         # divide by visibility
         if s ==0:
             angle_errors_vis = np.zeros([len(subjects), n_time, n_test_time, 4])
         for v, vis in enumerate(range(1, 5)):
             indx = np.array(events['response_visibilityCode'][sel]==vis)
-            angle_errors_vis[s,:,:,v] = np.mean(angle_error[:,:,indx],axis=2)
+            if clf_type['name']=='SVC':
+                angle_errors_vis[s,:,:,v] = np.mean(angle_error[:,:,indx],axis=2)
+            elif clf_type['name']=='SVR':
+                angle_errors_vis[s,:,:,v] = np.mean(angle_error[:,:,indx] ** 2,axis=2)
 
 
     # A)
@@ -132,7 +138,10 @@ for clf_type in clf_types:
     # -- Divide by visibility
     for vis in range(4):
         # define A (non corrected measure)
-        A = np.array(angle_errors_vis[0:19,:,:,vis])
+        if 'SVC':
+            A = np.array(angle_errors_vis[0:19,:,:,vis])
+        elif 'SVR':
+            A = np.array(angle_errors_vis[0:19,:,:,vis]) ** 2
 
         # bound to common scale
         lims = [np.min(A), np.max(A)]
