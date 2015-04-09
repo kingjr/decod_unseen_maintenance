@@ -11,7 +11,7 @@ from toolbox.utils import (plot_eb, fill_betweenx_discontinuous)
 
 def recombine_svr_prediction(gatx, gaty):
     """
-    This function takes the paths of two classifiers SVR predictions, typically
+    This function takes two classifiers SVR predictions, typically
     sine and cosine of an angle, and combine them into a predicted angle in
     radians
     """
@@ -21,8 +21,8 @@ def recombine_svr_prediction(gatx, gaty):
     # get true angle
     true_x = gatx.y_train_
     true_y = gaty.y_train_
-    true_angle, _ = cart2pol(true_x, true_y)
-    true_angle = np.squeeze(true_angle)
+    true_angles, _ = cart2pol(true_x, true_y)
+    true_angles = np.squeeze(true_angles)
 
     # get x and y regressors (cos and sin)
     predict_x = np.array(gatx.y_pred_)
@@ -30,19 +30,60 @@ def recombine_svr_prediction(gatx, gaty):
     predict_angles, _ = cart2pol(predict_x, predict_y)
     predict_angles = np.squeeze(predict_angles)
 
+    return predict_angles, true_angles
+
+
+def compute_error_svr(predict_angles, true_angles):
+    """ Add explanation and motivatin here """ # XXX
     # compute angle error
-    n_T = len(gatx.train_times['times_'])
-    n_t = len(gatx.test_times_['times_'][0])
-    true_angles = np.tile(true_angle, (n_T, n_t, 1))
-    angle_errors = (predict_angles - true_angles + pi) % (2 * pi) - pi
-    return predict_angles, true_angle, angle_errors
+    pi = np.pi
+    n_T, n_t, n = predict_angles.shape
+    true_angles = np.tile(true_angles, (n_T, n_t, 1))
+    # compute angle error
+    angle_error = predict_angles - true_angles
+    # center around 0
+    angle_errors = (angle_error + pi) % (2 * pi) - pi
+    return angle_errors
+
+def compute_error_svc(gat, weighted_mean=True):
+    """ Add explanation and motivatin here """ # XXX
+    # transform 6 categories into single angle: there are two options here,
+    # try it on the pilot subject, and use weighted mean if the two are
+    # equivalent
+    pi = np.pi
+    # realign to 0th angle category
+    n_angle = 6
+    angle = 2. * pi / n_angle
+    angles = np.arange(n_angle) * angle
+    # realign predictions so that the first class corresponds to a 0 degree angle error
+    # Note that eh classifiers were trained on the 6 orientations:
+    # 1. the y is is in degree
+    # 2. the first angle starts at 15
+    # 3. orientation can only spread on half of the circle
+    weights = realign_angle(gat, np.rad2deg(angles / 2) + 15)
+    if weighted_mean:
+        n_T, n_t, n_trials, n_categories = weights.shape
+        # multiply category ind (1, 2, 3, ) by angle, remove pi to be between
+        # -pi and pi and remove pi/6 to center on 0
+        angles = np.tile(angles, (n_T, n_t, n_trials, 1))
+        # weighted mean in complex space
+        x = np.mean(weights * np.cos(angles), axis=3)
+        y = np.mean(weights * np.sin(angles), axis=3)
+        angle_error, _ = cart2pol(x, y)
+    else:
+        # Chose the angle with the maximum weight
+        angle_error = (np.argmax(weights, axis=3) * angle)
+        # center around 0
+        angle_error = (angle_error + pi) % (2 * pi) - pi
+
+    return angle_error
 
 def cart2pol(x, y):
     theta = np.arctan2(y, x)
     radius = np.sqrt(x ** 2 + y ** 2)
     return(theta, radius)
 
-def realign_angle(gat, angles = [15, 45, 75, 105, 135, 165] ):
+def realign_angle(gat, angles):
     """
     This function realign classes output by a classifier so to give a
     distance in terms of categories of the predicted class and the real class.
@@ -65,6 +106,8 @@ def realign_angle(gat, angles = [15, 45, 75, 105, 135, 165] ):
         # shift so that the correct class is in the middle
     #probas = probas[:,:,:,np.append(np.arange(4,n_classes),np.arange(0,4))]
     return probas
+
+
 
 def hist_tuning_curve(angle_errors, res=30):
 
@@ -131,9 +174,6 @@ def plot_circ_hist(alpha, bins=10, measure='radians'):
 #     H.reshape((H.shape[0], r.shape[1:])
 
 
-# License: Scipy compatible
-# Author: David Huard, 2006
-# http://projects.scipy.org/numpy/attachment/ticket/189/histogram1d.py
 def histogramnd(a, bins=10, range=None, normed=False, weights=None, axis=None):
     """histogram(a, bins=10, range=None, normed=False, weights=None, axis=None)
                                                                    -> H, dict
@@ -172,6 +212,9 @@ def histogramnd(a, bins=10, range=None, normed=False, weights=None, axis=None):
     H2, Dict = histogram(x, bins=10, range=[0,1], normed=True, axis=0)
 
     See also: histogramnd
+    # License: Scipy compatible
+    # Author: David Huard, 2006
+    # http://projects.scipy.org/numpy/attachment/ticket/189/histogram1d.py
     """
 
     a = np.asarray(a)
@@ -225,9 +268,6 @@ def histogramnd(a, bins=10, range=None, normed=False, weights=None, axis=None):
         'bincenters':bincenters}
 
 
-# License: Scipy compatible
-# Author: David Huard, 2006
-# http://projects.scipy.org/numpy/attachment/ticket/189/histogram1d.py
 def __hist1d(aw, edges, decimal, weighted, normed):
     """Internal routine to compute the 1d histogram.
     aw: sample, [weights]
@@ -236,6 +276,10 @@ def __hist1d(aw, edges, decimal, weighted, normed):
              bin.
     weighted: Means that the weights are appended to array a.
     Return the bin count or frequency if normed.
+
+    # License: Scipy compatible
+    # Author: David Huard, 2006
+    # http://projects.scipy.org/numpy/attachment/ticket/189/histogram1d.py
     """
     nbin = edges.shape[0]+1
     if weighted:
@@ -265,7 +309,7 @@ def __hist1d(aw, edges, decimal, weighted, normed):
 
     return count
 
-def cluster_test_main(gat, A, baseline = np.pi/6,
+def cluster_test_main(gat, A, chance_level = np.pi/6,
                         alpha = 0.05, n_permutations = 2 ** 11,
                         threshold = dict(start=1., step=.2), lims=None,
                         ylabel='Performance', title=None):
@@ -278,7 +322,7 @@ def cluster_test_main(gat, A, baseline = np.pi/6,
     X: ndimensional array representing gat or diagonal performance.
         If A is diagonal, its dimensions should be n_subjects * n_time
         If A is GAT, its dimensions should be n_subjects * n_time * n_time
-    baseline: chance level to test against.
+    chance_level: chance level to test against.
         pi/6 for circular data and 0 for deviations are normally used
     """
     # check that X is array otherwise convert
@@ -286,7 +330,7 @@ def cluster_test_main(gat, A, baseline = np.pi/6,
         A = np.array(A)
 
     # define X
-    X = A - baseline
+    X = A - chance_level
 
     # define time points
     times = gat.train_times['times_']
@@ -332,20 +376,42 @@ def cluster_test_main(gat, A, baseline = np.pi/6,
     sfreq = (times[1] - times[0]) / 1000
     fill_betweenx_discontinuous(ax, ymin, ymax, sig_times, freq=sfreq,
                                 color='gray', alpha=.3)
-    ax.axhline(baseline, color='k', linestyle='--', label="Chance level")
+    ax.axhline(chance_level, color='k', linestyle='--', label="Chance level")
     ax.set_xlabel('Time (s)')
     ax.set_ylabel(ylabel)
     #plt.title(title)
     plt.show()
 
-def cluster_test_interaction(gats):
-    n_gats = len(gats)
-    dims = np.shape(gats)
-    n_subjects = dims[0]
-
-    if method == 'correlation':
-        for indx in range(len(gats)):
-
-    elif method == 'regression':
-
-    elif method == 'subtraction':
+# def cluster_test_interaction(gats, A, chance_level):
+#     # XXX WIP
+#     # check that X is array otherwise convert
+#     if not(type(A).__module__ == np.__name__):
+#         A = np.array(A)
+#
+#     # define X
+#     X = A - chance_level
+#
+#     # define dimensions
+#     n_subjects, n_time, n_testtime, n_conds = dims = np.shape(A)
+#
+#     # define time stamps
+#     times = gat.train_times['times_']
+#
+#     # apply method
+#     if method == 'correlation':
+#         R = np.zeros([n_subjects, n_time, n_time])
+#         P = np.zeros([n_subjects, n_time, n_time])
+#         for s,subject in enumerate(range(n_subjects)):
+#             for T in range(n_time):
+#                 for t in range(n_time):
+#                     r, p = stats.spearmanr(A[s,T,t,:],np.arange(4))
+#                     R[s,T,t] = r
+#                     P[s,T,t] = p
+#         imshow(np.mean(P,axis=0), interpolation='none',origin='lower',
+#                                     extent=[np.min(times), np.max(times),
+#                                         np.min(times), np.max(times)])
+#         plt.colorbar()
+#
+#     elif method == 'regression':
+#
+#     elif method == 'subtraction':
