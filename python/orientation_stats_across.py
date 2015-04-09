@@ -28,7 +28,6 @@ from postproc_functions import (realign_angle,
                                 plot_circ_hist,
                                 cluster_test_main)
 
-
 for clf_type in clf_types:
     #Z, V, p_values_v, p_values_z = list(), list(), list(), list()
     angle_errors, angle_errors_vis = list(), list() * 10
