@@ -392,7 +392,7 @@ def cluster_test_main(gat, A, chance_level = np.pi/6,
 #     X = A - chance_level
 #
 #     # define dimensions
-#     n_subjects, n_time, n_testtime, n_conds = dims = np.shape(A)
+#     n_subjects, n_conds, n_time, n_testtime  = dims = np.shape(A)
 #
 #     # define time stamps
 #     times = gat.train_times['times_']
@@ -404,10 +404,10 @@ def cluster_test_main(gat, A, chance_level = np.pi/6,
 #         for s,subject in enumerate(range(n_subjects)):
 #             for T in range(n_time):
 #                 for t in range(n_time):
-#                     r, p = stats.spearmanr(A[s,T,t,:],np.arange(4))
+#                     r, p = stats.spearmanr(A[s,:,T,t],np.arange(4))
 #                     R[s,T,t] = r
 #                     P[s,T,t] = p
-#         imshow(np.mean(P,axis=0), interpolation='none',origin='lower',
+#         imshow(np.mean(R,axis=0), interpolation='none',origin='lower',
 #                                     extent=[np.min(times), np.max(times),
 #                                         np.min(times), np.max(times)])
 #         plt.colorbar()
