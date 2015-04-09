@@ -338,4 +338,14 @@ def cluster_test_main(gat, A, baseline = np.pi/6,
     #plt.title(title)
     plt.show()
 
-# def cluster_test_interaction(gats):
+def cluster_test_interaction(gats):
+    n_gats = len(gats)
+    dims = np.shape(gats)
+    n_subjects = dims[0]
+
+    if method == 'correlation':
+        for indx in range(len(gats)):
+
+    elif method == 'regression':
+
+    elif method == 'subtraction':
