@@ -94,14 +94,14 @@ for clf_type in clf_types:
         # Z.append(z)
         # p_values_v.append(p_val_v)
         # p_values_z.append(p_val_z)
-        angle_errors.append(np.mean(angle_error, axis=2))
+        angle_errors.append(np.mean(np.abs(angle_error), axis=2))
 
         # divide by visibility
         angle_errors_vis_ = list()
         visibilities = range(1, 5)
         for v, vis in enumerate(visibilities):
             indx = np.where(events['response_visibilityCode'][sel]==vis)[0]
-            angle_errors_vis_.append(np.mean(angle_error[:,:,indx],axis=2))
+            angle_errors_vis_.append(np.mean(np.abs(angle_error[:,:,indx]),axis=2))
         angle_errors_vis.append(angle_errors_vis_)
 
 
@@ -114,7 +114,7 @@ for clf_type in clf_types:
 
     # B)
     # define X
-    chance_level = np.pi / 6.
+    chance_level = np.pi / 2.
 
     # perform cluster test on main effect (difference from chance)
     cluster_test_main(gat, angle_errors, chance_level, ylabel='Angle error')
