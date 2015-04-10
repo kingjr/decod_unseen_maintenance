@@ -10,7 +10,8 @@ from mne.io.meas_info import create_info
 from mne.epochs import EpochsArray
 from mne.decoding import GeneralizationAcrossTime
 
-from postproc_functions import compute_error_svr, compute_error_svc, recombine_svr_prediction
+from postproc_functions import (compute_error_svr, compute_error_svc,
+                                recombine_svr_prediction, plot_circ_hist)
 
 # GENERATE SYNTHETIC DATA ======================================================
 n_trial = 6 * 40
@@ -70,10 +71,10 @@ for transform in [cos, sin]:
 predict_angles, true_angles = recombine_svr_prediction(gats[0], gats[1])
 # --- score
 angle_errors_svr = compute_error_svr(predict_angles, true_angles)
-plt.matshow(angle_errors_svr[:,:,3]), plt.colorbar(), plt.show()
+plt.matshow(np.mean(angle_errors_svr,axis=2)), plt.colorbar(), plt.show()
 
 
-# SVC Gatt
+# SVC Gat
 scaler = StandardScaler()
 svc = SVC(C=1, kernel='linear', probability=True)
 clf = Pipeline([('scaler', scaler), ('svc', svc)])
