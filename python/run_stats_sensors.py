@@ -71,28 +71,32 @@ picks = [evoked.ch_names[ii] for ii in mne.pick_types(evoked.info, meg=chan_type
 evoked.pick_channels(picks)
 
 # Stats
-cluster = cluster_stat(evokeds, n_permutations=2 ** 11,
-                       connectivity=chan_type['connectivity'],
-                       threshold=dict(start=1., step=1.), n_jobs=-1)
-
-# Plots
-i_clus = np.where(cluster.p_values_ < .01)
-fig = cluster.plot(i_clus=i_clus, show=False)
-# report.add_figs_to_section(fig, '{}: {}: Clusters time'.format(
-#     ep['name'], contrast['name']), ep['name'] + contrast['name'])
-
-# plot T vales
-fig = cluster.plot_topomap(sensors=False, contours=False, show=False)
-
-# Plot contrasted ERF + select sig sensors
-evoked = Evokeds_to_Epochs(evokeds[0]).average() - \
-         Evokeds_to_Epochs(evokeds[-1]).average()
-# Create mask of significant clusters
-mask, _, _ = cluster._get_mask(i_clus)
+# cluster = cluster_stat(evokeds, n_permutations=2 ** 11,
+#                        connectivity=chan_type['connectivity'],
+#                        threshold=dict(start=1., step=1.), n_jobs=-1)
+#
+# # Plots
+# i_clus = np.where(cluster.p_values_ < .01)
+# fig = cluster.plot(i_clus=i_clus, show=False)
+# # report.add_figs_to_section(fig, '{}: {}: Clusters time'.format(
+# #     ep['name'], contrast['name']), ep['name'] + contrast['name'])
+#
+# # plot T vales
+# fig = cluster.plot_topomap(sensors=False, contours=False, show=False)
+#
+# # Plot contrasted ERF + select sig sensors
+# evoked = Evokeds_to_Epochs(evokeds[0]).average() - \
+#          Evokeds_to_Epochs(evokeds[-1]).average()
+# # Create mask of significant clusters
+# mask, _, _ = cluster._get_mask(i_clus)
 # Define color limits
 mM = np.percentile(np.abs(evoked.data), 99)
 # XXX JRK: pass plotting function to config
-evoked.plot_topomap(mask=mask.T, scale=1., sensors=False, contours=False,
+# evoked.plot_topomap(mask=mask.T, scale=1., sensors=False, contours=False,
+#                     times=np.linspace(min(evoked.times), max(evoked.times), 20),
+#                     vmin=-mM, vmax=mM, colorbar=True)
+
+evoked.plot_topomap(scale=1., sensors=False, contours=False,
                     times=np.linspace(min(evoked.times), max(evoked.times), 20),
                     vmin=-mM, vmax=mM, colorbar=True)
 
