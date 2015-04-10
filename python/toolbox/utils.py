@@ -463,3 +463,46 @@ class cluster_stat(dict):
             plt.show()
 
         return fig
+
+
+def find_in_df(df, include, exclude=dict(), max_n=np.inf):
+    """Find instance in pd.dataFrame that correspond to include and exlcuding
+    criteria.
+    Parameters
+    ----------
+    df : pd.dataFrame
+    includes : list | dict()
+    excludes : list | dict()
+    Returns
+    -------
+    inds : np.array"""
+    import random
+
+    # Find included trials
+    include_inds = _find_in_df(df, include)
+    # Find excluded trials
+    exclude_inds = _find_in_df(df, exclude)
+
+    # Select condition
+    inds = [i for i in include_inds if i not in exclude_inds]
+
+    # reduce number or trials if too many
+    if len(inds) > max_n:
+        random.shuffle(inds)
+        inds = inds[:max_n]
+
+    return inds
+
+
+def _find_in_df(df, le_dict):
+    """Find all instances in pd dataframe that match one of the specified
+    conditions"""
+    inds = []
+    for key in le_dict.keys():
+        if type(le_dict[key]) not in (list, np.ndarray):
+            le_dict[key] = [le_dict[key]]
+        for value in le_dict[key]:
+            for i in np.where(df[key] == value)[0]:
+                inds.append(i)
+    inds = np.unique(inds)
+    return inds
