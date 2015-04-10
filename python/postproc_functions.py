@@ -43,7 +43,7 @@ def compute_error_svr(predict_angles, true_angles):
     angle_error = predict_angles - true_angles
     # center around 0
     angle_errors = (angle_error + pi) % (2 * pi) - pi
-    angle_errors = np.abs(angle_errors)
+    # angle_errors = np.abs(angle_errors)
     return angle_errors
 
 def compute_error_svc(gat, weighted_mean=True):
@@ -76,7 +76,7 @@ def compute_error_svc(gat, weighted_mean=True):
         angle_error = (np.argmax(weights, axis=3) * angle)
         # center around 0
         angle_error = (angle_error + pi) % (2 * pi) - pi
-    angle_error = np.abs(angle_error)
+    # angle_error = np.abs(angle_error)
 
     return angle_error
 
