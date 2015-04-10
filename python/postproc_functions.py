@@ -43,6 +43,7 @@ def compute_error_svr(predict_angles, true_angles):
     angle_error = predict_angles - true_angles
     # center around 0
     angle_errors = (angle_error + pi) % (2 * pi) - pi
+    angle_errors = np.abs(angle_errors)
     return angle_errors
 
 def compute_error_svc(gat, weighted_mean=True):
@@ -75,6 +76,7 @@ def compute_error_svc(gat, weighted_mean=True):
         angle_error = (np.argmax(weights, axis=3) * angle)
         # center around 0
         angle_error = (angle_error + pi) % (2 * pi) - pi
+    angle_error = np.abs(angle_error)
 
     return angle_error
 
@@ -359,7 +361,9 @@ def cluster_test_main(gat, A, chance_level = np.pi/6,
     if lims==None:
         lims = [np.min(gat.scores_),np.max(gat.scores_)]
     fig = gat.plot(vmin=lims[0], vmax=lims[1],
-                   show=False)
+                   show=False,
+                   extent=[np.min(times), np.max(times),
+                       np.min(times), np.max(times)])
     ax = fig.axes[0]
     ax.contour(x, y, p_values < alpha, colors='black', levels=[0])
     #plt.title(title)
