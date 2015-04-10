@@ -103,11 +103,11 @@ for subject in subjects:
                 ax2[ax_ind].set_adjustable('box-forced')
 
         # Save figure
-        report.add_figs_to_section(fig1, ('%s (%s) %s: DELTA'
-            % (subject, ep_name, contrast['name'])), contrast['name'])
+        report.add_figs_to_section(fig1, ('%s %s: DELTA'
+            % (subject, contrast['name'])), contrast['name'])
 
-        report.add_figs_to_section(fig2, ('%s (%s) %s: CONDITIONS'
-            % (subject, ep_name, contrast['name'])), contrast['name'])
+        report.add_figs_to_section(fig2, ('%s %s: CONDITIONS'
+            % (subject, contrast['name'])), contrast['name'])
 
 
     # Save all_evokeds
