@@ -61,7 +61,7 @@ def compute_error_svc(gat, weighted_mean=True):
     # 1. the y is is in degree
     # 2. the first angle starts at 15
     # 3. orientation can only spread on half of the circle
-    weights = realign_angle(gat, np.rad2deg(angles / 2) + 15)
+    weights = realign_angle(gat, [np.round(i) for i in np.rad2deg(angles / 2) + 15.])
     if weighted_mean:
         n_T, n_t, n_trials, n_categories = weights.shape
         # multiply category ind (1, 2, 3, ) by angle, remove pi to be between
@@ -89,25 +89,30 @@ def realign_angle(gat, angles):
     """
     This function realign classes output by a classifier so to give a
     distance in terms of categories of the predicted class and the real class.
-    Input:
-    gat : the gat object output by a classifier
-    optional values: angles
-    Output:
-    probas : a time x time x trials x class array
+
+    Parameters:
+    -----------
+    gat : MNE GAT object
+        From which prediction (gat.y_pred_) and true value (gat.y_train_) are
+        compared / realigned.
+    angles: list | np.array (shape: n_angles)
+        Angles used in gat.y_train_
+
+    Returns:
+    --------
+    weights : np.array (shape: n_train_time x n_test_time x n_trials x n_angles)
+        Reordered array in which the first column corresponds to the probability
+        of the correct angle.
     """
-    # define dimensionality of the data
-    dims = np.array(np.shape(gat.y_pred_))
     # realign to 4th angle category
-    probas = np.zeros(dims)
+    weights = np.zeros(gat.y_pred_.shape)
     n_classes = len(angles)
     for a, angle in enumerate(angles):
-        sel = gat.y_train_ == angle
+        sel = np.where(gat.y_train_ == angle)[0]
         prediction = np.array(gat.y_pred_)
-        order = np.array(range(a,n_classes)+range(0,(a)))
-        probas[:, :, sel, :] = prediction[:, :, sel, :][:, :, :, order]
-        # shift so that the correct class is in the middle
-    #probas = probas[:,:,:,np.append(np.arange(4,n_classes),np.arange(0,4))]
-    return probas
+        order = np.array(range(a, n_classes)+range(0, a))
+        weights[:, :, sel, :] = prediction[:, :, sel, :][:, :, :, order]
+    return weights
 
 
 
