@@ -69,7 +69,7 @@ def save_to_dict(fname, data, overwrite=False):
         data_dict[key] = data[key]
 
     # Save
-    with open(fname, 'w') as f:
+    with open(fname, 'wb') as f:
         pickle.dump(data_dict, f)
 
 
@@ -95,7 +95,7 @@ def load_from_dict(fname, varnames=None, out_type='dict'):
         raise RuntimeError('%s not found' % fname)
 
     # Load original data
-    with open(fname) as f:
+    with open(fname,'rb') as f:
         data_dict = pickle.load(f)
 
     # Specify variables to load
@@ -113,7 +113,6 @@ def load_from_dict(fname, varnames=None, out_type='dict'):
         out = list()
         for key in varnames:
             out.append(data_dict[key])
-
 
     return out
 
