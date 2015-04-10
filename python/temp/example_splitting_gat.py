@@ -16,9 +16,15 @@ from config import (
 from utils import get_data
 from postproc_functions import (realign_angle)
 
+
+
+# ------------------------------------------------------------------------------
+# -----------------------------------SVC----------------------------------------
+# XXX temporary sub-selection
 s=9
 subjects = [subjects[s]]
 
+# loop across subjects
 for s, subject in enumerate(subjects):
     print(subject)
 
@@ -32,13 +38,17 @@ for s, subject in enumerate(subjects):
 
     # read GAT data
     with open(path_gat) as f:
-        gat, contrast, _, events = pickle.load(f)
+        gat, contrast, sel, events = pickle.load(f)
 
     # define probas
-    vis = events['seen_unseen'][sel]
+    vis = np.array(events['seen_unseen'][sel])
 
     # save dimensions
     n_time, n_test_time, n_trials, n_categories = dims = np.shape(gat.y_pred_)
+
+    if s == 0:
+        # Initialize variables
+        angle_errors = np.zeros(np.append(len(subjects),np.array(dims))
 
     # realign to 0th angle category
     probas = realign_angle(gat)
@@ -61,21 +71,29 @@ for s, subject in enumerate(subjects):
         angle_error = np.argmax(probas, axis=3) * np.pi / 3 - np.pi / 6
 
 
-    # plot gat
-    plt.figure()
-    plt.subplot(211)
-    ax= plt.imshow(np.mean(angle_error[:, :, vis == True], axis=2),
-                                    interpolation='none',origin='lower')
-    plt.subplot(212)
-    plt.imshow(np.mean(angle_error[:, :, vis == False], axis=2),
-                                    interpolation='none',origin='lower')
+    # store variables across subjects
+    angle_errors[s,:,:] = np.mean(angle_error[:, :, vis == True], axis=2)
 
-    # extract diagonal
-    probas_diag = np.array([angle_error[t,t,:] for t in range(n_time)])
 
-    # plot performance
-    plt.figure()
-    plt.plot(gat.train_times['times_'], np.mean(probas_diag[:, vis == True], axis=1))
-    plt.plot(gat.train_times['times_'], np.mean(probas_diag[:, vis == False], axis=1))
-    plt.legend(['seen','unseen'])
-    plt.show()
+# plot gat
+plt.figure()
+plt.subplot(211)
+ax= plt.imshow(np.mean(angle_error[:, :, vis == True], axis=2),
+                                interpolation='none',origin='lower')
+plt.subplot(212)
+plt.imshow(np.mean(angle_error[:, :, vis == False], axis=2),
+                                interpolation='none',origin='lower')
+
+# extract diagonal
+probas_diag = np.array([angle_error[t,t,:] for t in range(n_time)])
+
+# plot performance
+plt.figure()
+plt.plot(gat.train_times['times_'], np.mean(probas_diag[:, vis == True], axis=1))
+plt.plot(gat.train_times['times_'], np.mean(probas_diag[:, vis == False], axis=1))
+plt.legend(['seen','unseen'])
+plt.show()
+
+
+# ------------------------------------------------------------------------------
+# -----------------------------------SVR----------------------------------------

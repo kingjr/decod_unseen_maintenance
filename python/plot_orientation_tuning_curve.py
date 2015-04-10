@@ -24,49 +24,92 @@ from postproc_functions import (
                     realign_angle,
                     recombine_svr_prediction,
                     cart2pol,
-                    plot_circ_hist
+                    plot_circ_hist,
+                    hist_tuning_curve
 )
 
-# -----------------SVR----------------------------------------------------------
-# input type is ERF (for now)
+
+# define input type: it is ERF (for now)
 inputType=inputTypes[0]
+
+"""
+# -----------------SVR----------------------------------------------------------
+"""
 # classifier type is SVR
 clf_type = clf_types[1]
 # contrast is target orientation sine and cosine (for now...)
-contrast = clf_type['contrasts'][0:2]
+contrasts = clf_type['contrasts'][0:2]
 
 # loop across subjects
 for s, subject in enumerate(subjects):
     print(subject)
 
-    # initialize variables if first subject
-    if s == 0:
-        res = 20
-        trial_proportion = np.zeros([len(subjects),29,29,res])
-
-    # load individual data
+    # define data path
     path_x = op.join(results_path, subject, 'mvpas',
-        '{}-decod_{}_{}.pickle'.format(subject, contrast[0]['name'], 'SVR'))
+        '{}-decod_{}_{}.pickle'.format(subject, contrasts[0]['name'], 'SVR'))
 
     path_y = op.join(results_path, subject, 'mvpas',
-        '{}-decod_{}_{}.pickle'.format(subject, contrast[1]['name'], 'SVR'))
+        '{}-decod_{}_{}.pickle'.format(subject, contrasts[1]['name'], 'SVR'))
+
+    # load individual data
+    with open(path_x) as f:
+        gatx, contrast, sel, events = pickle.load(f)
+    with open(path_y) as f:
+        gaty, contrast, sel, events = pickle.load(f)
+
+    # initialize variables if first subject
+    if s == 0:
+        res = 6
+        dims = shape(gatx.y_pred_)[0:3]
+        trial_prop_diag = np.zeros([len(subjects),dims[0],res])
+        trial_prop_v_diag = np.zeros([len(subjects),dims[0],res,4])
 
     ###### PREPROC
     # recombine cosine and sine predictions
-    predAngle, trueX, trial_prop = recombine_svr_prediction(path_x, path_y,res)
+    _, _, angle_errors = recombine_svr_prediction(gatx, gaty)
 
-    trial_proportion[s,:,:,:] = trial_prop
+    # compute trial proportion
+    trial_prop = hist_tuning_curve(angle_errors, res=res)
 
-# plot average tuning curve across subjects on the diagonal
-trial_prop_diag = np.array([trial_proportion[:,t,t,:]
-                                for t in np.arange(trial_proportion.shape[1])])
-trial_prop_diag = trial_prop_diag.transpose([1,2,0])
+    # concatenate individual data
+    trial_prop_diag[s,:,:] = np.array([trial_prop[t,t,:]
+                                                for t in range(dims[0])])
 
-plt.figure()
-plt.imshow(trial_prop_diag.mean(axis=0), interpolation='none', origin='lower')
+    # divide by visibility
+    for v,vis in enumerate(range(1,5)):
+        idx = np.array(events['response_visibilityCode'][sel]==vis)
+        # HACK to avoid problems with last subject
+        if s != 19:
+            trial_prop_v = hist_tuning_curve(angle_errors[:,:,idx],res=res)
+            trial_prop_v_diag[s,:,:,v] = np.array([trial_prop_v[t,t,:]
+                                                for t in range(dims[0])])
+        else: break
+
+# plot AVERAGE tuning curve across subjects on the diagonal
+trial_prop_diag_ = trial_prop_diag.transpose([0,2,1])
+
+plt.figure(1)
+plt.imshow(trial_prop_diag_.mean(axis=0), interpolation='none', origin='lower')
 plt.colorbar()
 
+# divide by VISIBILITY
+# HACK to avoid problems with last subject
+trial_prop_v_diag__ = trial_prop_v_diag[0:19,:,:,:]
+
+# average and plot
+trial_prop_v_diag_ = np.nanmedian(trial_prop_v_diag__.transpose([0,2,1,3]), axis=0)
+lims = [np.min(trial_prop_v_diag_[:,:,3]), np.max(trial_prop_v_diag_[:,:,3])]
+plt.figure(2)
+for v, vis in enumerate(range(1,5)):
+    plt.subplot(4,1,vis)
+    plt.imshow(trial_prop_v_diag_[0:19,:,v], interpolation='none',origin='lower',
+                                        vmin= lims[0], vmax=lims[1])
+    plt.title(vis)
+    plt.colorbar()
+
+"""
 #-----------------------SVC-----------------------------------------------------
+"""
 # classifier type is SVC
 clf_type = clf_types[0]
 # contrast is target orientation (for now...)
@@ -80,7 +123,7 @@ for s, subject in enumerate(subjects):
 
     # load individual data
     with open(path) as f:
-        gat, contrast, _, events = pickle.load(f)
+        gat, contrast, sel, events = pickle.load(f)
 
     ##### PREPROC
     # realign angle
@@ -90,15 +133,30 @@ for s, subject in enumerate(subjects):
     if s == 0:
         dims = np.array(shape(probas))
         tuning_diag = np.zeros(np.append(len(subjects), dims[[1,3]]))
-        #PROBAS = np.zeros(np.append(len(subjects),dims))
+        tuning_diag_vis = np.zeros(np.append([len(subjects),4], dims[[1,3]]))
 
-    # store individual data into across data array
-    #PROBAS[s,:,:,:] = np.append(np.mean(probas, axis = 2))
     # store tuning curve along diagonal
-    tuning_diag[s,:,:] = np.mean([probas[t,t,:,:] for t in arange(29)],axis=1)
+    tuning_diag[s,:,:] = np.mean([probas[t,t,:,:] for t in arange(dims[0])],axis=1)
 
-# plot average tuning curve across subjects on diagonal
-tuning_diag=tuning_diag.transpose([0,2,1])
-plt.figure()
-plt.imshow(np.mean(tuning_diag,axis=0),interpolation='none')
+    # divide by visibility
+    for v,vis in enumerate(range(1,5)):
+        idx = np.array(events['response_visibilityCode'][sel]==vis)
+        subsel = [probas[t,t,idx,:] for t in arange(dims[0])]
+        tuning_diag_vis[s,v,:,:] = np.mean(subsel,axis=1)
+
+# plot AVERAGE tuning curve across subjects on diagonal
+tuning_diag=np.mean(tuning_diag.transpose([0,2,1]),axis=0)
+plt.figure(3)
+plt.imshow(np.roll(tuning_diag,2,axis=0),interpolation='none')
 plt.colorbar()
+
+# plot each VISIBILITY
+tuning_diag_vis_ = np.mean(tuning_diag_vis.transpose([0,1,3,2]),axis=0)
+lims = [np.min(tuning_diag_vis_), np.max(tuning_diag_vis_)]
+plt.figure(4)
+for v, vis in enumerate(range(1,5)):
+    plt.subplot(4,1,vis)
+    plt.imshow(np.roll(tuning_diag_vis_[v,:,:],2,axis=0),
+                interpolation='none', vmin=lims[0], vmax=lims[1])
+    plt.title(vis)
+    plt.colorbar()

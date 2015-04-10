@@ -25,7 +25,7 @@ from config import (
 subject = subjects[9]
 
 # PREPROC
-preproc = dict(decim=4, crop=dict(tmin=-.100, tmax=0.500))
+preproc = dict(decim=1, crop=dict(tmin=-.100, tmax=0.500))
 
 meg_fname = op.join(data_path, subject, 'preprocessed', subject + '_preprocessed')
 bhv_fname = op.join(data_path, subject, 'behavior', subject + '_fixed.mat')
@@ -112,11 +112,8 @@ n_T = len(gatx.train_times['times_'])
 n_t = len(gatx.test_times_['times_'][0])
 true_angles = np.tile(true_angle, (n_T, n_t, 1))
 angle_errors = (predict_angles - true_angles + pi) % (2 * pi) - pi
-angle_errors = predict_angles - true_angles
-plt.matshow(np.mean(angle_errors, axis=2))
-plt.show()
-
-
+#angle_errors = predict_angles - true_angles
+plt.imshow(np.mean(angle_errors ** 2, axis=2),origin='lower',interpolation='none')
 
 tile = lambda x: np.tile(x, (n_T, n_t, 1))
 plt.matshow(np.mean((predict_x - tile(true_x)) ** 2, axis=2))
