@@ -21,6 +21,11 @@ subjects = ['ak130184', 'el130086', 'ga130053', 'gm130176', 'hn120493',
     'mj130216', 'mr080072', 'oa130317', 'rg110386', 'sb120316',
     'tc120199', 'ts130283', 'yp130276', 'av130322', 'ps120458']
 
+# Define type of sensors used (useful for ICA correction, plotting etc)
+from mne.channels import read_ch_connectivity
+meg_connectivity, _ = read_ch_connectivity('neuromag306mag')
+chan_types = [dict(name='meg', connectivity=meg_connectivity)]
+
 # Define contrasts
 absent = dict(cond='present', values=[0])
 
@@ -28,7 +33,7 @@ contrasts_svc = (
     dict(name='targetAngle',
          include=dict(cond='orientation_target', values=[15, 45, 75, 105, 135, 165]),
          exclude=[absent],
-         scorer='realign_angle'),
+         scorer='realign_angle'), # don't put this quite now
     dict(name='probeAngle',
          include=dict(cond='orientation_probe', values=[15, 45, 75, 105, 135, 165]),
          exclude=[],
@@ -144,6 +149,17 @@ decoding_params = (
     dict(name='SVC',params=decoding_params_svc),
     dict(name='SVR',params=decoding_params_svr),
 )
+
+
+# Example of univariate analysis: In the future, this will have to be merged
+# with the contrasts defined for the multivariate analyses. In such case, we
+# would specify for each analysis whether it's supposed to be a binary contrast,
+# a regression or a circular correlation.
+contrasts = [
+            dict(name='presence',
+                 conditions=[dict(name='present', include=dict(present=1)),
+                             dict(name='absent', include=dict(present=0))])
+            ]
 
 
 # # UNCOMMENT TO SUBSELECTION FOR FAST PROCESSING
