@@ -1,51 +1,104 @@
+# Author: Jean-Rémi King <jeanremi.king@gmail.com>
+#
+# BSD License
+
 import numpy as np
 import matplotlib.pyplot as plt
 import pickle
 import os.path as op
-import warnings
 
-def build_contrast(evoked_list, epochs, events, weight='identical'):
+
+def build_contrast(evoked_list, epochs, events, operator=None):
     """Builds a n-deep contrast where n represents different levels of contrasts
     Parameters
     ----------
+    evoked_list : dict
+    epochs
+    events
+    operator
+
     Returns
     -------
-    delta : evoked
+    ceof : evoked
         contrast
     evokeds : list
         list of average evoked conditions
     e.g. XXX Make example
     """
-    evokeds = dict()
-    evokeds['sub'] = list()  # list of all evoked from lower level
-    evokeds['current'] = list() # evoked of contrast
 
-    for evoked in evoked_list:
-        if type(evoked) is dict:
-            # Handle unspecified exclude condition
+    evokeds = dict()
+    evokeds['evokeds'] = list()  # list of all evoked from lower level
+    evokeds['coef'] = list()  # evoked of contrast
+
+    # Accept passing lists only
+    if type(evoked_list) is list:
+        evoked_list_ = evoked_list
+        evoked_list = dict(conditions=evoked_list_)
+
+    # Gather coef at each sublevel
+    for evoked in evoked_list['conditions']:
+        if 'include' in evoked.keys():
+            # Default exclude condition
             if 'exclude' not in evoked.keys():
                 evoked['exclude'] = dict()
-
+            # Find corresponding samples
             sel = find_in_df(events, evoked['include'], evoked['exclude'])
-            # if no trial in conditions, save zeros:
+            # if no sample in conditions, throw error: XXX JRK: need fix
             if not len(sel):
-                raise RuntimeError('no epoch in '.format(evoked['name'], value))
+                raise RuntimeError('no epoch in %s' % evoked['name'])
             # Average
             avg = epochs[sel].average()
             # Keep info
             avg.comment = evoked['name']
-            # Change weight for subsequent contrast
-            if weight == 'identical':
-                avg.nave = 1
-            evokeds['current'].append(avg)
+            evokeds['coef'].append(avg)
         else:
-            evoked, evokeds_ = build_contrast(evoked, epochs, events)
-            evokeds['sub'].append(evokeds_)
-            evokeds['current'].append(evoked)
+            if 'operator' not in evoked_list.keys():
+                evoked_list['operator'] = None
+            evoked, evokeds_ = build_contrast(evoked, epochs, events,
+                                              evoked_list['operator'])
+            evokeds['evokeds'].append(evokeds_)
+            evokeds['coef'].append(evoked)
     else:
-        delta = evokeds['current'][0] - evokeds['current'][1]
+        # Set default operation
+        if operator is None:
+            if len(evokeds['coef']) == 2:
+                operator = evoked_subtract
+            elif len(evokeds['coef']) > 2:
+                operator = evoked_spearman
 
-    return delta, evokeds
+        coef = operator(evokeds)
+
+    return coef, evokeds
+
+
+def evoked_subtract(evokeds):
+    evokeds['coef'][0].nave = 1
+    evokeds['coef'][-1].nave = 1
+    coef = evoked_weighted_subtract(evokeds)
+    return coef
+
+
+def evoked_weighted_subtract(evokeds):
+    import warnings
+    if len(evokeds['coef']) > 2:
+        warnings.warn('More than 2 categories. Subtract last from last'
+                      'category!')
+    coef = evokeds['coef'][0] - evokeds['coef'][-1]
+    return coef
+
+
+def evoked_spearman(evokeds):
+    from scipy.stats import spearmanr
+    n_chan, n_time = evokeds['coef'][0].data.shape
+    coef = np.zeros((n_chan, n_time))
+    for chan in range(n_chan):
+        for t in range(n_time):
+            y = range(len(evokeds['coef']))
+            X = list()
+            for i in y:
+                X.append(evokeds['coef'][i].data[chan, t])
+            coef[chan, t], _ = spearmanr(X, y)
+    return coef
 
 
 def save_to_dict(fname, data, overwrite=False):
