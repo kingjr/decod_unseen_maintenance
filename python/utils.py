@@ -118,3 +118,52 @@ def decim(inst, decim):
         inst.info['sfreq'] /= decim
         inst.times = inst.times[::decim]
     return inst
+
+
+from sklearn.svm import SVR
+
+class SVR_angle(SVR):
+
+    def __init__(self):
+        from sklearn.svm import SVR
+        from sklearn.preprocessing import StandardScaler
+        from sklearn.pipeline import Pipeline
+        scaler_cos = StandardScaler()
+        scaler_sin = StandardScaler()
+        svr_cos = SVR(C=1, kernel='linear')
+        svr_sin = SVR(C=1, kernel='linear')
+        self.clf_cos = Pipeline([('scaler', scaler_cos), ('svr', svr_cos)])
+        self.clf_sin = Pipeline([('scaler', scaler_sin), ('svr', svr_sin)])
+
+    def fit(self, X, y):
+        """
+        Fit 2 regressors cos and sin of angles y
+        Parameters
+        ----------
+        X : np.array, shape(n_trials, n_chans, n_time)
+            MEG data
+        y : list | np.array (n_trials)
+            angles in degree
+        """
+        # Go from orientation space (0-180° degrees) to complex space (0 - 2 pi radians)
+        angle2circle = lambda angles: np.deg2rad(2 * (angles + 7.5))
+        y = angle2circle(trial_angles)
+        self.clf_cos.fit(X, np.cos(y))
+        self.clf_sin.fit(X, np.sin(y))
+
+    def predict(self, X):
+        """
+        Predict orientation from MEG data in radians
+        Parameters
+        ----------
+        X : np.array, shape(n_trials, n_chans, n_time)
+            MEG data
+        Returns
+        -------
+        predict_angle : list | np.array, shape(n_trials)
+            angle predictions in radian
+        """
+        predict_cos = self.clf_cos.predict(X)
+        predict_sin = self.clf_sin.predict(X)
+        predict_angle = np.arctan2(predict_sin, predict_cos)
+        return predict_angle
