@@ -180,8 +180,6 @@ class SVR_angle(SVR):
         predict_angle = np.arctan2(predict_sin, predict_cos)
         return predict_angle
 
-
-
 def score_angle(truth, prediction):
     """Scoring function dedicated to SVR_angle"""
     angle_error = truth - prediction[:, 0]
