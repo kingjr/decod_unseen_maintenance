@@ -52,60 +52,56 @@ for s, subject in enumerate(subjects):                                          
                             preproc['crop']['tmax'])
 
             # define classifier type (SVC or SVR)
-            for clf_type in clf_types:
-                # Apply to each contrast
-                for contrast in clf_type['contrasts']:
-                    #contrast = contrasts # remove once you loop across all contrasts
-                    print(contrast)
-                    # Find excluded trials
-                    exclude = np.any([events[x['cond']]==ii
-                                        for x in contrast['exclude']
-                                            for ii in x['values']],
-                                    axis=0)
 
-                    # Select condition
-                    include = list()
-                    cond_name = contrast['include']['cond']
-                    for value in contrast['include']['values']:
-                        # Find included trials
-                        include.append(events[cond_name]==value)
-                    sel = np.any(include,axis=0) * (exclude==False)
-                    sel = np.where(sel)[0]
+            # Apply to each contrast
+            for contrast in clf_type['contrasts']:
+                #contrast = contrasts # remove once you loop across all contrasts
+                print(contrast)
+                # Find excluded trials
+                exclude = np.any([events[x['cond']]==ii
+                                    for x in contrast['exclude']
+                                        for ii in x['values']],
+                                axis=0)
 
-                    # reduce number or trials if too many XXX just for speed, remove
-                    # if len(sel) > 400:
-                    #     import random
-                    #     random.shuffle(sel)
-                    #     sel = sel[0:400]
+                # Select condition
+                include = list()
+                cond_name = contrast['include']['cond']
+                for value in contrast['include']['values']:
+                    # Find included trials
+                    include.append(events[cond_name]==value)
+                sel = np.any(include,axis=0) * (exclude==False)
+                sel = np.where(sel)[0]
 
-                    y = np.array(events[cond_name].tolist())
+                # reduce number or trials if too many XXX just for speed, remove
+                # if len(sel) > 400:
+                #     import random
+                #     random.shuffle(sel)
+                #     sel = sel[0:400]
 
-                    # Apply contrast
-                    if clf_type['name']=='SVC':
-                        decoding_parameters = decoding_params[0]['params']
-                    elif clf_type['name']=='SVR':
-                        decoding_parameters = decoding_params[1]['params']
-                    gat = GeneralizationAcrossTime(**decoding_parameters)
-                    gat.fit(epochs[sel], y=y[sel])
-                    gat.score(epochs[sel], y=y[sel])
+                y = np.array(events[cond_name].tolist())
 
-                    # Plot
-                    fig = gat.plot_diagonal(show=False)
-                    report.add_figs_to_section(fig,
-                        ('%s %s: (decoding)' % (subject, cond_name)), subject)
+                # Apply contrast
+                gat = GeneralizationAcrossTime(clf=contrast['clf'], n_jobs=-1)
+                gat.fit(epochs[sel], y=y[sel])
+                gat.score(epochs[sel], y=y[sel])
 
-                    gat.plot(vmin=np.min(gat.scores_), vmax=np.max(gat.scores_),
-                             show=False)
-                    report.add_figs_to_section(fig,
-                        ('%s %s: GAT' % (subject, cond_name)), subject)
+                # Plot
+                fig = gat.plot_diagonal(show=False)
+                report.add_figs_to_section(fig,
+                    ('%s %s: (decoding)' % (subject, cond_name)), subject)
 
-                    # Save contrast
-                    pkl_fname = op.join(results_path, subject, 'mvpas',
-                        '{}-decod_{}_{}{}.pickle'.format(subject, contrast['name'], clf_type['name'],fname_appendix))
+                gat.plot(vmin=np.min(gat.scores_), vmax=np.max(gat.scores_),
+                         show=False)
+                report.add_figs_to_section(fig,
+                    ('%s %s: GAT' % (subject, cond_name)), subject)
 
-                    # Save classifier results
-                    with open(pkl_fname, 'wb') as f:
-                        pickle.dump([gat, contrast, sel, events], f)
+                # Save contrast
+                pkl_fname = op.join(results_path, subject, 'mvpas',
+                    '{}-decod_{}_{}{}.pickle'.format(subject, contrast['name'], clf_type['name'],fname_appendix))
+
+                # Save classifier results
+                with open(pkl_fname, 'wb') as f:
+                    pickle.dump([gat, contrast, sel, events], f)
 
 
 report.save(open_browser=open_browser)

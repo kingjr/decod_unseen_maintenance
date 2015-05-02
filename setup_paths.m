@@ -1,5 +1,5 @@
 
-switch 'D145'
+switch 'niccolo_ubuntu'
     case 'D145'
         cd('/home/niccolo/Dropbox/DOCUP/scripts');
         path = '/media/niccolo/Yupi/Paris/';
@@ -36,11 +36,10 @@ switch 'D145'
         addpath('/home/imen/Desktop/Backup_ICM/Projects_ICM/toolboxes/statistics/');
     case 'niccolo_ubuntu'
         cd('/home/niccolo/Dropbox/DOCUP/scripts');
-        path = '/media/My Passport/Paris/';
+        path = '/media/Paris/';
         addpath(path);
         addpath('/home/niccolo/Dropbox/DOCUP/toolboxes/JR_toolbox/');
         addpath('/home/niccolo/Dropbox/DOCUP/toolboxes/export_fig/');
-        %addpath('/home/niccolo/Dropbox/DOCUP/toolboxes/fieldtrip-20130225/'); ft_defaults;
         addpath('/home/niccolo/Dropbox/DOCUP/toolboxes/fieldtrip-20141030/'); ft_defaults;
         addpath('/home/niccolo/Dropbox/DOCUP/toolboxes/circular_stats/');
         
