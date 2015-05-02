@@ -7,6 +7,10 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import scipy.io as sio
 
+def angle2circle(angles):
+    """from degree to radians multipled by 2"""
+    return np.deg2rad(2 * (angles + 7.5))
+
 def get_data(meg_fname, bhv_fname):
     from mne.io.meas_info import create_info
     from mne.epochs import EpochsArray
@@ -58,10 +62,12 @@ def get_data(meg_fname, bhv_fname):
         # manual new keys
         event['orientation_target']        = event['orientation']*30-15
         event['orientation_probe']         = (event['orientation']*30-15 + event['tilt'] * 30) % 180
-        event['orientation_target_cos']    = np.cos(2*np.deg2rad(event['orientation_target']+7.5))#cos(2*deg2rad(angles + 7.5))
-        event['orientation_target_sin']    = np.sin(2*np.deg2rad(event['orientation_target']+7.5))#sin(2*deg2rad(angles + 7.5))
-        event['orientation_probe_cos']     = np.cos(2*np.deg2rad(event['orientation_probe']+7.5))
-        event['orientation_probe_sin']     = np.sin(2*np.deg2rad(event['orientation_probe']+7.5))
+        event['orientation_target_rad']    = angle2circle(event['orientation_target'])
+        event['orientation_probe_rad']     = angle2circle(event['orientation_probe'])
+        #event['orientation_target_cos']    = np.cos(2*np.deg2rad(event['orientation_target']+7.5))#cos(2*deg2rad(angles + 7.5))
+        #event['orientation_target_sin']    = np.sin(2*np.deg2rad(event['orientation_target']+7.5))#sin(2*deg2rad(angles + 7.5))
+        #event['orientation_probe_cos']     = np.cos(2*np.deg2rad(event['orientation_probe']+7.5))
+        #event['orientation_probe_sin']     = np.sin(2*np.deg2rad(event['orientation_probe']+7.5))
         event['targetContrast']            = contrasts[event['contrast']-1]
         event['seen_unseen']               = event['response_visibilityCode'] > 1
 
@@ -120,7 +126,15 @@ def decim(inst, decim):
     return inst
 
 
-from sklearn.svm import SVR
+from sklearn.svm import SVR, SVC
+
+
+class SVC_2class_proba(SVC):
+    """Probabilistic SVC for 2 classes only"""
+    def predict(self, x):
+        probas = super(SVC_2class_proba, self).predict_proba(x)
+        return probas[:, 1]
+
 
 class SVR_angle(SVR):
 
@@ -146,8 +160,6 @@ class SVR_angle(SVR):
             angles in degree
         """
         # Go from orientation space (0-180° degrees) to complex space (0 - 2 pi radians)
-        angle2circle = lambda angles: np.deg2rad(2 * (angles + 7.5))
-        y = angle2circle(trial_angles)
         self.clf_cos.fit(X, np.cos(y))
         self.clf_sin.fit(X, np.sin(y))
 
@@ -167,3 +179,26 @@ class SVR_angle(SVR):
         predict_sin = self.clf_sin.predict(X)
         predict_angle = np.arctan2(predict_sin, predict_cos)
         return predict_angle
+
+
+
+def score_angle(truth, prediction):
+    """Scoring function dedicated to SVR_angle"""
+    angle_error = truth - prediction[:, 0]
+    pi = np.pi
+    score = np.mean(np.abs((angle_error + pi) % (2 * pi) - pi))
+    return score
+
+def scorer_auc(y_true, y_pred):
+    from sklearn.metrics import roc_auc_score
+    from sklearn.preprocessing import LabelBinarizer
+    """Dedicated to 2class probabilistic outputs"""
+    le = LabelBinarizer()
+    y_true = le.fit_transform(y_true)
+    return roc_auc_score(y_true, y_pred)
+
+def scorer_spearman(y_true, y_pred):
+    """"Dedicated to standard SVR"""
+    from scipy.stats import spearmanr
+    rho, p = spearmanr(y_true, y_pred[:, 0])
+    return rho
