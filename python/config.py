@@ -1,14 +1,12 @@
 import os
 import os.path as op
-# import pandas as pd
-
 
 # Experiment parameters
 open_browser = True
 base_path = op.dirname(op.dirname(__file__))
-data_path = op.join(base_path, '/media', 'Paris', 'data')
+data_path = op.join(base_path, '/media', 'niccolo', 'Paris', 'data')
 script_path = '/home/niccolo/Dropbox/DOCUP/scripts/python/'
-results_path = op.join(base_path, '/media', 'ParisPy', 'data')
+results_path = op.join(base_path, '/media', 'niccolo', 'ParisPy', 'data')
 results_dir = op.join(base_path, 'results')
 if not op.exists(results_dir):
     os.mkdir(results_dir)
@@ -38,7 +36,8 @@ from utils import (
 scaler = StandardScaler()
 
 # SVC
-svc = SVC_2class_proba(C=1, kernel='linear', class_weight='auto')
+svc = SVC_2class_proba(C=1, kernel='linear', class_weight='auto',
+                       probability=True)
 pipeline_svc = Pipeline([('scaler', scaler), ('svc', svc)])
 
 # SVR
@@ -119,7 +118,26 @@ inputTypes = (
 # ##################################""
 # # UNCOMMENT TO SUBSELECTION FOR FAST PROCESSING
 # #
-subjects = [subjects[9]]
+# subjects = [subjects[9]]
 inputTypes = [inputTypes[0]]
-# preproc = dict(decim=8, crop=dict(tmin=0, tmax=0.400))
-preproc = dict(decim=8, crop=dict(tmin=0, tmax=0.500))
+# # preproc = dict(decim=8, crop=dict(tmin=0, tmax=0.400))
+preproc = dict(decim=2, crop=dict(tmin=-.1, tmax=1.100))
+#
+# contrasts = (
+#     dict(name='4visibilitiesPresent',
+#          include=dict(cond='response_visibilityCode', values=[1, 2, 3, 4]),
+#          exclude=[absent],
+#          clf=pipeline_svr,
+#          scorer=scorer_spearman),
+#     dict(name='presentAbsent',
+#          include=dict(cond='present', values=[0, 1]),
+#          exclude=[],
+#          clf=pipeline_svc,
+#          scorer=scorer_auc),
+#     dict(name='targetAngle',
+#          include=dict(cond='orientation_target_rad',
+#                       values=angle2circle([15, 45, 75, 105, 135, 165])),
+#          exclude=[absent],
+#          clf=pipeline_svrangle,
+#          scorer=scorer_angle)
+# )
