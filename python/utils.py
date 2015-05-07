@@ -5,7 +5,7 @@ import scipy.io as sio
 
 def angle2circle(angles):
     """from degree to radians multipled by 2"""
-    return np.deg2rad(2 * (angles + 7.5))
+    return np.deg2rad(2 * (np.array(angles) + 7.5))
 
 
 def get_data(meg_fname, bhv_fname):
@@ -22,7 +22,7 @@ def get_data(meg_fname, bhv_fname):
 
     # Create an MNE Epoch
     n_trial, n_chans, n_time = bin_data.shape
-    sfreq = ft_data['fsample'].item().item()
+    sfreq = ft_data['fsample'].item()
     time = ft_data['time'].item()[0]
     tmin = min(time)
     chan_names = [str(label) for label in ft_data['label'].item()]
@@ -145,7 +145,7 @@ class SVR_angle(SVR):
         y : list | np.array (n_trials)
             angles in degree
         """
-        # Go from orientation space (0-180° degrees) to complex space
+        # Go from orientation space (0-180 degrees) to complex space
         # (0 - 2 pi radians)
         self.clf_cos.fit(X, np.cos(y))
         self.clf_sin.fit(X, np.sin(y))
