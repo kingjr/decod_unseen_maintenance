@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 from config import (
                     subjects,
                     data_path,
-                    results_path,
+                    pyoutput_path,
                     inputTypes,
                     clf_types,
 )
@@ -45,10 +45,10 @@ for s, subject in enumerate(subjects):
     print(subject)
 
     # define data path
-    path_x = op.join(results_path, subject, 'mvpas',
+    path_x = op.join(pyoutput_path, subject, 'mvpas',
         '{}-decod_{}_{}.pickle'.format(subject, contrasts[0]['name'], 'SVR'))
 
-    path_y = op.join(results_path, subject, 'mvpas',
+    path_y = op.join(pyoutput_path, subject, 'mvpas',
         '{}-decod_{}_{}.pickle'.format(subject, contrasts[1]['name'], 'SVR'))
 
     # load individual data
@@ -118,7 +118,7 @@ contrast = clf_type['contrasts'][0]
 for s, subject in enumerate(subjects):
     print(subject)
     # define individual data path
-    path = op.join(results_path,subject,'mvpas',
+    path = op.join(pyoutput_path,subject,'mvpas',
         '{}-decod_{}_{}.pickle'.format(subject,contrast['name'],'SVC'))
 
     # load individual data

@@ -1,4 +1,4 @@
-# Author: Jean-Rémi King <jeanremi.king@gmail.com>
+# Author: Jean-Remi King <jeanremi.king@gmail.com>
 #
 # BSD License
 

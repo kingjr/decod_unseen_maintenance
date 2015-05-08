@@ -9,7 +9,7 @@ from meeg_preprocessing import setup_provenance
 from config import (
     open_browser,
     data_path,
-    results_path,
+    pyoutput_path,
     results_dir,
     subjects,
     inputTypes,
@@ -92,7 +92,7 @@ for s, subject in enumerate(subjects):  # Loop across each subject
 
                 # Save contrast
                 pkl_fname = op.join(
-                    results_path, subject, 'mvpas',
+                    pyoutput_path, subject, 'mvpas',
                     '{}-decod_{}_{}.pickle'.format(subject, contrast['name'],
                                                    fname_appendix))
 

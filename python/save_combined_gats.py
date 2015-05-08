@@ -9,7 +9,7 @@ import os.path as op
 import scipy.io as sio
 
 from postproc_functions import recombine_svr_prediction
-from config import (results_path,
+from config import (pyoutput_path,
                     subjects,
                     inputTypes,
                     clf_types
@@ -24,11 +24,11 @@ for s, subjects in subjects:
     for c in range(1): # use range(2) to compute also probes
         # define results path
         contrast = clf_type['contrasts'][c*2]
-        path_x = op.join(results_path, subject, 'mvpas',
+        path_x = op.join(pyoutput_path, subject, 'mvpas',
             '{}-decod_{}_{}.pickle'.format(subject, contrast['name'], 'SVR'))
 
         contrast = clf_type['contrasts'][c*2+1]
-        path_y = op.join(results_path, subject, 'mvpas',
+        path_y = op.join(pyoutput_path, subject, 'mvpas',
             '{}-decod_{}_{}.pickle'.format(subject, contrast['name'], 'SVR'))
 
         # read GAT data
@@ -61,7 +61,7 @@ for s, subjects in subjects:
         gat.scores_ = angle_error
 
         # Save contrast
-        pkl_fname = op.join(results_path, subject, 'mvpas',
+        pkl_fname = op.join(pyoutput_path, subject, 'mvpas',
             '{}-decod_{}_{}.pickle'.format(subject, contrast['name'], 'SVR'))
 
         # Save classifier results

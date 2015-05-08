@@ -19,7 +19,7 @@ from utils import get_data
 
 from config import (
     data_path,
-    results_path,
+    pyoutput_path,
     subjects,
     results_dir,
     contrasts,
@@ -111,7 +111,7 @@ for subject in subjects:
 
 
     # Save all_evokeds
-    ave_fname = op.join(results_path, subject,
+    ave_fname = op.join(pyoutput_path, subject,
                       '{}-contrasts-ave.pickle'.format(subject))
     save_dict = dict()
     save_dict[contrast['name']] = dict(delta=delta, evokeds=evokeds,

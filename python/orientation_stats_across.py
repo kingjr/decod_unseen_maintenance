@@ -18,7 +18,7 @@ import matplotlib.pyplot as plt
 from pycircstat import vtest, rayleigh
 from mne.stats import spatio_temporal_cluster_1samp_test
 
-from config import (subjects, results_path, clf_types)
+from config import (subjects, pyoutput_path, clf_types)
 from toolbox.utils import (plot_eb, fill_betweenx_discontinuous)
 from postproc_functions import (realign_angle,
                                 cart2pol,
@@ -36,7 +36,7 @@ for clf_type in clf_types:
 
         if clf_type['name']=='SVC':
             # define results path
-            path_gat = op.join(results_path, subject, 'mvpas',
+            path_gat = op.join(pyoutput_path, subject, 'mvpas',
                 '{}-decod_{}_{}.pickle'.format(subject, 'targetAngle', 'SVC'))
 
             ###### PREPROC
@@ -54,10 +54,10 @@ for clf_type in clf_types:
 
         elif clf_type['name']=='SVR':
             # define results path
-            path_x = op.join(results_path, subject, 'mvpas',
+            path_x = op.join(pyoutput_path, subject, 'mvpas',
                 '{}-decod_{}_{}.pickle'.format(subject, 'targetAngle_cos', 'SVR'))
 
-            path_y = op.join(results_path, subject, 'mvpas',
+            path_y = op.join(pyoutput_path, subject, 'mvpas',
                 '{}-decod_{}_{}.pickle'.format(subject, 'targetAngle_sin', 'SVR'))
 
             # read GAT data

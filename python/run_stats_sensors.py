@@ -13,7 +13,7 @@ import mne
 
 from config import (
     data_path,
-    results_path,
+    pyoutput_path,
     subjects,
     results_dir,
     contrasts,
@@ -50,7 +50,7 @@ contrast = contrasts[0]
 evokeds = list()
 # Gather data across all subjects
 for s, subject in enumerate(subjects):
-    ave_fname = op.join(results_path, subject,
+    ave_fname = op.join(pyoutput_path, subject,
                         '{}-contrasts-ave.pickle'.format(subject))
     le_dict = load_from_dict(ave_fname)
     # XXX JRK : Needs to fix this for NP and GM
@@ -112,7 +112,7 @@ evoked.plot_topomap(scale=1., sensors=False, contours=False,
 #                            ep['name'] + contrast['name'])
 
 # Save contrast
-pkl_fname = op.join(results_path, 'fsaverage', 'cluster_sensors.pickle')
+pkl_fname = op.join(pyoutput_path, 'fsaverage', 'cluster_sensors.pickle')
 
 # If file exist, load already save data and append new cluster
 save_var = dict()

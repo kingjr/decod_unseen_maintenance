@@ -6,7 +6,7 @@ open_browser = True
 base_path = op.dirname(op.dirname(__file__))
 data_path = op.join(base_path, '/media', 'niccolo', 'Paris', 'data')
 script_path = '/home/niccolo/Dropbox/DOCUP/scripts/python/'
-results_path = op.join(base_path, '/media', 'niccolo', 'ParisPy', 'data')
+pyoutput_path = op.join(base_path, '/media', 'niccolo', 'ParisPy', 'data')
 results_dir = op.join(base_path, 'results')
 if not op.exists(results_dir):
     os.mkdir(results_dir)

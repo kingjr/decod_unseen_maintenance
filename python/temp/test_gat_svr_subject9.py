@@ -13,7 +13,7 @@ from utils import get_data, resample_epochs, decim
 from config import (
     open_browser,
     data_path,
-    results_path,
+    pyoutput_path,
     results_dir,
     subjects,
     inputTypes,

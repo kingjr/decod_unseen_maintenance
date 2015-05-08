@@ -9,7 +9,7 @@ import mne
 from config import (
                     subjects,
                     data_path,
-                    results_path,
+                    pyoutput_path,
                     inputTypes,
                     clf_types
 )
@@ -29,7 +29,7 @@ for s, subject in enumerate(subjects):
     print(subject)
 
     # define results path
-    path_gat = op.join(results_path, subject, 'mvpas',
+    path_gat = op.join(pyoutput_path, subject, 'mvpas',
         '{}-decod_{}_{}.pickle'.format(subject, 'targetAngle', 'SVC'))
 
     ###### PREPROC
