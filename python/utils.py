@@ -112,11 +112,18 @@ def decim(inst, decim):
     return inst
 
 
-from sklearn.svm import LinearSVR
+from sklearn.svm import LinearSVR, SVC
 from sklearn.linear_model import LogisticRegression
 
 
 class clf_2class_proba(LogisticRegression):
+    """Probabilistic SVC for 2 classes only"""
+    def predict(self, x):
+        probas = super(clf_2class_proba, self).predict_proba(x)
+        return probas[:, 1]
+
+
+class SVC_2class_proba(SVC):
     """Probabilistic SVC for 2 classes only"""
     def predict(self, x):
         probas = super(clf_2class_proba, self).predict_proba(x)

@@ -93,7 +93,7 @@ for s, subject in enumerate(subjects):  # Loop across each subject
                 # Save contrast
                 pkl_fname = op.join(
                     pyoutput_path, subject, 'mvpas',
-                    '{}-decod_{}_{}.pickle'.format(subject, contrast['name'],
+                    '{}-decod_{}{}.pickle'.format(subject, contrast['name'],
                                                    fname_appendix))
 
                 # Save classifier results
