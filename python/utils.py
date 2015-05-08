@@ -112,26 +112,27 @@ def decim(inst, decim):
     return inst
 
 
-from sklearn.svm import SVR, SVC
+from sklearn.svm import LinearSVR
+from sklearn.linear_model import LogisticRegression
 
 
-class SVC_2class_proba(SVC):
+class clf_2class_proba(LogisticRegression):
     """Probabilistic SVC for 2 classes only"""
     def predict(self, x):
-        probas = super(SVC_2class_proba, self).predict_proba(x)
+        probas = super(clf_2class_proba, self).predict_proba(x)
         return probas[:, 1]
 
 
-class SVR_angle(SVR):
+class SVR_angle(LinearSVR):
 
     def __init__(self):
-        from sklearn.svm import SVR
+        from sklearn.svm import LinearSVR
         from sklearn.preprocessing import StandardScaler
         from sklearn.pipeline import Pipeline
         scaler_cos = StandardScaler()
         scaler_sin = StandardScaler()
-        svr_cos = SVR(C=1, kernel='linear')
-        svr_sin = SVR(C=1, kernel='linear')
+        svr_cos = LinearSVR(C=1)
+        svr_sin = LinearSVR(C=1)
         self.clf_cos = Pipeline([('scaler', scaler_cos), ('svr', svr_cos)])
         self.clf_sin = Pipeline([('scaler', scaler_sin), ('svr', svr_sin)])
 

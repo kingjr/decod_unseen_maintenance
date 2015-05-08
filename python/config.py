@@ -28,20 +28,19 @@ preproc = dict()
 # Decoding parameters
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import Pipeline
-from sklearn.svm import SVR
+from sklearn.svm import LinearSVR
 from utils import (
-    SVC_2class_proba, SVR_angle, angle2circle,
+    clf_2class_proba, SVR_angle, angle2circle,
     scorer_angle, scorer_auc, scorer_spearman)
 
 scaler = StandardScaler()
 
 # SVC
-svc = SVC_2class_proba(C=1, kernel='linear', class_weight='auto',
-                       probability=True)
+svc = clf_2class_proba(C=1, class_weight='auto')
 pipeline_svc = Pipeline([('scaler', scaler), ('svc', svc)])
 
 # SVR
-svr = SVR(C=1, kernel='linear')
+svr = LinearSVR(C=1)
 pipeline_svr = Pipeline([('scaler', scaler), ('svr', svr)])
 
 # SVR angles
@@ -120,24 +119,24 @@ inputTypes = (
 # #
 # subjects = [subjects[9]]
 inputTypes = [inputTypes[0]]
-# # preproc = dict(decim=8, crop=dict(tmin=0, tmax=0.400))
-preproc = dict(decim=2, crop=dict(tmin=-.1, tmax=1.100))
+preproc = dict(decim=8, crop=dict(tmin=0, tmax=0.400))
+# preproc = dict(decim=2, crop=dict(tmin=-.1, tmax=1.100))
 #
-# contrasts = (
-#     dict(name='4visibilitiesPresent',
-#          include=dict(cond='response_visibilityCode', values=[1, 2, 3, 4]),
-#          exclude=[absent],
-#          clf=pipeline_svr,
-#          scorer=scorer_spearman),
-#     dict(name='presentAbsent',
-#          include=dict(cond='present', values=[0, 1]),
-#          exclude=[],
-#          clf=pipeline_svc,
-#          scorer=scorer_auc),
-#     dict(name='targetAngle',
-#          include=dict(cond='orientation_target_rad',
-#                       values=angle2circle([15, 45, 75, 105, 135, 165])),
-#          exclude=[absent],
-#          clf=pipeline_svrangle,
-#          scorer=scorer_angle)
-# )
+contrasts = (
+    dict(name='4visibilitiesPresent',
+         include=dict(cond='response_visibilityCode', values=[1, 2, 3, 4]),
+         exclude=[absent],
+         clf=pipeline_svr,
+         scorer=scorer_spearman),
+    dict(name='presentAbsent',
+         include=dict(cond='present', values=[0, 1]),
+         exclude=[],
+         clf=pipeline_svc,
+         scorer=scorer_auc),
+    dict(name='targetAngle',
+         include=dict(cond='orientation_target_rad',
+                      values=angle2circle([15, 45, 75, 105, 135, 165])),
+         exclude=[absent],
+         clf=pipeline_svrangle,
+         scorer=scorer_angle)
+)
