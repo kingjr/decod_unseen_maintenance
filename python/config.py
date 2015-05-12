@@ -105,23 +105,25 @@ contrasts = (
 )
 
 
-# Define frequencies of interest for power decoding
-freqs = [7, 10, 12, 18, 29, 70, 105]
-
-# Define type of input (erf,power etc...)
+# Define type of input (erf,frequenct etc...)
 inputTypes = (
-    dict(name='erf', values=[float('NaN')]),
-    dict(name='power', values=freqs)
+    dict(name='erf'),
+    dict(name='freq7'),
+    dict(name='freq10'),
+    dict(name='freq12'),
+    dict(name='freq18'),
+    dict(name='freq29'),
+    dict(name='freq70'),
+    dict(name='freq105'),
 )
 
 # ##################################""
 # # UNCOMMENT TO SUBSELECTION FOR FAST PROCESSING
 # #
 # subjects = [subjects[9]]
-inputTypes = [inputTypes[0]]
-preproc = dict(decim=8, crop=dict(tmin=0, tmax=0.400))
+# inputTypes = [inputTypes[0]]
+preproc = dict(decim=2, crop=dict(tmin=-.2, tmax=1.200))
 # preproc = dict(decim=2, crop=dict(tmin=-.1, tmax=1.100))
-contrasts = contrasts[2:4]
 # contrasts = (
 #     dict(name='4visibilitiesPresent',
 #          include=dict(cond='response_visibilityCode', values=[1, 2, 3, 4]),
