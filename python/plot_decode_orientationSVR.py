@@ -43,8 +43,10 @@ for typ in inputTypes:
         # loop across subjects
         for s, subject in enumerate(subjects):
             print(subject)
-            # define meg_path appendix
-            fname_appendix = op.join('_Tfoi_mtm_', typ['name'][4:], 'Hz')
+            if typ['name'] == 'erf':
+                fname_appendix = ''
+            else:
+                fname_appendix = op.join('_Tfoi_mtm_', typ['name'][4:], 'Hz')
 
             # # load behavioral data
             # meg_fname = op.join(data_path, subject, 'preprocessed',

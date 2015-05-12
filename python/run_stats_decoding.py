@@ -40,7 +40,10 @@ for typ in inputTypes:
                                             typ['name']))
 
             # define meg_path appendix
-            fname_appendix = op.join('_Tfoi_mtm_', typ['name'][4:], 'Hz')
+            if typ['name'] == 'erf':
+                fname_appendix = ''
+            else:
+                fname_appendix = op.join('_Tfoi_mtm_', typ['name'][4:], 'Hz')
 
             # define path to file to be loaded
             pkl_fname = op.join(
