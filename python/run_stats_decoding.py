@@ -46,7 +46,7 @@ for typ in inputTypes:
 
                 # define meg_path appendix
                 if typ['name'] == 'erf':
-                    fname_appendix = '_'  # XXX REMOVE NEXT TIME
+                    fname_appendix = ''  # XXX REMOVE NEXT TIME
                 elif typ['name'] == 'power':
                     fname_appendix = op.join('_Tfoi_mtm_', freq, 'Hz')
 
@@ -57,7 +57,7 @@ for typ in inputTypes:
                         subject, contrast['name'], fname_appendix))
 
                 with open(pkl_fname) as f:
-                    gat, contrast, _, _ = pickle.load(f)
+                    gat, _, _, _ = pickle.load(f)
                 if s == 0:
                     scores = np.array(gat.scores_)[:, :, None]
                 else:
