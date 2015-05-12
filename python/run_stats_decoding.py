@@ -1,5 +1,6 @@
 import os.path as op
 import numpy as np
+import copy
 # import matplotlib.pyplot as plt
 
 from toolbox.utils import fill_betweenx_discontinuous, plot_eb
@@ -62,25 +63,36 @@ for typ in inputTypes:
                 with open(pkl_fname) as f:
                     gat, contrast, sel, events = pickle.load(f)
 
+                gat_ = copy.deepcopy(gat)
+
                 # define seen vs unseen
                 vis = np.array(events['seen_unseen'][sel])
 
                 # define subselection of trials of interest
                 if subselection['name'] == 'allTrials':
                     # select all trials used for classification
-                    subsel = np.arange(events.shape[0])[sel]
+                    subsel = [(vis[t] == True) | (vis[t] == False)
+                              for t in np.arange(len(vis))]
                 elif subselection['name'] == 'seenOnly':
                     # subscore only seen trials
-                    subsel = vis == True
+                    subsel = [(vis[t] == True)
+                              for t in np.arange(len(vis))]
                 elif subselection['name'] == 'unseenOnly':
-                    subsel = vis == False
+                    subsel = [(vis[t] == False)
+                              for t in np.arange(len(vis))]
+
+                # rescore subselection
+                gat_.y_pred_ = gat.y_pred_[:, :, subsel]
+                y = np.array(events[contrast['include']['cond']].tolist())
+                gat_.score(y=y[subsel],
+                           scorer=contrast['scorer'])
 
                 # concatenate scores in a gat * subject array
                 if s == 0:
-                    scores = np.array(gat.scores_)[subsel, subsel, None]
+                    scores = np.array(gat_.scores_)[:, :, None]
                 else:
                     scores = np.concatenate((
-                        scores, np.array(gat.scores_)[subsel, subsel, None]),
+                        scores, np.array(gat_.scores_)[:, :, None]),
                         axis=2)
 
             # STATS
@@ -147,8 +159,9 @@ for typ in inputTypes:
             # SAVE
             pkl_fname = op.join(
                 pyoutput_path, 'fsaverage', 'decoding',
-                'decod_stats_{}{}.pickle'.format(contrast['name'],
-                                                 fname_appendix))
+                'decod_stats_{}{}{}.pickle'.format(contrast['name'],
+                                                   fname_appendix,
+                                                   subselection['name']))
             with open(pkl_fname, 'wb') as f:
                 pickle.dump([scores, p_values], f)
 
