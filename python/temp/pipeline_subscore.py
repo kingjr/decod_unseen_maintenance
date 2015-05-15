@@ -66,9 +66,9 @@ def gat_subscore(gat, sel, y=None, scorer=None):
     scores
     """
     # Subselection of trials
-    for train in range(gat.y_pred_):
-        for test in range(gat.y_pred_[train]):
-            gat.y_pred_ = gat.y_pred_[train][test][sel, :]
+    for train in range(len(gat.y_pred_)):
+        for test in range(len(gat.y_pred_[train])):
+            gat.y_pred_[train][test] = gat.y_pred_[train][test][sel, :]
     gat.y_train_ = gat.y_train_[sel]
     return gat.score(y=y, scorer=scorer)
 
@@ -148,9 +148,9 @@ def mean_pred(gat, y=None):
     if y is None:
         y = gat.y_train_
     y_pred = list()
-    for train in range(gat.y_pred_):
+    for train in range(len(gat.y_pred_)):
         y_pred_ = list()
-        for test in range(gat.y_pred_[train]):
+        for test in range(len(gat.y_pred_[train])):
             y_pred__ = list()
             for c in np.unique(y):
                 m = np.mean(gat.y_pred_[train][test][y == c, :], axis=0)
