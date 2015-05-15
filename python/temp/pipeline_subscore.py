@@ -180,6 +180,8 @@ for typ in inputTypes:
             # Put back trials predictions in order according to original
             # selection
             gat = gat_order_y(gat, order=sel, n_pred=len(events))
+            # TODO FIXME XXX
+            gat.y_pred_ = np.array(gat.y_pred_)
 
             # Subscore overall from new selection
             sel = sel_events(events, subscore)
