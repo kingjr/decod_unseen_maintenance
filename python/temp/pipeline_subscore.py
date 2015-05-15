@@ -90,7 +90,7 @@ report, run_id, results_dir, logger = setup_provenance(
     script=__file__, results_dir=results_dir)
 
 for typ in inputTypes:
-    logger.info(ep['name'])
+    logger.info(typ['name'])
     for analysis in subscores:
         logger.info(subscore['name'])
         # Gather subjects
