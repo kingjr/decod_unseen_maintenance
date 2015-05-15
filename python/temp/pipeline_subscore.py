@@ -17,7 +17,7 @@ from scripts.config import (
 )
 
 
-def pkl_fname(type, subject, analysis):
+def pkl_fname(type, subject, subscore):
     # define meg_path appendix
     if typ['name'] == 'erf':
         fname_appendix = ''
@@ -29,11 +29,11 @@ def pkl_fname(type, subject, analysis):
     pkl_fname = op.join(
         pyoutput_path, subject, 'mvpas',
         '{}-decod_{}{}.pickle'.format(
-            subject, analysis['name'], fname_appendix))
+            subject, subscore['name'], fname_appendix))
     return pkl_fname
 
 
-def subscore(gat, sel, y=None, scorer=None):
+def gat_subscore(gat, sel, y=None, scorer=None):
     """Subscores a GAT.
 
     Parameters
@@ -92,22 +92,22 @@ report, run_id, results_dir, logger = setup_provenance(
 
 for typ in inputTypes:
     logger.info(typ['name'])
-    for analysis in subscores:
+    for subscore in subscores:
         logger.info(subscore['name'])
         # Gather subjects data
         scores_list = list()
         y_pred_list = list()
         for subject in subjects:
             # Load CV data
-            file = pkl_fname(typ, subject, analysis['contrast'])
+            file = pkl_fname(typ, subject, subscore['contrast'])
             with open(file) as f:
                 gat, _, events, sel = pickle.load(f)
 
             # Subscore overall
-            sel = find_in_df(events, analysis['include'], analysis['exclude'])
-            key = analysis['include'].keys()[0]
+            sel = find_in_df(events, subscore['include'], subscore['exclude'])
+            key = subscore['include'].keys()[0]
             y = np.array(events[key][sel].tolist())
-            score = subscore(gat, sel, y=y, scorer=analysis['scorer'])
+            score = gat_subscore(gat, sel, y=y, scorer=subscore['scorer'])
             scores_list.append(score)
 
             # Keep mean prediction
@@ -116,12 +116,12 @@ for typ in inputTypes:
         # STATS
         scores = np.array(scores_list)
         # ------ Parameters XXX to be transfered to config?
-        # XXX JRK set stats level for each type of analysis
+        # XXX JRK set stats level for each type of subscore
         alpha = 0.05
         n_permutations = 2 ** 11
         threshold = dict(start=.2, step=.2)
 
-        X = scores.transpose((2, 0, 1)) - analysis['chance']
+        X = scores.transpose((2, 0, 1)) - subscore['chance']
 
         # ------ Run stats
         T_obs_, clusters, p_values, _ = spatio_temporal_cluster_1samp_test(
@@ -149,7 +149,7 @@ for typ in inputTypes:
         # plt.show()
         report.add_figs_to_section(
             fig, '%s (%s) : Decoding GAT' %
-            (typ['name'], analysis['name']), typ['name'])
+            (typ['name'], subscore['name']), typ['name'])
 
         # ------ Plot Decoding
         fig = gat.plot_diagonal(show=False)
@@ -171,10 +171,10 @@ for typ in inputTypes:
         # plt.show()
         report.add_figs_to_section(
             fig, '%s (%s): Decoding diag' %
-            (typ['name'], analysis['name']), typ['name'])
+            (typ['name'], subscore['name']), typ['name'])
 
         # SAVE
-        fname = pkl_fname(typ, subject, analysis['name'])
+        fname = pkl_fname(typ, subject, subscore['name'])
         with open(pkl_fname, 'wb') as f:
             pickle.dump([scores, p_values], f)
 
