@@ -1,3 +1,4 @@
+import op
 import pickle
 import numpy as np
 
@@ -7,13 +8,27 @@ from meeg_preprocessing.utils import setup_provenance
 from toolbox.utils import find_in_df
 
 from scripts.config import (
-    paths,
+    results_dir, pyoutput_path,
     subjects,
     epochs_params,
     open_browser,
     subscores
 )
 
+
+def pkl_fname(type, subject, contrast):
+    # define meg_path appendix
+    if typ['name'] == 'erf':
+        fname_appendix = ''
+    else:
+        fname_appendix = op.join('_Tfoi_mtm_',
+                                 typ['name'][4:], 'Hz')
+
+    # define path to file to be loaded
+    pkl_fname = op.join(
+        pyoutput_path, subject, 'mvpas',
+        '{}-decod_{}{}.pickle'.format(
+            subject, contrast['name'], fname_appendix))
 
 def combine_gat_y(gat_list, order_list=None):
     """Combines multiple gat.y_pred_ & gat.y_train_ into a single gat.
@@ -110,7 +125,7 @@ def mean_pred(gat, y=None):
 # Setup logs:
 mne.set_log_level('INFO')
 report, run_id, results_dir, logger = setup_provenance(
-    script=__file__, results_dir=paths('report'))
+    script=__file__, results_dir=results_dir)
 
 for ep in epochs_params:
     ep = epochs_params[0]
@@ -123,14 +138,12 @@ for ep in epochs_params:
         for subject in subjects:
             # Load CV data
             if analysis['contrast'] is not None:
-                fname = paths('decode', subject, epoch=ep['name'],
-                              analysis=analysis['contrast'])
+                file = pkl_fname(typ, subject, analysis['contrast'])
                 with open(file) as f:
                     gat_dec, _, events, sel_dec = pickle.load(f)
             # Load Generalize data
             if analysis['generalization'] is not None:
-                fname = paths('generalize', subject, epoch=ep['name'],
-                              analysis=analysis['generalization'])
+                file = pkl_fname(typ, subject, analysis['contrast'])
                 with open(file) as f:
                     gat_gen, _, events, sel_gen = pickle.load(f)
 
