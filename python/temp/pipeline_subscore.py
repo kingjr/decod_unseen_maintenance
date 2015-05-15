@@ -6,7 +6,7 @@ import numpy as np
 from mne.stats import spatio_temporal_cluster_1samp_test
 
 # from meeg_preprocessing.utils import setup_provenance
-from toolbox.utils import find_in_df, fill_betweenx_discontinuous, plot_eb
+from toolbox.utils import fill_betweenx_discontinuous, plot_eb
 
 from config import (
     # results_dir,
@@ -16,6 +16,24 @@ from config import (
     # open_browser,
     subscores
 )
+
+
+def sel_events(events, contrast):
+    # Find excluded trials
+    exclude = np.any([
+        events[x['cond']] == ii for x in contrast['exclude']
+        for ii in x['values']],
+        axis=0)
+
+    # Select condition
+    include = list()
+    cond_name = contrast['include']['cond']
+    for value in contrast['include']['values']:
+        # Find included trials
+        include.append(events[cond_name] == value)
+    sel = np.any(include, axis=0) * (exclude == False)
+    sel = np.where(sel)[0]
+    return sel
 
 
 def pkl_fname(typ, subject, name):
@@ -164,8 +182,8 @@ for typ in inputTypes:
             gat = gat_order_y(gat, order=sel, n_pred=len(events))
 
             # Subscore overall from new selection
-            sel = find_in_df(events, subscore['include'], subscore['exclude'])
-            key = subscore['include'].keys()[0]
+            sel = sel_events(events, subscore)
+            key = subscore['include']['cond'].keys()[0]
             y = np.array(events[key][sel].tolist())
             score = gat_subscore(gat, sel, y=y, scorer=subscore['scorer'])
             scores_list.append(score)
