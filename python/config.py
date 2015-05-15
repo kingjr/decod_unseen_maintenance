@@ -157,11 +157,11 @@ subjects = [subjects[9]]
 inputTypes = [inputTypes[0]]
 # preproc = dict(decim=2, crop=dict(tmin=-.2, tmax=1.200))
 # preproc = dict(decim=2, crop=dict(tmin=-.1, tmax=1.100))
-subscores = (
+subscores = [
     dict(name='targetAngleANDseen',
          contrast='targetAngle',
          include=dict(cond='orientation_target_rad',
                       values=angle2circle([15, 45, 75, 105, 135, 165])),
          exclude=[absent, unseen],
-         scorer=scorer_angle)
-)
+         scorer=scorer_angle, chance=1. / 6.)
+]
