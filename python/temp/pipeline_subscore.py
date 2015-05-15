@@ -55,6 +55,50 @@ def gat_subscore(gat, sel, y=None, scorer=None):
     return gat.score(y=y, scorer=scorer)
 
 
+def gat_order_y(gat_list, order_list=None, n_pred=None):
+    """Combines multiple gat.y_pred_ & gat.y_train_ into a single gat.
+
+    Parameters
+    ----------
+        gat_list : list of GeneralizationAcrossTime objects, shape (n_gat)
+            The gats must have been predicted (gat.predict(epochs))
+        order_list : None | list, shape (n_gat), optional
+            Order of the prediction, to be recombined. Defaults to None.
+        n_pred : None | int, optional
+            Maximum number of predictions. If None, set to max(sel). Defaults
+            to None.
+    Returns
+    -------
+        gat : GeneralizationAcrossTime object"""
+
+    if order_list is not None:
+        if len(gat_list) != len(order_list):
+            raise ValueError('len(order_list) must equal len(gat_list)')
+    else:
+        order = [range(len(gat.y_pred_[0][0])) for gat in gat_list]
+        for idx in range(1, len(order)):
+            order[idx] += len(order[idx-1])
+    # Identifiy trial number
+    if n_pred is None:
+        n_pred = np.max([np.max(sel) for sel in order_list])
+    n_dims = np.shape(gat_list[0].y_pred_[0][0])[1]
+    # initialize combined gat
+    cmb_gat = gat_list[0]
+    # initialize y_pred
+    for train in range(gat.y_pred_):
+        for test in range(gat.y_pred_[train]):
+            cmb_gat.y_pred_[train][test] = np.nan * np.ones((n_pred, n_dims))
+    # initialize y_train
+    cmb_gat.y_train_ = np.ones((n_pred,))
+
+    for gat, sel in zip(gat_list, order_list):
+        for train in range(gat.y_pred_):
+            for test in range(gat.y_pred_[train]):
+                cmb_gat.y_pred_[train][test][sel, :] = gat.y_pred_[train][test]
+        cmb_gat.y_train_[sel] = gat.y_train_
+    return cmb_gat
+
+
 def mean_pred(gat, y=None):
     """Provides mean prediction for each category.
 
@@ -102,6 +146,9 @@ for typ in inputTypes:
             file = pkl_fname(typ, subject, subscore['contrast'])
             with open(file) as f:
                 gat, _, events, sel = pickle.load(f)
+
+            # Put back trials predictions in order
+            gat = gat_order_y(gat, order=sel, n_pred=len(events))
 
             # Subscore overall
             sel = find_in_df(events, subscore['include'], subscore['exclude'])
