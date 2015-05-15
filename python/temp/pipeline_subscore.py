@@ -18,7 +18,7 @@ from config import (
 )
 
 
-def pkl_fname(type, subject, subscore):
+def pkl_fname(typ, subject, subscore):
     # define meg_path appendix
     if typ['name'] == 'erf':
         fname_appendix = ''
