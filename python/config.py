@@ -48,6 +48,9 @@ pipeline_svrangle = SVR_angle()
 
 # ###################### Define contrasts #####################
 absent = dict(cond='present', values=[0])
+unseen = dict(cond='seen_unseen', values=[0])
+seen = dict(cond='seen_unseen', values=[1])
+
 
 contrasts = (
     dict(name='4visibilitiesPresent',
@@ -150,25 +153,15 @@ inputTypes = (
 # ##################################""
 # # UNCOMMENT TO SUBSELECTION FOR FAST PROCESSING
 # #
-# subjects = [subjects[9]]
-# inputTypes = [inputTypes[0]]
-preproc = dict(decim=2, crop=dict(tmin=-.2, tmax=1.200))
+subjects = [subjects[9]]
+inputTypes = [inputTypes[0]]
+# preproc = dict(decim=2, crop=dict(tmin=-.2, tmax=1.200))
 # preproc = dict(decim=2, crop=dict(tmin=-.1, tmax=1.100))
-# contrasts = (
-#     dict(name='4visibilitiesPresent',
-#          include=dict(cond='response_visibilityCode', values=[1, 2, 3, 4]),
-#          exclude=[absent],
-#          clf=pipeline_svr,
-#          scorer=scorer_spearman),
-#     dict(name='presentAbsent',
-#          include=dict(cond='present', values=[0, 1]),
-#          exclude=[],
-#          clf=pipeline_svc,
-#          scorer=scorer_auc),
-#     dict(name='targetAngle',
-#          include=dict(cond='orientation_target_rad',
-#                       values=angle2circle([15, 45, 75, 105, 135, 165])),
-#          exclude=[absent],
-#          clf=pipeline_svrangle,
-#          scorer=scorer_angle)
-# )
+subscores = (
+    dict(name='targetAngleANDseen',
+         contrast='targetAngle',
+         include=dict(cond='orientation_target_rad',
+                      values=angle2circle([15, 45, 75, 105, 135, 165])),
+         exclude=[absent, unseen],
+         scorer=scorer_angle)
+)
