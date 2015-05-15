@@ -183,7 +183,7 @@ for typ in inputTypes:
 
             # Subscore overall from new selection
             sel = sel_events(events, subscore)
-            key = subscore['include']['cond'].keys()[0]
+            key = subscore['include']['cond']
             y = np.array(events[key][sel].tolist())
             score = gat_subscore(gat, sel, y=y, scorer=subscore['scorer'])
             scores_list.append(score)
