@@ -18,7 +18,7 @@ from config import (
 )
 
 
-def pkl_fname(typ, subject, subscore):
+def pkl_fname(typ, subject, name):
     # define meg_path appendix
     if typ['name'] == 'erf':
         fname_appendix = ''
@@ -29,8 +29,7 @@ def pkl_fname(typ, subject, subscore):
     # define path to file to be loaded
     pkl_fname = op.join(
         pyoutput_path, subject, 'mvpas',
-        '{}-decod_{}{}.pickle'.format(
-            subject, subscore['name'], fname_appendix))
+        '{}-decod_{}{}.pickle'.format(subject, name, fname_appendix))
     return pkl_fname
 
 
