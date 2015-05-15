@@ -65,11 +65,19 @@ def gat_subscore(gat, sel, y=None, scorer=None):
     -------
     scores
     """
+    # TODO FIXME XXX
+    import copy
+    gat_ = copy.deepcopy(gat)
     # Subselection of trials
-    for train in range(len(gat.y_pred_)):
-        for test in range(len(gat.y_pred_[train])):
-            gat.y_pred_[train][test] = gat.y_pred_[train][test][sel, :]
+    gat.y_pred_ = list()
+    for train in range(len(gat_.y_pred_)):
+        y_pred_ = list()
+        for test in range(len(gat_.y_pred_[train])):
+            y_pred_.append(gat_.y_pred_[train][test][sel, :])
+        gat.y_pred_.append(y_pred_)
     gat.y_train_ = gat.y_train_[sel]
+    # TODO FIXME XXX
+    gat.y_pred_ = np.array(gat.y_pred_)
     return gat.score(y=y, scorer=scorer)
 
 
