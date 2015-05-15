@@ -10,7 +10,7 @@ from toolbox.utils import find_in_df
 from scripts.config import (
     results_dir, pyoutput_path,
     subjects,
-    epochs_params,
+    inputTypes,
     open_browser,
     subscores
 )
@@ -29,7 +29,7 @@ def pkl_fname(type, subject, contrast):
         pyoutput_path, subject, 'mvpas',
         '{}-decod_{}{}.pickle'.format(
             subject, contrast['name'], fname_appendix))
-    return pkl_fnames
+    return pkl_fname
 
 
 def subscore(gat, sel, y=None, scorer=None):
@@ -89,8 +89,7 @@ mne.set_log_level('INFO')
 report, run_id, results_dir, logger = setup_provenance(
     script=__file__, results_dir=results_dir)
 
-for ep in epochs_params:
-    ep = epochs_params[0]
+for typ in inputTypes:
     logger.info(ep['name'])
     for analysis in subscores:
         logger.info(subscore['name'])
