@@ -153,11 +153,12 @@ inputTypes = (
 # ##################################""
 # # UNCOMMENT TO SUBSELECTION FOR FAST PROCESSING
 # #
-subjects = [subjects[9]]
+# subjects = [subjects[9]]
 inputTypes = [inputTypes[0]]
 # preproc = dict(decim=2, crop=dict(tmin=-.2, tmax=1.200))
 # preproc = dict(decim=2, crop=dict(tmin=-.1, tmax=1.100))
 subscores = [
+    contrasts[0],
     dict(name='targetAngleANDseen',
          contrast='targetAngle',
          include=dict(cond='orientation_target_rad',
