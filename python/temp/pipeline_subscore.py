@@ -1,11 +1,12 @@
-import op
+import os.path as op
 import pickle
 import numpy as np
 
 import mne
+from mne.stats import spatio_temporal_cluster_1samp_test
 
 from meeg_preprocessing.utils import setup_provenance
-from toolbox.utils import find_in_df
+from toolbox.utils import find_in_df, fill_betweenx_discontinuous, plot_eb
 
 from scripts.config import (
     results_dir, pyoutput_path,
@@ -16,7 +17,7 @@ from scripts.config import (
 )
 
 
-def pkl_fname(type, subject, contrast):
+def pkl_fname(type, subject, analysis):
     # define meg_path appendix
     if typ['name'] == 'erf':
         fname_appendix = ''
@@ -28,7 +29,7 @@ def pkl_fname(type, subject, contrast):
     pkl_fname = op.join(
         pyoutput_path, subject, 'mvpas',
         '{}-decod_{}{}.pickle'.format(
-            subject, contrast['name'], fname_appendix))
+            subject, analysis['name'], fname_appendix))
     return pkl_fname
 
 
@@ -93,7 +94,7 @@ for typ in inputTypes:
     logger.info(typ['name'])
     for analysis in subscores:
         logger.info(subscore['name'])
-        # Gather subjects
+        # Gather subjects data
         scores_list = list()
         y_pred_list = list()
         for subject in subjects:
@@ -112,5 +113,69 @@ for typ in inputTypes:
             # Keep mean prediction
             y_pred_list.append(mean_pred(gat, y))
 
-        # TODO STATS
-        # TODO PLOTS
+        # STATS
+        scores = np.array(scores_list)
+        # ------ Parameters XXX to be transfered to config?
+        # XXX JRK set stats level for each type of analysis
+        alpha = 0.05
+        n_permutations = 2 ** 11
+        threshold = dict(start=.2, step=.2)
+
+        X = scores.transpose((2, 0, 1)) - analysis['chance']
+
+        # ------ Run stats
+        T_obs_, clusters, p_values, _ = spatio_temporal_cluster_1samp_test(
+            X,
+            out_type='mask',
+            n_permutations=n_permutations,
+            connectivity=None,
+            threshold=threshold,
+            n_jobs=-1)
+
+        # ------ combine clusters & retrieve min p_values for each feature
+        cluster_p = [clusters[c] * p for c, p in enumerate(p_values)]
+        p_values = np.min(np.logical_not(clusters) + cluster_p, axis=0)
+        x, y = np.meshgrid(gat.train_times['times_'],
+                           gat.test_times_['times_'][0],
+                           copy=False, indexing='xy')
+
+        # PLOT
+        # ------ Plot GAT
+        gat.scores_ = np.mean(scores, axis=2)
+        fig = gat.plot(vmin=np.min(gat.scores_), vmax=np.max(gat.scores_),
+                       show=False)
+        ax = fig.axes[0]
+        ax.contour(x, y, p_values < alpha, colors='black', levels=[0])
+        # plt.show()
+        report.add_figs_to_section(
+            fig, '%s (%s) : Decoding GAT' %
+            (typ['name'], analysis['name']), typ['name'])
+
+        # ------ Plot Decoding
+        fig = gat.plot_diagonal(show=False)
+        ax = fig.axes[0]
+        ymin, ymax = ax.get_ylim()
+
+        scores_diag = np.array([np.diag(s) for s in
+                                scores.transpose((2, 0, 1))])
+        times = gat.train_times['times_']
+
+        sig_times = times[np.where(np.diag(p_values) < alpha)[0]]
+        sfreq = (times[1] - times[0]) / 1000
+        fill_betweenx_discontinuous(ax, ymin, ymax, sig_times, freq=sfreq,
+                                    color='orange')
+
+        plot_eb(times, np.mean(scores_diag, axis=0),
+                np.std(scores_diag, axis=0) / np.sqrt(scores.shape[2]),
+                ax=ax, color='blue')
+        # plt.show()
+        report.add_figs_to_section(
+            fig, '%s (%s): Decoding diag' %
+            (typ['name'], analysis['name']), typ['name'])
+
+        # SAVE
+        fname = pkl_fname(typ, subject, analysis['name'])
+        with open(pkl_fname, 'wb') as f:
+            pickle.dump([scores, p_values], f)
+
+report.save(open_browser=open_browser)
