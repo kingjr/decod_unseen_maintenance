@@ -2,17 +2,18 @@ import os.path as op
 import pickle
 import numpy as np
 
-import mne
+# import mne
 from mne.stats import spatio_temporal_cluster_1samp_test
 
-from meeg_preprocessing.utils import setup_provenance
+# from meeg_preprocessing.utils import setup_provenance
 from toolbox.utils import find_in_df, fill_betweenx_discontinuous, plot_eb
 
 from scripts.config import (
-    results_dir, pyoutput_path,
+    # results_dir,
+    pyoutput_path,
     subjects,
     inputTypes,
-    open_browser,
+    # open_browser,
     subscores
 )
 
@@ -130,14 +131,14 @@ def mean_pred(gat, y=None):
     return y_pred
 
 # Setup logs:
-mne.set_log_level('INFO')
-report, run_id, results_dir, logger = setup_provenance(
-    script=__file__, results_dir=results_dir)
+# mne.set_log_level('INFO')
+# report, run_id, results_dir, logger = setup_provenance(
+#     script=__file__, results_dir=results_dir)
 
 for typ in inputTypes:
-    logger.info(typ['name'])
+    # logger.info(typ['name'])
     for subscore in subscores:
-        logger.info(subscore['name'])
+        # logger.info(subscore['name'])
         # Gather subjects data
         scores_list = list()
         y_pred_list = list()
@@ -194,9 +195,9 @@ for typ in inputTypes:
         ax = fig.axes[0]
         ax.contour(x, y, p_values < alpha, colors='black', levels=[0])
         # plt.show()
-        report.add_figs_to_section(
-            fig, '%s (%s) : Decoding GAT' %
-            (typ['name'], subscore['name']), typ['name'])
+        # report.add_figs_to_section(
+        #     fig, '%s (%s) : Decoding GAT' %
+        #     (typ['name'], subscore['name']), typ['name'])
 
         # ------ Plot Decoding
         fig = gat.plot_diagonal(show=False)
@@ -216,13 +217,13 @@ for typ in inputTypes:
                 np.std(scores_diag, axis=0) / np.sqrt(scores.shape[2]),
                 ax=ax, color='blue')
         # plt.show()
-        report.add_figs_to_section(
-            fig, '%s (%s): Decoding diag' %
-            (typ['name'], subscore['name']), typ['name'])
+        # report.add_figs_to_section(
+        #     fig, '%s (%s): Decoding diag' %
+        #     (typ['name'], subscore['name']), typ['name'])
 
         # SAVE
         fname = pkl_fname(typ, subject, subscore['name'])
         with open(pkl_fname, 'wb') as f:
             pickle.dump([scores, p_values], f)
 
-report.save(open_browser=open_browser)
+# report.save(open_browser=open_browser)
