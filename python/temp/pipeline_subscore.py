@@ -107,8 +107,8 @@ for ep in epochs_params:
             sel = find_in_df(events, analysis['include'], analysis['exclude'])
             key = analysis['include'].keys()[0]
             y = np.array(events[key][sel].tolist())
-            scores_list.append(subscore(gat, sel, y=y,
-                                        scorer=analysis['scorer']))
+            score = subscore(gat, sel, y=y, scorer=analysis['scorer'])
+            scores_list.append(score)
 
             # Keep mean prediction
             y_pred_list.append(mean_pred(gat, y))
