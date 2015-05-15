@@ -29,6 +29,7 @@ def pkl_fname(type, subject, contrast):
         pyoutput_path, subject, 'mvpas',
         '{}-decod_{}{}.pickle'.format(
             subject, contrast['name'], fname_appendix))
+    return pkl_fnames
 
 
 def subscore(gat, sel, y=None, scorer=None):
