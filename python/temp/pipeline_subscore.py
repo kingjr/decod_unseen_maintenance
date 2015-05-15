@@ -8,7 +8,7 @@ from mne.stats import spatio_temporal_cluster_1samp_test
 # from meeg_preprocessing.utils import setup_provenance
 from toolbox.utils import find_in_df, fill_betweenx_discontinuous, plot_eb
 
-from scripts.config import (
+from config import (
     # results_dir,
     pyoutput_path,
     subjects,
