@@ -209,7 +209,7 @@ for typ in inputTypes:
         n_permutations = 2 ** 11
         threshold = dict(start=.2, step=.2)
 
-        X = scores.transpose((2, 0, 1)) - subscore['chance']
+        X = scores - subscore['chance']
 
         # ------ Run stats
         T_obs_, clusters, p_values, _ = spatio_temporal_cluster_1samp_test(
@@ -228,8 +228,12 @@ for typ in inputTypes:
                            copy=False, indexing='xy')
 
         # PLOT
+        # keep mean score for plotting
+        for train in range(scores.shape[1]):
+            for test in range(scores.shape[2]):
+                gat.scores_[train][test] = np.mean(scores[:, train, test],
+                                                   axis=0)
         # ------ Plot GAT
-        gat.scores_ = np.mean(scores, axis=2)
         fig = gat.plot(vmin=np.min(gat.scores_), vmax=np.max(gat.scores_),
                        show=False)
         ax = fig.axes[0]
@@ -244,8 +248,7 @@ for typ in inputTypes:
         ax = fig.axes[0]
         ymin, ymax = ax.get_ylim()
 
-        scores_diag = np.array([np.diag(s) for s in
-                                scores.transpose((2, 0, 1))])
+        scores_diag = np.array([np.diag(s) for s in scores])
         times = gat.train_times['times_']
 
         sig_times = times[np.where(np.diag(p_values) < alpha)[0]]
