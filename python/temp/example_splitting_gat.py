@@ -6,22 +6,19 @@ import matplotlib.pyplot as plt
 
 import mne
 
-from config import (
-                    subjects,
+from config import (subjects,
                     data_path,
                     pyoutput_path,
                     inputTypes,
-                    clf_types
-)
+                    clf_types)
 from utils import get_data
 from postproc_functions import (realign_angle)
-
 
 
 # ------------------------------------------------------------------------------
 # -----------------------------------SVC----------------------------------------
 # XXX temporary sub-selection
-s=9
+s = 9
 subjects = [subjects[s]]
 
 # loop across subjects
@@ -30,9 +27,10 @@ for s, subject in enumerate(subjects):
 
     # define results path
     path_gat = op.join(pyoutput_path, subject, 'mvpas',
-        '{}-decod_{}_{}.pickle'.format(subject, 'targetAngle', 'SVC'))
+                       '{}-decod_{}_{}.pickle'.format(subject, 'targetAngle',
+                                                      'SVC'))
 
-    ###### PREPROC
+    # PREPROC
     # Compute angle errors by realigning the predicted categories according to
     # true category
 
@@ -40,7 +38,7 @@ for s, subject in enumerate(subjects):
     with open(path_gat) as f:
         gat, contrast, sel, events = pickle.load(f)
 
-    # define probas
+    # define subselection
     vis = np.array(events['seen_unseen'][sel])
 
     # save dimensions
@@ -48,7 +46,7 @@ for s, subject in enumerate(subjects):
 
     if s == 0:
         # Initialize variables
-        angle_errors = np.zeros(np.append(len(subjects),np.array(dims))
+        angle_errors = np.zeros(np.append(len(subjects), np.array(dims))
 
     # realign to 0th angle category
     probas = realign_angle(gat)
