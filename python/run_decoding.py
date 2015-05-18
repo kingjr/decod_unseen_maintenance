@@ -27,7 +27,7 @@ for s, subject in enumerate(subjects):  # Loop across each subject
         if typ['name'] == 'erf':
             fname_appendix = ''
         else:
-            fname_appendix = op.join('_Tfoi_mtm_', typ['name'][4:], 'Hz')
+            fname_appendix = '_Tfoi_mtm_' + typ['name'][4:] + 'Hz'
 
         # define paths
         meg_fname = op.join(data_path, subject, 'preprocessed',
