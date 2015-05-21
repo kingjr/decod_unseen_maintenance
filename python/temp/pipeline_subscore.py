@@ -41,8 +41,7 @@ def pkl_fname(typ, subject, name):
     if typ['name'] == 'erf':
         fname_appendix = ''
     else:
-        fname_appendix = op.join('_Tfoi_mtm_',
-                                 typ['name'][4:], 'Hz')
+        fname_appendix = '_Tfoi_mtm_' + typ['name'][4:] + 'Hz'
 
     # define path to file to be loaded
     pkl_fname = op.join(
@@ -181,7 +180,7 @@ for typ in inputTypes:
         y_pred_list = list()
         for subject in subjects:
             # Load CV data
-            file = pkl_fname(typ, subject, subscore['contrast'])
+            file = pkl_fname(typ, subject, subscore['name'])
             with open(file) as f:
                 gat, _, sel, events = pickle.load(f)
 
@@ -235,7 +234,7 @@ for typ in inputTypes:
                                                    axis=0)
         # ------ Plot GAT
         fig = gat.plot(vmin=np.min(gat.scores_), vmax=np.max(gat.scores_),
-                       show=False)
+                       show=True)
         ax = fig.axes[0]
         ax.contour(x, y, p_values < alpha, colors='black', levels=[0])
         # plt.show()
@@ -244,7 +243,7 @@ for typ in inputTypes:
         #     (typ['name'], subscore['name']), typ['name'])
 
         # ------ Plot Decoding
-        fig = gat.plot_diagonal(show=False)
+        fig = gat.plot_diagonal(show=True)
         ax = fig.axes[0]
         ymin, ymax = ax.get_ylim()
 
@@ -266,7 +265,7 @@ for typ in inputTypes:
 
         # SAVE
         fname = pkl_fname(typ, subject, subscore['name'])
-        with open(pkl_fname, 'wb') as f:
+        with open(fname, 'wb') as f:
             pickle.dump([scores, p_values], f)
 
 # report.save(open_browser=open_browser)
