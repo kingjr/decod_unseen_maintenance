@@ -26,15 +26,17 @@ for s, subject in enumerate(subjects):  # Loop across each subject
         print(typ)
         if typ['name'] == 'erf':
             fname_appendix = ''
+            fileformat = '.dat'
         else:
             fname_appendix = '_Tfoi_mtm_' + typ['name'][4:] + 'Hz'
+            fileformat = '.mat'
 
         # define paths
         meg_fname = op.join(data_path, subject, 'preprocessed',
                             subject + '_preprocessed' + fname_appendix)
         bhv_fname = op.join(data_path, subject, 'behavior',
                             subject + '_fixed.mat')
-        epochs, events = get_data(meg_fname, bhv_fname)
+        epochs, events = get_data(meg_fname, bhv_fname, fileformat)
 
         # preprocess data for memory issue
         if 'resample' in preproc.keys():
