@@ -180,7 +180,7 @@ for typ in inputTypes:
         y_pred_list = list()
         for subject in subjects:
             # Load CV data
-            file = pkl_fname(typ, subject, subscore['name'])
+            file = pkl_fname(typ, subject, subscore['contrast'])
             with open(file) as f:
                 gat, _, sel, events = pickle.load(f)
 
@@ -264,7 +264,11 @@ for typ in inputTypes:
         #     (typ['name'], subscore['name']), typ['name'])
 
         # SAVE
-        fname = pkl_fname(typ, subject, subscore['name'])
+        fname = op.join(
+            pyoutput_path, 'fsaverage', 'decoding',
+            'decod_stats_{}{}{}.pickle'.format(contrast['name'],
+                                               fname_appendix,
+                                               subscore['name']))
         with open(fname, 'wb') as f:
             pickle.dump([scores, p_values], f)
 
