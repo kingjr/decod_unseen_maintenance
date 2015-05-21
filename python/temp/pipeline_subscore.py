@@ -4,16 +4,17 @@ import numpy as np
 
 # import mne
 from mne.stats import spatio_temporal_cluster_1samp_test
+from meeg_preprocessing import setup_provenance
 
 # from meeg_preprocessing.utils import setup_provenance
 from toolbox.utils import fill_betweenx_discontinuous, plot_eb
 
 from config import (
-    # results_dir,
+    results_dir,
     pyoutput_path,
     subjects,
     inputTypes,
-    # open_browser,
+    open_browser,
     subscores
 )
 
@@ -168,8 +169,8 @@ def mean_pred(gat, y=None):
 
 # Setup logs:
 # mne.set_log_level('INFO')
-# report, run_id, results_dir, logger = setup_provenance(
-#     script=__file__, results_dir=results_dir)
+report, run_id, results_dir, logger = setup_provenance(
+    script=__file__, results_dir=results_dir)
 
 for typ in inputTypes:
     # logger.info(typ['name'])
@@ -194,7 +195,12 @@ for typ in inputTypes:
             sel = sel_events(events, subscore)
             key = subscore['include']['cond']
             y = np.array(events[key][sel].tolist())
-            score = gat_subscore(gat, sel, y=y, scorer=subscore['scorer'])
+            # HACK to skip few subjects that do not have enough trials in some
+            # conditions of interest
+            try:
+                score = gat_subscore(gat, sel, y=y, scorer=subscore['scorer'])
+            except:
+                continue
             scores_list.append(score)
 
             # Keep mean prediction
@@ -234,16 +240,16 @@ for typ in inputTypes:
                                                    axis=0)
         # ------ Plot GAT
         fig = gat.plot(vmin=np.min(gat.scores_), vmax=np.max(gat.scores_),
-                       show=True)
+                       show=False)
         ax = fig.axes[0]
         ax.contour(x, y, p_values < alpha, colors='black', levels=[0])
         # plt.show()
-        # report.add_figs_to_section(
-        #     fig, '%s (%s) : Decoding GAT' %
-        #     (typ['name'], subscore['name']), typ['name'])
+        report.add_figs_to_section(
+            fig, '%s (%s) : Decoding GAT' %
+            (typ['name'], subscore['name']), typ['name'])
 
         # ------ Plot Decoding
-        fig = gat.plot_diagonal(show=True)
+        fig = gat.plot_diagonal(show=False)
         ax = fig.axes[0]
         ymin, ymax = ax.get_ylim()
 
@@ -259,15 +265,16 @@ for typ in inputTypes:
                 np.std(scores_diag, axis=0) / np.sqrt(scores.shape[2]),
                 ax=ax, color='blue')
         # plt.show()
-        # report.add_figs_to_section(
-        #     fig, '%s (%s): Decoding diag' %
-        #     (typ['name'], subscore['name']), typ['name'])
+        report.add_figs_to_section(
+            fig, '%s (%s): Decoding diag' %
+            (typ['name'], subscore['name']), typ['name'])
 
         # SAVE
         fname = op.join(
             pyoutput_path, 'fsaverage', 'decoding',
-            'decod_stats_{}{}.pickle'.format(file, subscore['name']))
+            'decod_stats_{}_{}.pickle'.format(typ['name'],
+                                              subscore['name']))
         with open(fname, 'wb') as f:
             pickle.dump([scores, p_values], f)
 
-# report.save(open_browser=open_browser)
+report.save(open_browser=open_browser)
