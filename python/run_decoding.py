@@ -81,12 +81,14 @@ for s, subject in enumerate(subjects):  # Loop across each subject
             # Plot
             fig = gat.plot_diagonal(show=False)
             report.add_figs_to_section(
-                fig, ('%s %s: (decoding)' % (subject, cond_name)), subject)
+                fig, ('%s %s %s: (diagonal)' %
+                      (subject, cond_name, typ['name'])), subject)
 
             fig = gat.plot(vmin=np.min(gat.scores_),
                            vmax=np.max(gat.scores_), show=False)
             report.add_figs_to_section(
-                fig, ('%s %s: GAT' % (subject, cond_name)), subject)
+                fig, ('%s %s %s: GAT' % (subject, cond_name, typ['name'])),
+                subject)
 
             # Save contrast
             pkl_fname = op.join(
