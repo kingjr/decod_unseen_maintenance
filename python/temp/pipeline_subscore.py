@@ -266,9 +266,7 @@ for typ in inputTypes:
         # SAVE
         fname = op.join(
             pyoutput_path, 'fsaverage', 'decoding',
-            'decod_stats_{}{}{}.pickle'.format(subscore['contrast'],
-                                               fname_appendix,
-                                               subscore['name']))
+            'decod_stats_{}{}.pickle'.format(file, subscore['name']))
         with open(fname, 'wb') as f:
             pickle.dump([scores, p_values], f)
 
