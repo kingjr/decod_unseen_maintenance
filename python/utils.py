@@ -8,22 +8,32 @@ def angle2circle(angles):
     return np.deg2rad(2 * (np.array(angles) + 7.5))
 
 
-def get_data(meg_fname, bhv_fname):
+def get_data(meg_fname, bhv_fname, fileformat):
     from mne.io.meas_info import create_info
     from mne.epochs import EpochsArray
-    """XXX Here explain what this does"""
+    """load behavioural and meg data (erf and time freq)"""
     # import information from fieldtrip data to get data shape
-    ft_data = sio.loadmat(meg_fname + '.mat', squeeze_me=True,
+    ft_data = sio.loadmat(meg_fname[0:-4] + '.mat', squeeze_me=True,
                           struct_as_record=True)['data']
-    # import binary MEG data
-    bin_data = np.fromfile(meg_fname + '.dat', dtype=np.float32)
-    Xdim = ft_data['Xdim'].item()
-    bin_data = np.reshape(bin_data, Xdim[[2, 1, 0]]).transpose([2, 1, 0])
+    if fileformat == '.dat':
+        # import binary MEG data
+        bin_data = np.fromfile(meg_fname, dtype=np.float32)
+        Xdim = ft_data['Xdim'].item()
+        bin_data = np.reshape(bin_data, Xdim[[2, 1, 0]]).transpose([2, 1, 0])
+        # define data
+        data = bin_data
+        time = ft_data['time'].item()[0]
+
+    elif fileformat == '.mat':
+        # import structure MEG data
+        matdata = ft_data['powspctrm'].item()
+        # define data
+        data = matdata
+        time = ft_data['time'].item()
 
     # Create an MNE Epoch
-    n_trial, n_chans, n_time = bin_data.shape
-    sfreq = ft_data['fsample'].item()
-    time = ft_data['time'].item()[0]
+    n_trial, n_chans, n_time = data.shape
+    sfreq = 1. / (time[1] - time[0])
     tmin = min(time)
     chan_names = [str(label) for label in ft_data['label'].item()]
     chan_types = np.squeeze(np.concatenate(
@@ -33,7 +43,7 @@ def get_data(meg_fname, bhv_fname):
     events = np.c_[np.cumsum(np.ones(n_trial)) * 5 * sfreq,
                    np.zeros(n_trial),
                    ft_data['trialinfo'].item()]
-    epochs = EpochsArray(bin_data, info, events=events, tmin=tmin)
+    epochs = EpochsArray(data, info, events=events, tmin=tmin)
 
     # Load behavioral file
     trials = sio.loadmat(bhv_fname, squeeze_me=True,
@@ -53,8 +63,10 @@ def get_data(meg_fname, bhv_fname):
 
     contrasts = [0, .5, .75, 1]
     events = list()
-    for trial in trials:
+    for t, trial in enumerate(trials):
         event = dict()
+        # define previous trial
+        prevtrial = trials[t-1]
         for key in keys:
                 event[key] = trial[key]
         # manual new keys
@@ -67,6 +79,13 @@ def get_data(meg_fname, bhv_fname):
             event['orientation_probe'])
         event['targetContrast'] = contrasts[event['contrast']-1]
         event['seen_unseen'] = event['response_visibilityCode'] > 1
+        event['previous_trial_visibility'] = prevtrial[
+            'response_visibilityCode']
+        event['previous_orientation_target'] = prevtrial[
+            'orientation']*30-15
+        event['previous_orientation_probe'] = (prevtrial[
+            'orientation']*30-15 +
+            trial['tilt'] * 30) % 180
 
         # append to all events
         events.append(event)
