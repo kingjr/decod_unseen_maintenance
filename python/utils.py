@@ -13,11 +13,11 @@ def get_data(meg_fname, bhv_fname, fileformat):
     from mne.epochs import EpochsArray
     """load behavioural and meg data (erf and time freq)"""
     # import information from fieldtrip data to get data shape
-    ft_data = sio.loadmat(meg_fname[0:-4] + '.mat', squeeze_me=True,
+    ft_data = sio.loadmat(meg_fname + '.mat', squeeze_me=True,
                           struct_as_record=True)['data']
     if fileformat == '.dat':
         # import binary MEG data
-        bin_data = np.fromfile(meg_fname, dtype=np.float32)
+        bin_data = np.fromfile(meg_fname + fileformat, dtype=np.float32)
         Xdim = ft_data['Xdim'].item()
         bin_data = np.reshape(bin_data, Xdim[[2, 1, 0]]).transpose([2, 1, 0])
         # define data
