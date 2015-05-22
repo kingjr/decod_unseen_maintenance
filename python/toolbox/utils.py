@@ -8,8 +8,10 @@ import pickle
 import os.path as op
 
 
-def build_contrast(evoked_list, epochs, events, operator=None):
-    """Builds a n-deep contrast where n represents different levels of contrasts
+
+
+def build_analysis(evoked_list, epochs, events, operator=None):
+    """Builds a n-deep analysis where n represents different levels of analyses
     Parameters
     ----------
     evoked_list : dict
@@ -28,7 +30,7 @@ def build_contrast(evoked_list, epochs, events, operator=None):
 
     evokeds = dict()
     evokeds['evokeds'] = list()  # list of all evoked from lower level
-    evokeds['coef'] = list()  # evoked of contrast
+    evokeds['coef'] = list()  # evoked of analysis
 
     # Accept passing lists only
     if type(evoked_list) is list:
@@ -54,10 +56,10 @@ def build_contrast(evoked_list, epochs, events, operator=None):
         else:
             if 'operator' not in evoked_list.keys():
                 evoked_list['operator'] = None
-            evoked, evokeds_ = build_contrast(evoked, epochs, events,
-                                              evoked_list['operator'])
+            coef_, evokeds_ = build_analysis(evoked, epochs, events,
+                                             evoked_list['operator'])
             evokeds['evokeds'].append(evokeds_)
-            evokeds['coef'].append(evoked)
+            evokeds['coef'].append(coef_)
     else:
         # Set default operation
         if operator is None:
