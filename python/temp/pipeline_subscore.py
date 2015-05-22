@@ -245,8 +245,8 @@ for typ in inputTypes:
         ax.contour(x, y, p_values < alpha, colors='black', levels=[0])
         # plt.show()
         report.add_figs_to_section(
-            fig, '%s (%s) : Decoding GAT' %
-            (typ['name'], subscore['name']), typ['name'])
+            fig, '%s - %s (trained on %s): Decoding GAT' %
+            (typ['name'], subscore['name'], subscore['contrast']), typ['name'])
 
         # ------ Plot Decoding
         fig = gat.plot_diagonal(show=False)
@@ -266,8 +266,8 @@ for typ in inputTypes:
                 ax=ax, color='blue')
         # plt.show()
         report.add_figs_to_section(
-            fig, '%s (%s): Decoding diag' %
-            (typ['name'], subscore['name']), typ['name'])
+            fig, '%s - %s (trained on %s): Decoding diag' %
+            (typ['name'], subscore['name'], subscore['contrast']), typ['name'])
 
         # SAVE
         fname = op.join(
