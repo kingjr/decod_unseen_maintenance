@@ -8,8 +8,6 @@ import pickle
 import os.path as op
 
 
-
-
 def build_analysis(evoked_list, epochs, events, operator=None):
     """Builds a n-deep analysis where n represents different levels of analyses
     Parameters
@@ -312,7 +310,7 @@ def Evokeds_to_Epochs(inst, info=None, events=None):
 
 class cluster_stat(dict):
     """ Cluster statistics """
-    def __init__(self, insts, alpha=0.05, **kwargs):
+    def __init__(self, epochs, alpha=0.05, **kwargs):
         """
         Parameters
         ----------
@@ -325,11 +323,13 @@ class cluster_stat(dict):
 
         """
         from mne.stats import spatio_temporal_cluster_1samp_test
+
         # Convert lists of evoked in Epochs
-        insts = [Evokeds_to_Epochs(i) if type(i) is list else i for i in insts]
+        if isinstance(epochs, list):
+            epochs = Evokeds_to_Epochs(epochs)
+        X = epochs._data.transpose((0, 2, 1))
 
         # Apply contrast: n * space * time
-        X = np.array(insts[0]._data - insts[1]._data).transpose([0, 2, 1])
 
         # Run stats
         self.T_obs_, clusters, p_values, _ = \
@@ -344,10 +344,10 @@ class cluster_stat(dict):
         self.p_values_ = p_values[inds]
 
         # By default, keep meta data from first epoch
-        self.insts = insts
-        self.times = self.insts[0].times
-        self.info = self.insts[0].info
-        self.ch_names = self.insts[0].ch_names
+        self.epochs = epochs
+        self.times = self.epochs[0].times
+        self.info = self.epochs[0].info
+        self.ch_names = self.epochs[0].ch_names
 
         return
 
@@ -432,7 +432,7 @@ class cluster_stat(dict):
         mask, space_inds, time_inds = self._get_mask(i_clu)
 
         # plot average test statistic and mark significant sensors
-        evoked = self.insts[0].average()
+        evoked = self.epochs.average()
         evoked.data = self.T_obs_.transpose()
         fig = evoked.plot_topomap(mask=np.transpose(mask), **kwargs)
 
@@ -458,7 +458,6 @@ class cluster_stat(dict):
         fig
         """
         import matplotlib.pyplot as plt
-        from mne.viz.utils import COLORS
 
         times = self.times * 1000
 
@@ -480,18 +479,8 @@ class cluster_stat(dict):
         # Time course
         if plot_type == 'butterfly':
             # Plot butterfly of difference
-            evoked = self.insts[0].average() - self.insts[1].average()
+            evoked = self.epochs.average()
             fig = evoked.plot(axes=axes, show=False, **kwargs)
-        elif plot_type == 'cluster':
-            evokeds = [x.average() for x in self.insts]
-            for i_clu in i_clus:
-                _, space_inds, _ = self._get_mask(i_clu)
-                for i_evo, evoked in enumerate(evokeds):
-                    signal = np.mean(evoked.data[space_inds, :],
-                                     axis=0)
-                    _kwargs = kwargs.copy()
-                    _kwargs['color'] = COLORS[i_evo % len(COLORS)]
-                    axes.plot(times, signal, **_kwargs)
 
         # Significant times
         ymin, ymax = axes.get_ylim()
@@ -521,6 +510,7 @@ class cluster_stat(dict):
 def find_in_df(df, include, exclude=dict(), max_n=np.inf):
     """Find instance in pd.dataFrame that correspond to include and exlcuding
     criteria.
+
     Parameters
     ----------
     df : pd.dataFrame
