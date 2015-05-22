@@ -271,6 +271,45 @@ subscores = [
          scorer=scorer_spearman),
 ]
 
+# ############# Define second-order subscores #################################
+subscores2 = [
+    dict(name='presentAbsent:seenVSunseen',
+         contrast1='presentAbsentANDseen',
+         contrast2='presentAbsentANDunseen',
+         include=dict(cond='present', values=[0, 1]),
+         exclude=[unseen],
+         clf=pipeline_svc, chance=0,
+         scorer=scorer_auc),
+    dict(name='accuracy:seenVSunseen',
+         contrast1='accuracyANDseen',
+         contrast2='accuracyANDunseen',
+         include=dict(cond='correct', values=[0, 1]),
+         exclude=[dict(cond='correct', values=[float('NaN')]), unseen],
+         clf=pipeline_svc, chance=0,
+         scorer=scorer_auc),
+    dict(name='lambda:seenVSunseen',
+         contrast1='lambdaANDseen',
+         contrast2='lambdaANDunseen',
+         include=dict(cond='lambda', values=[1, 2]),
+         exclude=[absent, unseen],
+         clf=pipeline_svc, chance=0,
+         scorer=scorer_auc),
+    dict(name='tilt:seenVSunseen',
+         contrast1='tiltANDseen',
+         contrast2='tiltANDunseen',
+         include=dict(cond='tilt', values=[-1, 1]),
+         exclude=[absent, unseen],
+         clf=pipeline_svc, chance=0,
+         scorer=scorer_auc),
+    dict(name='responseButton:seenVSunseen',
+         contrast1='responseButtonANDseen',
+         contrast2='responseButtonANDseen',
+         include=dict(cond='response_tilt', values=[-1, 1]),
+         exclude=[dict(cond='response_tilt', values=[0]), unseen],
+         clf=pipeline_svc, chance=0,
+         scorer=scorer_auc),
+
+]
 
 # ############## Define type of input (erf,frequenct etc...) ##################
 inputTypes = (
@@ -287,7 +326,7 @@ inputTypes = (
 # ##################################""
 # # UNCOMMENT TO SUBSELECTION FOR FAST PROCESSING
 # #
-subjects = subjects[-2:]
-inputTypes = [inputTypes[0]]
+# subjects = subjects[-2:]
+# inputTypes = [inputTypes[0]]
 preproc = dict(decim=2, crop=dict(tmin=-.2, tmax=1.200))
 # preproc = dict(decim=2, crop=dict(tmin=-.1, tmax=1.100))
