@@ -310,6 +310,10 @@ subscores2 = [
          scorer=scorer_auc),
 
 ]
+# #############################################################################
+# univariate analyses definition
+from analyses_definition_univariate import format_analysis
+analyses = [format_analysis(contrast) for contrast in contrasts]
 
 # ############## Define type of input (erf,frequenct etc...) ##################
 inputTypes = (
@@ -326,7 +330,8 @@ inputTypes = (
 # ##################################""
 # # UNCOMMENT TO SUBSELECTION FOR FAST PROCESSING
 # #
-# subjects = subjects[-2:]
-# inputTypes = [inputTypes[0]]
+# subjects = [subjects[9]]
+inputTypes = [inputTypes[-1]]
+analyses = [analyses[2]]
 preproc = dict(decim=2, crop=dict(tmin=-.2, tmax=1.200))
 # preproc = dict(decim=2, crop=dict(tmin=-.1, tmax=1.100))

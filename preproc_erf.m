@@ -53,7 +53,7 @@ clear datas;
 
 %% save data
 %---- save in a binary file
-%---- extract meg data from fieldtirp structure to transform it into a matrix
+%---- extract meg data from fieldtrip structure to transform it into a matrix
 save([data_path 'preprocessed/' sbj_initials '_preprocessed.mat'], 'data'); % save details
 
 ft2mat = @(data) permute(reshape(cell2mat(data.trial),[size(data.trial{1}), length(data.trial)]),[3 1 2]);
