@@ -91,6 +91,7 @@ def evoked_spearman(evokeds):
     from scipy.stats import spearmanr
     n_chan, n_time = evokeds['coef'][0].data.shape
     coef = np.zeros((n_chan, n_time))
+    # TODO: need parallelization
     for chan in range(n_chan):
         for t in range(n_time):
             y = range(len(evokeds['coef']))
@@ -98,7 +99,9 @@ def evoked_spearman(evokeds):
             for i in y:
                 X.append(evokeds['coef'][i].data[chan, t])
             coef[chan, t], _ = spearmanr(X, y)
-    return coef
+    evoked = evokeds['coef'][0]
+    evoked.data = coef
+    return evoked
 
 
 def save_to_dict(fname, data, overwrite=False):
@@ -148,7 +151,7 @@ def load_from_dict(fname, varnames=None, out_type='dict'):
         raise RuntimeError('%s not found' % fname)
 
     # Load original data
-    with open(fname,'rb') as f:
+    with open(fname, 'rb') as f:
         data_dict = pickle.load(f)
 
     # Specify variables to load
@@ -203,6 +206,7 @@ def plot_eb(x, y, yerr, ax=None, alpha=0.3, color=None, line_args=dict(),
 
     return ax
 
+
 def fill_betweenx_discontinuous(ax, ymin, ymax, x, freq=1, **kwargs):
     """Fill betwwen x even if x is discontinuous clusters
     Parameters
@@ -241,8 +245,8 @@ def resample_epochs(epochs, sfreq):
     from scipy.signal import resample
 
     # resample
-    epochs._data = resample(epochs._data,
-                            epochs._data.shape[2] / epochs.info['sfreq'] * sfreq,
+    epochs._data = resample(epochs._data, epochs._data.shape[2] /
+                            epochs.info['sfreq'] * sfreq,
                             axis=2)
     # update metadata
     epochs.info['sfreq'] = sfreq
@@ -250,21 +254,22 @@ def resample_epochs(epochs, sfreq):
                               dtype=np.float) / sfreq + epochs.times[0])
     return epochs
 
+
 def decim(inst, decim):
     """faster resampling"""
     from mne.io.base import _BaseRaw
     from mne.epochs import _BaseEpochs
     if isinstance(inst, _BaseRaw):
-         inst._data =  inst._data[:,::decim]
-         inst.info['sfreq'] /= decim
-         inst._first_samps /= decim
-         inst.first_samp /= decim
-         inst._last_samps /= decim
-         inst.last_samp /= decim
-         inst._raw_lengths /= decim
-         inst._times =  inst._times[::decim]
+        inst._data = inst._data[:, ::decim]
+        inst.info['sfreq'] /= decim
+        inst._first_samps /= decim
+        inst.first_samp /= decim
+        inst._last_samps /= decim
+        inst.last_samp /= decim
+        inst._raw_lengths /= decim
+        inst._times = inst._times[::decim]
     elif isinstance(inst, _BaseEpochs):
-        inst._data = inst._data[:,:,::decim]
+        inst._data = inst._data[:, :, ::decim]
         inst.info['sfreq'] /= decim
         inst.times = inst.times[::decim]
     return inst
@@ -287,7 +292,7 @@ def Evokeds_to_Epochs(inst, info=None, events=None):
     from mne.evoked import Evoked
 
     if (not(isinstance(inst, list)) or
-        not np.all([isinstance(x, Evoked) for x in inst])):
+            not np.all([isinstance(x, Evoked) for x in inst])):
         raise('inst mus be a list of evoked')
 
     # concatenate signals
@@ -298,7 +303,7 @@ def Evokeds_to_Epochs(inst, info=None, events=None):
     if events is None:
         n = len(inst)
         events = np.c_[np.cumsum(np.ones(n)) * info['sfreq'],
-                                 np.zeros(n), np.ones(n)]
+                       np.zeros(n), np.ones(n)]
 
     return EpochsArray(data, info, events=events, tmin=inst[0].times.min())
 
@@ -318,8 +323,6 @@ class cluster_stat(dict):
 
         """
         from mne.stats import spatio_temporal_cluster_1samp_test
-        from mne.channels import read_ch_connectivity
-
         # Convert lists of evoked in Epochs
         insts = [Evokeds_to_Epochs(i) if type(i) is list else i for i in insts]
 
@@ -332,10 +335,10 @@ class cluster_stat(dict):
 
         # Save sorted sig clusters
         inds = np.argsort(p_values)
-        clusters = np.array(clusters)[inds,:,:]
+        clusters = np.array(clusters)[inds, :, :]
         p_values = p_values[inds]
         inds = np.where(p_values < alpha)[0]
-        self.sig_clusters_ = clusters[inds,:,:]
+        self.sig_clusters_ = clusters[inds, :, :]
         self.p_values_ = p_values[inds]
 
         # By default, keep meta data from first epoch
@@ -345,7 +348,6 @@ class cluster_stat(dict):
         self.ch_names = self.insts[0].ch_names
 
         return
-
 
     def _get_mask(self, i_clu):
         """
@@ -376,7 +378,6 @@ class cluster_stat(dict):
         time_inds = np.where(np.sum(mask, axis=1))[0]
 
         return mask, space_inds, time_inds
-
 
     def plot_topo(self, i_clu=None, pos=None, **kwargs):
         """
@@ -410,7 +411,6 @@ class cluster_stat(dict):
 
         return fig
 
-
     def plot_topomap(self, i_clu=None, **kwargs):
         """
         Plots effect topography and highlights significant selected clusters.
@@ -436,7 +436,6 @@ class cluster_stat(dict):
 
         return fig
 
-
     def plot(self, plot_type='butterfly', i_clus=None, axes=None, show=True,
              **kwargs):
         """
@@ -459,7 +458,7 @@ class cluster_stat(dict):
         import matplotlib.pyplot as plt
         from mne.viz.utils import COLORS
 
-        times = self.times  * 1000
+        times = self.times * 1000
 
         # if axes is None:
         if True:
@@ -486,7 +485,7 @@ class cluster_stat(dict):
             for i_clu in i_clus:
                 _, space_inds, _ = self._get_mask(i_clu)
                 for i_evo, evoked in enumerate(evokeds):
-                    signal = np.mean(evoked.data[space_inds,:],
+                    signal = np.mean(evoked.data[space_inds, :],
                                      axis=0)
                     _kwargs = kwargs.copy()
                     _kwargs['color'] = COLORS[i_evo % len(COLORS)]
