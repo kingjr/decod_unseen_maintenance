@@ -8,8 +8,7 @@ import pickle
 import os.path as op
 
 
-def build_analysis(evoked_list, epochs, events, operator=None,
-                   data_type='categorical'):
+def build_analysis(evoked_list, epochs, events, operator=None):
     """Builds a n-deep analysis where n represents different levels of analyses
     Parameters
     ----------
@@ -36,7 +35,7 @@ def build_analysis(evoked_list, epochs, events, operator=None,
         evoked_list_ = evoked_list
         evoked_list = dict(conditions=evoked_list_)
 
-    sel_list = list()
+    # Gather coef at each sublevel
     for evoked in evoked_list['conditions']:
         if 'include' in evoked.keys():
             # Default exclude condition
@@ -52,7 +51,6 @@ def build_analysis(evoked_list, epochs, events, operator=None,
             # Keep info
             avg.comment = evoked['name']
             evokeds['coef'].append(avg)
-            sel_list.append(sel)
         else:
             if 'operator' not in evoked_list.keys():
                 evoked_list['operator'] = None
@@ -62,17 +60,13 @@ def build_analysis(evoked_list, epochs, events, operator=None,
             evokeds['coef'].append(coef_)
     else:
         # Set default operation
-        if data_type == 'continuous':
-            if operator is None:
-                if len(evokeds['coef']) == 2:
-                    operator = evoked_subtract
-                elif len(evokeds['coef']) > 2:
-                    operator = evoked_spearman
-            coef = operator(evokeds)
-        else:
-            sel = [ii for jj in sel_list for ii in jj]
-            key = evoked['include'].keys()[0]
-            coef = operator(epochs[sel], events[key][sel])
+        if operator is None:
+            if len(evokeds['coef']) == 2:
+                operator = evoked_subtract
+            elif len(evokeds['coef']) > 2:
+                operator = evoked_spearman
+
+        coef = operator(evokeds)
 
     return coef, evokeds
 
@@ -108,79 +102,6 @@ def evoked_spearman(evokeds):
     evoked = evokeds['coef'][0]
     evoked.data = coef
     return evoked
-
-
-def evoked_circularlinear(epochs, angles):
-    # from pycircstat.regression import CL1stOrderRegression
-    # regress = CL1stOrderRegression()
-    n_trials, n_chans, n_times = epochs._data.shape
-    # transform to 2D array
-    x = epochs._data.reshape(n_trials, n_chans * n_times)
-    # duplicate angles for each time / chan
-    angles = np.tile(angles, [x.shape[1], 1]).T
-    # compute
-    rho, _ = circular_linear_correlation(angles, x)
-    # store in format readable to build_analysis
-    evoked = epochs.average()
-    evoked.data = rho.reshape(n_chans, n_times)
-    return evoked
-
-
-def circular_linear_correlation(alpha, x):
-    """
-
-    Parameters
-    ----------
-        alpha : numpy.array, shape (n_angles, n_dims)
-            The angular data (if n_dims == 1, repeated across all x dimensions)
-        x : numpy.array, shape (n_angles, n_dims)
-            The linear data
-    Returns
-    -------
-        rho : numpy.array, shape (n_dims)
-            Correlation values
-        p_val : numpy.array, shape (n_dims)
-            P values
-
-    Adapted from:
-        Circular Statistics Toolbox for Matlab
-        By Philipp Berens, 2009
-        berens@tuebingen.mpg.de - www.kyb.mpg.de/~berens/circStat.html
-        Equantion 27.47
-    """
-    # Authors:             Jean-Remi King <jeanremi.king@gmail.com>
-    #                      Niccolo Pescetelli <niccolo.pescetelli@gmail.com>
-    #
-    #  Licence : BSD-simplified
-
-    from scipy.stats import chi2
-    import numpy as np
-
-    def corr(X, Y):
-        if X.ndim == 1:
-            X = X[:, None]
-        if Y.ndim == 1:
-            Y = Y[:, None]
-        if Y.shape != X.shape:
-            raise ValueError('X and Y must have identical shapes.')
-        coef = np.nan * np.zeros(X.shape[1])
-        for idx, (x, y) in enumerate(zip(X.T, Y.T)):
-            coef[idx] = np.corrcoef(x, y)[0, 1]
-        return coef
-
-    # computes correlation for sin and cos separately
-    rxs = corr(x, np.sin(alpha))
-    rxc = corr(x, np.cos(alpha))
-    rcs = corr(np.sin(alpha), np.cos(alpha))
-
-    # Taken from equation 27.47
-    rho = np.sqrt((rxc ** 2 + rxs ** 2 - 2 * rxc * rxs * rcs) / (1 - rcs ** 2))
-
-    # Get degrees of freedom
-    n = len(alpha)
-    pval = 1 - chi2.cdf(n * rho ** 2, 2)
-
-    return rho, pval
 
 
 def save_to_dict(fname, data, overwrite=False):
