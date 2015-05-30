@@ -9,6 +9,12 @@ def angle2circle(angles):
 
 
 def get_data(meg_fname, bhv_fname, fileformat):
+    epochs = load_FieldTrip_data(meg_fname, fileformat)
+    events = get_events(bhv_fname)
+    return epochs, events
+
+
+def load_FieldTrip_data(meg_fname, fileformat):
     from mne.io.meas_info import create_info
     from mne.epochs import EpochsArray
     """load behavioural and meg data (erf and time freq)"""
@@ -44,7 +50,10 @@ def get_data(meg_fname, bhv_fname, fileformat):
                    np.zeros(n_trial),
                    ft_data['trialinfo'].item()]
     epochs = EpochsArray(data, info, events=events, tmin=tmin)
+    return epochs
 
+
+def get_events(bhv_fname):
     # Load behavioral file
     trials = sio.loadmat(bhv_fname, squeeze_me=True,
                          struct_as_record=True)["trials"]
@@ -90,8 +99,7 @@ def get_data(meg_fname, bhv_fname, fileformat):
         # append to all events
         events.append(event)
     events = pd.DataFrame(events)
-
-    return epochs, events
+    return events
 
 
 def resample_epochs(epochs, sfreq):
