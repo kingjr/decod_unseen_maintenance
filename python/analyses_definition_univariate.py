@@ -1,5 +1,6 @@
 from utils import scorer_auc, scorer_angle, scorer_spearman
-from toolbox.utils import evoked_subtract, evoked_spearman  # , evoked_vtest
+from toolbox.utils import (evoked_subtract, evoked_spearman,
+                           evoked_circularlinear)
 
 
 def format_analysis(contrast):
@@ -14,8 +15,7 @@ def format_analysis(contrast):
     elif contrast['scorer'] == scorer_auc:
         operator = evoked_subtract
     elif contrast['scorer'] == scorer_angle:
-        # TODO evoked_vtest
-        return
+        operator = evoked_circularlinear
     # exclude
     exclude = dict()
     for exclude_ in contrast['exclude']:

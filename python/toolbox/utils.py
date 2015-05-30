@@ -104,6 +104,76 @@ def evoked_spearman(evokeds):
     return evoked
 
 
+def evoked_circularlinear(evokeds):
+    # from pycircstat.regression import CL1stOrderRegression
+    # regress = CL1stOrderRegression()
+    n_angles = len(evokeds['coef'])
+    angles = np.linspace(0, 2 * np.pi - (2 * np.pi) / n_angles, n_angles)
+    x = np.array([evoked.data.flatten() for evoked in evokeds['coef']])
+    rho, _ = circular_linear_correlation(angles, x)
+
+    n_chans, n_times = evokeds['coef'][0].data.shape
+    evoked.data = rho.reshape(n_chans, n_times)
+    return evoked
+
+
+def circular_linear_correlation(alpha, x):
+    """
+
+    Parameters
+    ----------
+        alpha : numpy.array, shape (n_angles, n_dims)
+            The angular data (if n_dims == 1, repeated across all x dimensions)
+        x : numpy.array, shape (n_angles, n_dims)
+            The linear data
+    Returns
+    -------
+        rho : numpy.array, shape (n_dims)
+            Correlation values
+        p_val : numpy.array, shape (n_dims)
+            P values
+
+    Adapted from:
+        Circular Statistics Toolbox for Matlab
+        By Philipp Berens, 2009
+        berens@tuebingen.mpg.de - www.kyb.mpg.de/~berens/circStat.html
+        Equantion 27.47
+    """
+    # Authors:             Jean-Remi King <jeanremi.king@gmail.com>
+    #                      Niccolo Pescetelli <niccolo.pescetelli@gmail.com>
+    #
+    #  Licence : BSD-simplified
+
+    from scipy.stats import chi2
+    import numpy as np
+
+    def corr(X, Y):
+        if X.ndim == 1:
+            X = X[:, None]
+        if Y.ndim < X.ndim:
+            Y = np.tile(Y, [X.shape[1], 1]).T
+        if Y.shape != X.shape:
+            raise ValueError('X and Y must have identical shapes.')
+        coef = np.nan * np.zeros(X.shape[1])
+        for idx, (x, y) in enumerate(zip(X.T, Y.T)):
+            coef[idx] = np.corrcoef(x, y)[0, 1]
+        return coef
+
+    # computes correlation for sin and cos separately
+    rxs = corr(x, np.sin(alpha))
+    rxc = corr(x, np.cos(alpha))
+    rcs = corr(np.sin(alpha), np.cos(alpha))
+
+    # Taken from equation 27.47
+    rho = np.sqrt((rxc ** 2 + rxs ** 2 - 2 * rxc * rxs * rcs) / (1 - rcs**2))
+
+    # Get degrees of freedom
+    n = len(alpha)
+    pval = 1 - chi2.cdf(n * rho ** 2, 2)
+
+    return rho, pval
+
+
 def save_to_dict(fname, data, overwrite=False):
     """Add pickle object to file without replacing its content using a
     dictionary format which keys' correspond to the names of the variables.
