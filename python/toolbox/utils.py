@@ -119,14 +119,18 @@ def evoked_circularlinear(epochs, angles):
     # duplicate angles for each time / chan
     angles = np.tile(angles, [x.shape[1], 1]).T
     # compute
-    rho, _ = circular_linear_correlation(angles, x)
+    r, r2, pval = circular_linear_correlation(angles, x)
     # store in format readable to build_analysis
     evoked = epochs.average()
-    evoked.data = rho.reshape(n_chans, n_times)
+    evoked.data = r.reshape(n_chans, n_times)
     return evoked
 
 
 def circular_linear_correlation(alpha, x):
+    # Authors:  Jean-Remi King <jeanremi.king@gmail.com>
+    #           Niccolo Pescetelli <niccolo.pescetelli@gmail.com>
+    #
+    # Licence : BSD-simplified
     """
 
     Parameters
@@ -137,8 +141,10 @@ def circular_linear_correlation(alpha, x):
             The linear data
     Returns
     -------
-        rho : numpy.array, shape (n_dims)
-            Correlation values
+        R : numpy.array, shape (n_dims)
+            R values
+        R2 : numpy.array, shape (n_dims)
+            R square values
         p_val : numpy.array, shape (n_dims)
             P values
 
@@ -148,10 +154,6 @@ def circular_linear_correlation(alpha, x):
         berens@tuebingen.mpg.de - www.kyb.mpg.de/~berens/circStat.html
         Equantion 27.47
     """
-    # Authors:             Jean-Remi King <jeanremi.king@gmail.com>
-    #                      Niccolo Pescetelli <niccolo.pescetelli@gmail.com>
-    #
-    #  Licence : BSD-simplified
 
     from scipy.stats import chi2
     import numpy as np
@@ -169,18 +171,20 @@ def circular_linear_correlation(alpha, x):
         return coef
 
     # computes correlation for sin and cos separately
+    alpha = alpha % (2 * np.pi) - np.pi
     rxs = corr(x, np.sin(alpha))
     rxc = corr(x, np.cos(alpha))
     rcs = corr(np.sin(alpha), np.cos(alpha))
 
-    # Taken from equation 27.47
-    rho = np.sqrt((rxc ** 2 + rxs ** 2 - 2 * rxc * rxs * rcs) / (1 - rcs ** 2))
+    # Adapted from equation 27.47
+    R = (rxc ** 2 + rxs ** 2 - 2 * rxc * rxs * rcs) / (1 - rcs ** 2)
+    R2 = np.sqrt(R ** 2)
 
     # Get degrees of freedom
     n = len(alpha)
-    pval = 1 - chi2.cdf(n * rho ** 2, 2)
+    pval = 1 - chi2.cdf(n * R2, 2)
 
-    return rho, pval
+    return R, R2, pval
 
 
 def save_to_dict(fname, data, overwrite=False):
