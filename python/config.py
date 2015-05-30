@@ -313,8 +313,8 @@ subscores2 = [
 # #############################################################################
 # univariate analyses definition: transform the input used for the decoding to
 # the univariate analyse. Yes this NEEDS to be cleaned
-from analyses_definition_univariate import format_analysis
-analyses = [format_analysis(contrast) for contrast in contrasts]
+# from analyses_definition_univariate import format_analysis
+# analyses = [format_analysis(contrast) for contrast in contrasts]
 
 # ############## Define type of input (erf,frequenct etc...) ##################
 inputTypes = (
@@ -333,6 +333,6 @@ inputTypes = (
 # #
 # subjects = [subjects[9]]
 inputTypes = [inputTypes[-1]]
-analyses = [ana for ana in analyses if ana['name'] == 'targetAngle']
+# analyses = [ana for ana in analyses if ana['name'] == 'targetAngle']
 preproc = dict(decim=2, crop=dict(tmin=-.2, tmax=1.200))
 # preproc = dict(decim=2, crop=dict(tmin=-.1, tmax=1.100))
