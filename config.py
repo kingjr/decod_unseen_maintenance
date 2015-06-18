@@ -27,7 +27,7 @@ def paths(typ, subject='fsaverage', data_type='erf', lock='target',
         decod=op.join(this_path, '%s_%s_%s_%s.pickle' % (
             subject, lock, data_type, analysis)),
         generalize=op.join(this_path, '%s_%s_%s_%s.pickle' % (
-            subject, lock, data_type, analysis)),
+            subject, lock, data_type, analysis))),
     if log:
         fname = paths('log')
         print '%s: %s ' % (fname, path_template[typ])
