@@ -8,9 +8,7 @@ import mne
 from mne.io.pick import _picks_by_type as picks_by_type
 from meeg_preprocessing import setup_provenance
 
-from toolbox.utils import build_analysis
-from utils import get_data
-from orientations.utils import meg_to_gradmag
+from orientations.utils import meg_to_gradmag, build_analysis, get_data
 
 from config import (
     data_path,
