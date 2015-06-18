@@ -16,7 +16,7 @@ from config import (
     pyoutput_path,
     results_dir,
     subjects,
-    inputTypes,
+    data_types,
     clf_types,
     preproc,
     decoding_params

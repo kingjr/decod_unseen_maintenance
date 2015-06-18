@@ -15,7 +15,7 @@ from config import (
     data_path,
     subjects,
     results_dir,
-    inputTypes,
+    data_types,
     analyses,
     chan_types,
     open_browser,
@@ -38,13 +38,13 @@ for subject in subjects:
     # Extract events from mat file
     bhv_fname = op.join(data_path, subject, 'behavior', subject + '_fixed.mat')
 
-    for typ in inputTypes:  # Input type ERFs or frequency power
-        print(typ)
-        if typ['name'] == 'erf':
+    for data_type in data_types:  # Input type ERFs or frequency power
+        print(data_type)
+        if data_type == 'erf':
             fname_appendix = ''
             fileformat = '.dat'
         else:
-            fname_appendix = '_Tfoi_mtm_' + typ['name'][4:] + 'Hz'
+            fname_appendix = '_Tfoi_mtm_' + data_type[4:] + 'Hz'
             fileformat = '.mat'
         # Get MEG data
 
@@ -72,7 +72,7 @@ for subject in subjects:
             if not os.path.exists(save_dir):
                 os.makedirs(save_dir)
             pkl_fname = op.join(save_dir, '%s-cluster_sensors_%s.pickle' % (
-                typ['name'], analysis['name']))
+                data_type, analysis['name']))
 
             with open(pkl_fname, 'wb') as f:
                 pickle.dump([coef, evokeds, analysis, events], f)
@@ -120,10 +120,10 @@ for subject in subjects:
 
             # Save figure
             report.add_figs_to_section(fig1, ('%s (%s) %s: COEF' % (
-                subject, typ['name'], analysis['name'])), analysis['name'])
+                subject, data_type, analysis['name'])), analysis['name'])
 
             report.add_figs_to_section(fig2, ('%s (%s) %s: CONDITIONS' % (
-                subject, typ['name'], analysis['name'])), analysis['name'])
+                subject, data_type, analysis['name'])), analysis['name'])
 
 
 report.save(open_browser=open_browser)

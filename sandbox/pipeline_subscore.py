@@ -13,7 +13,7 @@ from config import (
     results_dir,
     pyoutput_path,
     subjects,
-    inputTypes,
+    data_types,
     open_browser,
     subscores
 )
@@ -39,10 +39,10 @@ def sel_events(events, contrast):
 
 def pkl_fname(typ, subject, name):
     # define meg_path appendix
-    if typ['name'] == 'erf':
+    if data_type == 'erf':
         fname_appendix = ''
     else:
-        fname_appendix = '_Tfoi_mtm_' + typ['name'][4:] + 'Hz'
+        fname_appendix = '_Tfoi_mtm_' + data_type[4:] + 'Hz'
 
     # define path to file to be loaded
     pkl_fname = op.join(
@@ -172,8 +172,8 @@ def mean_pred(gat, y=None):
 report, run_id, results_dir, logger = setup_provenance(
     script=__file__, results_dir=results_dir)
 
-for typ in inputTypes:
-    # logger.info(typ['name'])
+for data_type in data_types:
+    # logger.info(data_type)
     for subscore in subscores:
         # logger.info(subscore['name'])
         # Gather subjects data
@@ -246,7 +246,7 @@ for typ in inputTypes:
         # plt.show()
         report.add_figs_to_section(
             fig, '%s - %s (trained on %s): Decoding GAT' %
-            (typ['name'], subscore['name'], subscore['contrast']), typ['name'])
+            (data_type, subscore['name'], subscore['contrast']), data_type)
 
         # ------ Plot Decoding
         fig = gat.plot_diagonal(show=False)
@@ -267,12 +267,12 @@ for typ in inputTypes:
         # plt.show()
         report.add_figs_to_section(
             fig, '%s - %s (trained on %s): Decoding diag' %
-            (typ['name'], subscore['name'], subscore['contrast']), typ['name'])
+            (data_type, subscore['name'], subscore['contrast']), data_type)
 
         # SAVE
         fname = op.join(
             pyoutput_path, 'fsaverage', 'decoding',
-            'decod_stats_{}_{}.pickle'.format(typ['name'],
+            'decod_stats_{}_{}.pickle'.format(data_type,
                                               subscore['name']))
         with open(fname, 'wb') as f:
             pickle.dump([scores, p_values], f)

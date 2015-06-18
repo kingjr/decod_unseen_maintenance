@@ -34,22 +34,13 @@ preproc = dict()
 # analyses = [format_analysis(contrast) for contrast in contrasts]
 
 # ############## Define type of input (erf,frequenct etc...) ##################
-inputTypes = (
-    dict(name='freq7'),
-    dict(name='freq10'),
-    dict(name='freq12'),
-    dict(name='freq18'),
-    dict(name='freq29'),
-    dict(name='freq70'),
-    dict(name='freq105'),
-    dict(name='erf'),
-)
+data_types = ['erf'] + ['freq' + freq for freq in [7, 10, 12, 18, 29, 70, 105]]
 
 # ##################################""
 # # UNCOMMENT TO SUBSELECTION FOR FAST PROCESSING
 # #
 # subjects = [subjects[9]]
-inputTypes = [inputTypes[-1]]
+data_types = [data_types[0]]
 # analyses = [ana for ana in analyses if ana['name'] == 'targetAngle']
 preproc = dict(decim=2, crop=dict(tmin=-.2, tmax=1.200))
 # preproc = dict(decim=2, crop=dict(tmin=-.1, tmax=1.100))

@@ -19,7 +19,7 @@ from config import (
     results_dir,
     pyoutput_path,
     subjects,
-    inputTypes,
+    data_types,
     open_browser,
     subscores,
     subscores2
@@ -35,8 +35,8 @@ from temp.pipeline_subscore import (sel_events,
 report, run_id, results_dir, logger = setup_provenance(
     script=__file__, results_dir=results_dir)
 
-for typ in inputTypes:
-    # logger.info(typ['name'])
+for data_type in data_types:
+    # logger.info(data_type)
     for subscore in subscores2:
         # logger.info(subscore['name'])
         # Gather subjects data
@@ -113,7 +113,7 @@ for typ in inputTypes:
         # plt.show()
         report.add_figs_to_section(
             fig, '%s - %s (trained on %s): Decoding GAT' %
-            (typ['name'], subscore['name'], subscore['contrast']), typ['name'])
+            (data_type, subscore['name'], subscore['contrast']), data_type)
 
         # ------ Plot Decoding
         fig = gat.plot_diagonal(show=False)
@@ -134,12 +134,12 @@ for typ in inputTypes:
         # plt.show()
         report.add_figs_to_section(
             fig, '%s - %s (trained on %s): Decoding diag' %
-            (typ['name'], subscore['name'], subscore['contrast']), typ['name'])
+            (data_type, subscore['name'], subscore['contrast']), data_type)
 
         # SAVE
         fname = op.join(
             pyoutput_path, 'fsaverage', 'decoding',
-            'decod_stats_{}_{}.pickle'.format(typ['name'],
+            'decod_stats_{}_{}.pickle'.format(data_type,
                                               subscore['name']))
         with open(fname, 'wb') as f:
             pickle.dump([scores, p_values], f)

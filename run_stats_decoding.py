@@ -17,7 +17,7 @@ from config import (
     pyoutput_path,
     results_dir,
     open_browser,
-    inputTypes,
+    data_types,
     contrasts)
 
 
@@ -33,8 +33,8 @@ subselections = (dict(name='allTrials'),
                  dict(name='unseenOnly'))
 
 # Apply contrast to ERFs or frequency power
-for typ in inputTypes:
-    print(typ)
+for data_type in data_types:
+    print(data_type)
 
     # Loop across contrasts
     for contrast in contrasts:
@@ -44,14 +44,14 @@ for typ in inputTypes:
             # DATA
             for s, subject in enumerate(subjects):
                 print('load GAT %s %s %s' % (subject, contrast['name'],
-                                             typ['name']))
+                                             data_type))
 
                 # define meg_path appendix
-                if typ['name'] == 'erf':
+                if data_type == 'erf':
                     fname_appendix = ''
                 else:
                     fname_appendix = op.join('_Tfoi_mtm_',
-                                             typ['name'][4:], 'Hz')
+                                             data_type[4:], 'Hz')
 
                 # define path to file to be loaded
                 pkl_fname = op.join(
@@ -130,8 +130,8 @@ for typ in inputTypes:
             # plt.show()
             report.add_figs_to_section(
                 fig, '%s (%s) - %s: Decoding GAT' %
-                (typ['name'], contrast['name'], subselection['name']),
-                typ['name'])
+                (data_type, contrast['name'], subselection['name']),
+                data_type)
 
             # ------ Plot Decoding
             fig = gat.plot_diagonal(show=False)
@@ -153,8 +153,8 @@ for typ in inputTypes:
             # plt.show()
             report.add_figs_to_section(
                 fig, '%s (%s) - %s: Decoding diag' %
-                (typ['name'], contrast['name'], subselection['name']),
-                typ['name'])
+                (data_type, contrast['name'], subselection['name']),
+                data_type)
 
             # SAVE
             pkl_fname = op.join(

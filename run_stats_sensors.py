@@ -9,7 +9,7 @@ from meeg_preprocessing import setup_provenance
 from config import (
     data_path,
     subjects,
-    inputTypes,
+    data_types,
     analyses,
     chan_types,
     results_dir,
@@ -30,13 +30,13 @@ if 'meg' in [i['name'] for i in chan_types]:
     chan_types[i] = dict(name='mag', **meg_type)
 
 # Apply contrast on each type of epoch
-for typ in inputTypes:  # Input type ERFs or frequency power
-    print(typ)
-    if typ['name'] == 'erf':
+for data_type in data_types:  # Input type ERFs or frequency power
+    print(data_type)
+    if data_type == 'erf':
         fname_appendix = ''
         fileformat = '.dat'
     else:
-        fname_appendix = '_Tfoi_mtm_' + typ['name'][4:] + 'Hz'
+        fname_appendix = '_Tfoi_mtm_' + data_type[4:] + 'Hz'
         fileformat = '.mat'
 
     for analysis in analyses:
@@ -47,7 +47,7 @@ for typ in inputTypes:  # Input type ERFs or frequency power
         for s, subject in enumerate(subjects):
             pkl_fname = op.join(data_path, 'MEG', subject, 'evokeds',
                                 '%s-cluster_sensors_%s.pickle' % (
-                                    typ['name'], analysis['name']))
+                                    data_type, analysis['name']))
             with open(pkl_fname) as f:
                 coef, evoked, _, _ = pickle.load(f)
             evokeds.append(coef)
@@ -83,8 +83,8 @@ for typ in inputTypes:  # Input type ERFs or frequency power
             i_clus = np.where(cluster.p_values_ < .01)
             fig = cluster.plot(i_clus=i_clus, show=False)
             report.add_figs_to_section(fig, '{}: {}: Clusters time'.format(
-                typ['name'], analysis['name']),
-                typ['name'] + analysis['name'])
+                data_type, analysis['name']),
+                data_type + analysis['name'])
 
             # plot T vales
             fig = cluster.plot_topomap(sensors=False, contours=False,
@@ -106,12 +106,12 @@ for typ in inputTypes:  # Input type ERFs or frequency power
                                       vmin=-mM, vmax=mM, colorbar=True)
 
             report.add_figs_to_section(fig, '{}: {}: topos'.format(
-                typ['name'], analysis['name']),
-                typ['name'] + analysis['name'])
+                data_type, analysis['name']),
+                data_type + analysis['name'])
 
             report.add_figs_to_section(fig, '{}: {}: Clusters'.format(
-                typ['name'], analysis['name']),
-                typ['name'] + analysis['name'])
+                data_type, analysis['name']),
+                data_type + analysis['name'])
 
             # Save contrast
             # TODO CHANGE SAVING TO SAVE MULTIPLE CHAN TYPES
@@ -120,7 +120,7 @@ for typ in inputTypes:  # Input type ERFs or frequency power
                 os.makedirs(save_dir)
             pkl_fname = op.join(save_dir,
                                 '%s-cluster_sensors_%s.pickle' % (
-                                    typ['name'], analysis['name']))
+                                    data_type, analysis['name']))
 
             with open(pkl_fname, 'wb') as f:
                 pickle.dump([cluster, evokeds, analysis], f)

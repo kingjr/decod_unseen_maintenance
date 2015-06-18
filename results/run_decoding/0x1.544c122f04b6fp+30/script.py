@@ -15,7 +15,7 @@ from config import (
     results_dir,
     subjects,
     clf_types,
-    inputTypes,
+    data_types,
     preproc,
     decoding_params
 )
@@ -25,15 +25,15 @@ report, run_id, results_dir, logger = setup_provenance(
 
 for subject in [subjects[i] for i in [0,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]]:                                                        # Loop across each subject
     print(subject)
-    for typ in inputTypes:                                                      # Input type defines whether we decode ERFs or frequency power
-        print(typ)
+    for data_type in data_types:                                                      # Input type defines whether we decode ERFs or frequency power
+        print(data_type)
         for freq in typ['values']:                                              # loop only once if ERF and across all frequencies of interest if frequency power
             print(freq)
 
             # define meg_path appendix
-            if typ['name']=='erf':
+            if data_type=='erf':
                 meg_appendix = ''
-            elif typ['name']=='power':
+            elif data_type=='power':
                 meg_appendix = op.join('_Tfoi_mtm_',freq,'Hz')
 
             # define paths

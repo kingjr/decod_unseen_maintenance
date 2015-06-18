@@ -12,7 +12,7 @@ from config import (
     pyoutput_path,
     results_dir,
     subjects,
-    inputTypes,
+    data_types,
     preproc,
     contrasts
 )
@@ -22,13 +22,13 @@ report, run_id, results_dir, logger = setup_provenance(
 
 for s, subject in enumerate(subjects):  # Loop across each subject
     print(subject)
-    for typ in inputTypes:  # Input type ERFs or frequency power
-        print(typ)
-        if typ['name'] == 'erf':
+    for data_type in data_types:  # Input type ERFs or frequency power
+        print(data_type)
+        if data_type == 'erf':
             fname_appendix = ''
             fileformat = '.dat'
         else:
-            fname_appendix = '_Tfoi_mtm_' + typ['name'][4:] + 'Hz'
+            fname_appendix = '_Tfoi_mtm_' + data_type[4:] + 'Hz'
             fileformat = '.mat'
 
         # define paths
@@ -82,12 +82,12 @@ for s, subject in enumerate(subjects):  # Loop across each subject
             fig = gat.plot_diagonal(show=False)
             report.add_figs_to_section(
                 fig, ('%s %s %s: (diagonal)' %
-                      (subject, cond_name, typ['name'])), subject)
+                      (subject, cond_name, data_type)), subject)
 
             fig = gat.plot(vmin=np.min(gat.scores_),
                            vmax=np.max(gat.scores_), show=False)
             report.add_figs_to_section(
-                fig, ('%s %s %s: GAT' % (subject, cond_name, typ['name'])),
+                fig, ('%s %s %s: GAT' % (subject, cond_name, data_type)),
                 subject)
 
             # Save contrast

@@ -17,7 +17,7 @@ from config import (
                     subjects,
                     data_path,
                     pyoutput_path,
-                    inputTypes,
+                    data_types,
                     clf_types,
 )
 from postproc_functions import (
@@ -30,7 +30,7 @@ from postproc_functions import (
 
 
 # define input type: it is ERF (for now)
-inputType=inputTypes[0]
+inputType=data_types[0]
 
 """
 # -----------------SVR----------------------------------------------------------
