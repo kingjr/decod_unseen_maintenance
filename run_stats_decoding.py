@@ -4,7 +4,7 @@ import copy
 # import matplotlib.pyplot as plt
 
 from toolbox.utils import fill_betweenx_discontinuous, plot_eb
-from meeg_preprocessing import setup_provenance
+from meeg_preprocessing.utils import setup_provenance
 
 from mne.stats import spatio_temporal_cluster_1samp_test
 

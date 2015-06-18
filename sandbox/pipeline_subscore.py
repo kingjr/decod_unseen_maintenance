@@ -4,7 +4,7 @@ import numpy as np
 
 # import mne
 from mne.stats import spatio_temporal_cluster_1samp_test
-from meeg_preprocessing import setup_provenance
+from meeg_preprocessing.utils import setup_provenance
 
 # from meeg_preprocessing.utils import setup_provenance
 from toolbox.utils import fill_betweenx_discontinuous, plot_eb

@@ -3,7 +3,7 @@ import pickle
 from mne.decoding import GeneralizationAcrossTime
 
 from orientations.utils import load_epochs_events, resample_epochs, decim
-from meeg_preprocessing import setup_provenance
+from meeg_preprocessing.utils import setup_provenance
 
 from config import (
     open_browser,

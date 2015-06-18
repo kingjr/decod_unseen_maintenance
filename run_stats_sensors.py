@@ -2,7 +2,7 @@ import pickle
 import numpy as np
 import mne
 from toolbox.utils import (cluster_stat, Evokeds_to_Epochs, decim)
-from meeg_preprocessing import setup_provenance
+from meeg_preprocessing.utils import setup_provenance
 
 from config import (
     paths,

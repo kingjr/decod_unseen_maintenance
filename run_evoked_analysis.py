@@ -5,7 +5,7 @@ from itertools import product
 
 import mne
 from mne.io.pick import _picks_by_type as picks_by_type
-from meeg_preprocessing import setup_provenance
+from meeg_preprocessing.utils import setup_provenance
 
 from orientations.utils import (meg_to_gradmag, build_analysis,
                                 load_epochs_events)
