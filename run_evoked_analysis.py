@@ -10,6 +10,7 @@ from meeg_preprocessing import setup_provenance
 
 from toolbox.utils import build_analysis
 from utils import get_data
+from orientations.utils import meg_to_gradmag
 
 from config import (
     data_path,
@@ -25,13 +26,6 @@ report, run_id, results_dir, logger = setup_provenance(script=__file__,
                                                        results_dir=results_dir)
 
 mne.set_log_level('INFO')
-
-# force separation of magnetometers and gradiometers
-if 'meg' in [i['name'] for i in chan_types]:
-    chan_types = [dict(name='mag'), dict(name='grad')] + \
-                 [dict(name=i['name'])
-                  for i in chan_types
-                  if i['name'] != 'meg']
 
 for subject in subjects:
     print(subject)
@@ -78,7 +72,7 @@ for subject in subjects:
                 pickle.dump([coef, evokeds, analysis, events], f)
 
             # Loop across channels
-            for ch, chan_type in enumerate(chan_types):
+            for ch, chan_type in enumerate(meg_to_gradmag(chan_types)):
                 # Select specific types of sensor
                 info = coef.info
                 picks = [i for k, p in picks_by_type(info)

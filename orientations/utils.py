@@ -9,6 +9,16 @@ from sklearn.svm import LinearSVR, SVC
 from sklearn.linear_model import LogisticRegression
 
 
+def meg_to_gradmag(chan_types):
+    """force separation of magnetometers and gradiometers"""
+    if 'meg' in [chan['name'] for chan in chan_types]:
+        chan_types = [dict(name='mag'), dict(name='grad')] + \
+                     [dict(name=chan['name'])
+                      for chan in chan_types
+                      if chan['name'] != 'meg']
+    return chan_types
+
+
 def angle2circle(angles):
     """from degree to radians multipled by rm2"""
     return np.deg2rad(2 * (np.array(angles) + 7.5))
