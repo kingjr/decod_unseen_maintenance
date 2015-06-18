@@ -20,27 +20,29 @@ def paths(typ, subject='fsaverage', data_type='erf', lock='target',
         report=op.join(base_path, 'results'),
         log=op.join(base_path, pyscript.strip('.py') + '.log'),
 
-        behavior=op.join(this_path, '%_fixed.mat' % subject),
+        behavior=op.join(this_path, '%s_fixed.mat' % subject),
         epoch=op.join(this_path, '%s_%s_%s.mat' % (subject, lock, data_type)),
         evoked=op.join(this_path, '%s_%s_%s_%s.fif' % (
             subject, lock, data_type, analysis)),
         decod=op.join(this_path, '%s_%s_%s_%s.pickle' % (
             subject, lock, data_type, analysis)),
         generalize=op.join(this_path, '%s_%s_%s_%s.pickle' % (
-            subject, lock, data_type, analysis))),
+            subject, lock, data_type, analysis)))
+    file = path_template[typ]
+
+    # Log file ?
     if log:
         fname = paths('log')
-        print '%s: %s ' % (fname, path_template[typ])
+        print '%s: %s ' % (fname, file)
         with open(fname, "a") as myfile:
-            myfile.write("%s \n" % path_template[typ])
+            myfile.write("%s \n" % file)
 
-    if not op.exists(os.path.dirname(path_template[typ])):
-        os.mkdir(path_template[typ])
+    # Create folder?
+    folder = os.path.dirname(file)
+    if folder and not op.exists(folder):
+        os.mkdir(folder)
 
-    return path_template[typ]
-
-if not op.exists(paths('report')):
-    os.mkdir(paths('report'))
+    return
 
 subjects = [
     'ak130184', 'el130086', 'ga130053', 'gm130176', 'hn120493',
