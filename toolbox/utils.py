@@ -104,8 +104,6 @@ def evoked_spearman(evokeds):
     return evoked
 
 
-<<<<<<< HEAD
-=======
 def evoked_circularlinear(epochs, angles):
     # from pycircstat.regression import CL1stOrderRegression
     # regress = CL1stOrderRegression()
@@ -183,7 +181,6 @@ def circular_linear_correlation(alpha, x):
     return R, R2, pval
 
 
->>>>>>> 0d617c09e8c54b9686d1c32b49e077d535abe709
 def save_to_dict(fname, data, overwrite=False):
     """Add pickle object to file without replacing its content using a
     dictionary format which keys' correspond to the names of the variables.
