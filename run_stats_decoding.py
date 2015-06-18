@@ -13,16 +13,15 @@ import pickle
 ###############################################################################
 
 from config import (
+    paths,
     subjects,
-    pyoutput_path,
-    results_dir,
     open_browser,
     data_types,
     contrasts)
 
 
-report, run_id, results_dir, logger = setup_provenance(
-    script=__file__, results_dir=results_dir)
+report, run_id, _, logger = setup_provenance(
+    script=__file__, results_dir=paths('report'))
 
 # subjects = [subjects[i] for i in range(20)] # XXX to be be removed
 
@@ -46,18 +45,10 @@ for data_type in data_types:
                 print('load GAT %s %s %s' % (subject, contrast['name'],
                                              data_type))
 
-                # define meg_path appendix
-                if data_type == 'erf':
-                    fname_appendix = ''
-                else:
-                    fname_appendix = op.join('_Tfoi_mtm_',
-                                             data_type[4:], 'Hz')
-
                 # define path to file to be loaded
-                pkl_fname = op.join(
-                    pyoutput_path, subject, 'mvpas',
-                    '{}-decod_{}{}.pickle'.format(
-                        subject, contrast['name'], fname_appendix))
+                pkl_fname = paths('decod', subject=subject,
+                                  data_type=data_type,
+                                  analysis=contrast['name'])
 
                 # retrieve classifier data
                 with open(pkl_fname) as f:
@@ -157,11 +148,11 @@ for data_type in data_types:
                 data_type)
 
             # SAVE
-            pkl_fname = op.join(
-                pyoutput_path, 'fsaverage', 'decoding',
-                'decod_stats_{}{}{}.pickle'.format(contrast['name'],
-                                                   fname_appendix,
-                                                   subselection['name']))
+            pkl_fname = paths('decod', subject='fsaverage',
+                              data_type=data_type,
+                              analysis=('stats_' + contrast['name'] +
+                                        '-' + subselection['name']),
+                              log=True)
             with open(pkl_fname, 'wb') as f:
                 pickle.dump([scores, p_values], f)
 

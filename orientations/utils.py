@@ -9,20 +9,13 @@ from sklearn.svm import LinearSVR, SVC
 from sklearn.linear_model import LogisticRegression
 
 
-def load_epochs_events(subject, data_type, data_path):
-    # FIXME: cleanup this mess by renaming files properly
-    if data_type == 'erf':
-        fname_appendix = ''
-        fileformat = '.dat'
-    else:
-        fname_appendix = '_Tfoi_mtm_' + data_type[4:] + 'Hz'
-        fileformat = '.mat'
+def load_epochs_events(subject, paths=None, data_type='erf',
+                       lock='target'):
     # Get MEG data
-    meg_fname = op.join(data_path, subject, 'preprocessed',
-                        subject + '_preprocessed' + fname_appendix)
-    epochs = load_FieldTrip_data(meg_fname, fileformat)
+    meg_fname = paths('epoch', subject=subject, data_type=data_type, lock=lock)
+    epochs = load_FieldTrip_data(meg_fname)
     # Get behavioral data
-    bhv_fname = op.join(data_path, subject, 'behavior', subject + '_fixed.mat')
+    bhv_fname = paths('behavior', subject=subject)
     events = get_events(bhv_fname)
     return epochs, events
 
@@ -42,23 +35,23 @@ def angle2circle(angles):
     return np.deg2rad(2 * (np.array(angles) + 7.5))
 
 
-def load_FieldTrip_data(meg_fname, fileformat):
+def load_FieldTrip_data(meg_fname):
     from mne.io.meas_info import create_info
     from mne.epochs import EpochsArray
     """load behavioural and meg data (erf and time freq)"""
     # import information from fieldtrip data to get data shape
     ft_data = sio.loadmat(meg_fname + '.mat', squeeze_me=True,
                           struct_as_record=True)['data']
-    if fileformat == '.dat':
+    if meg_fname[-3:] == '.dat':
         # import binary MEG data
-        bin_data = np.fromfile(meg_fname + fileformat, dtype=np.float32)
+        bin_data = np.fromfile(meg_fname + '.dat', dtype=np.float32)
         Xdim = ft_data['Xdim'].item()
         bin_data = np.reshape(bin_data, Xdim[[2, 1, 0]]).transpose([2, 1, 0])
         # define data
         data = bin_data
         time = ft_data['time'].item()[0]
 
-    elif fileformat == '.mat':
+    else:
         # import structure MEG data
         matdata = ft_data['powspctrm'].item()
         # define data

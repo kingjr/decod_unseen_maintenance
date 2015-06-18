@@ -1,42 +1,27 @@
-import os.path as op
 import numpy as np
 import pickle
 from mne.decoding import GeneralizationAcrossTime
 
-from utils import get_data, resample_epochs, decim
+from orientations.utils import load_epochs_events, resample_epochs, decim
 from meeg_preprocessing import setup_provenance
 
 from config import (
     open_browser,
-    data_path,
-    pyoutput_path,
-    results_dir,
+    paths,
     subjects,
     data_types,
     preproc,
     contrasts
 )
 
-report, run_id, results_dir, logger = setup_provenance(
-    script=__file__, results_dir=results_dir)
+report, run_id, _, logger = setup_provenance(
+    script=__file__, results_dir=paths('report'))
 
 for s, subject in enumerate(subjects):  # Loop across each subject
     print(subject)
     for data_type in data_types:  # Input type ERFs or frequency power
-        print(data_type)
-        if data_type == 'erf':
-            fname_appendix = ''
-            fileformat = '.dat'
-        else:
-            fname_appendix = '_Tfoi_mtm_' + data_type[4:] + 'Hz'
-            fileformat = '.mat'
-
-        # define paths
-        meg_fname = op.join(data_path, subject, 'preprocessed',
-                            subject + '_preprocessed' + fname_appendix)
-        bhv_fname = op.join(data_path, subject, 'behavior',
-                            subject + '_fixed.mat')
-        epochs, events = get_data(meg_fname, bhv_fname, fileformat)
+        epochs, events = load_epochs_events(subject, paths,
+                                            data_type=data_type)
 
         # preprocess data for memory issue
         if 'resample' in preproc.keys():
@@ -91,10 +76,8 @@ for s, subject in enumerate(subjects):  # Loop across each subject
                 subject)
 
             # Save contrast
-            pkl_fname = op.join(
-                pyoutput_path, subject, 'mvpas',
-                '{}-decod_{}{}.pickle'.format(subject, contrast['name'],
-                                              fname_appendix))
+            pkl_fname = paths('decod', subject=subject, data_type=data_type,
+                              analysis=contrast['name'])
 
             # Save classifier results
             with open(pkl_fname, 'wb') as f:

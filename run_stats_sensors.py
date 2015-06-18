@@ -1,5 +1,3 @@
-import os
-import os.path as op
 import pickle
 import numpy as np
 import mne
@@ -7,18 +5,17 @@ from toolbox.utils import (cluster_stat, Evokeds_to_Epochs, decim)
 from meeg_preprocessing import setup_provenance
 
 from config import (
-    data_path,
+    paths,
     subjects,
     data_types,
     analyses,
     chan_types,
-    results_dir,
     open_browser
 )
 
 # XXX uncomment
-report, run_id, results_dir, logger = setup_provenance(
-    script=__file__, results_dir=results_dir)
+report, run_id, _, logger = setup_provenance(
+    script=__file__, results_dir=paths('report'))
 
 
 if 'meg' in [i['name'] for i in chan_types]:
@@ -45,10 +42,10 @@ for data_type in data_types:  # Input type ERFs or frequency power
 
         # Load data across all subjects
         for s, subject in enumerate(subjects):
-            pkl_fname = op.join(data_path, 'MEG', subject, 'evokeds',
-                                '%s-cluster_sensors_%s.pickle' % (
-                                    data_type, analysis['name']))
-            with open(pkl_fname) as f:
+            pkl_fname = paths('evoked', subject=subject,
+                              data_type=data_type,
+                              analysis=analysis['name'])
+            with open(pkl_fname, 'rb') as f:
                 coef, evoked, _, _ = pickle.load(f)
             evokeds.append(coef)
 
@@ -115,13 +112,11 @@ for data_type in data_types:  # Input type ERFs or frequency power
 
             # Save contrast
             # TODO CHANGE SAVING TO SAVE MULTIPLE CHAN TYPES
-            save_dir = op.join(data_path, 'MEG', 'fsaverage')
-            if not op.exists(save_dir):
-                os.makedirs(save_dir)
-            pkl_fname = op.join(save_dir,
-                                '%s-cluster_sensors_%s.pickle' % (
-                                    data_type, analysis['name']))
 
+            pkl_fname = paths('evoked', subject='fsaverage',
+                              data_type=data_type,
+                              analysis=('stats_' + analysis['name']),
+                              log=True)
             with open(pkl_fname, 'wb') as f:
                 pickle.dump([cluster, evokeds, analysis], f)
 

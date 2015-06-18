@@ -14,7 +14,7 @@ from config import (
     open_browser,
     data_path,
     pyoutput_path,
-    results_dir,
+    paths('report'),
     subjects,
     data_types,
     clf_types,

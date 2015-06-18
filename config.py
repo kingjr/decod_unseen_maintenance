@@ -4,12 +4,43 @@ import os.path as op
 # Experiment parameters
 open_browser = True
 base_path = op.dirname(op.dirname(__file__))
-data_path = op.join(base_path, '/media', 'niccolo', 'Paris', 'data')
-script_path = '/home/niccolo/Dropbox/DOCUP/scripts/python/'
-pyoutput_path = op.join(base_path, '/media', 'niccolo', 'ParisPy', 'data')
-results_dir = op.join(base_path, 'results')
-if not op.exists(results_dir):
-    os.mkdir(results_dir)
+data_path = op.join(base_path, '../data/')
+# XXX what to do with this ad hoc paths?
+# script_path = '/home/niccolo/Dropbox/DOCUP/scripts/python/'
+# pyoutput_path = op.join(base_path, '/media', 'niccolo', 'ParisPy', 'data')
+
+
+def paths(typ, subject='fsaverage', data_type='erf', lock='target',
+          analysis='analysis', pyscript='config.py', log=False):
+    # FIXME: cleanup epochs filenames
+    this_path = op.join(data_path, subject, typ)
+    path_template = dict(
+        base_path=base_path,
+        data_path=data_path,
+        report=op.join(base_path, 'results'),
+        log=op.join(base_path, pyscript.strip('.py') + '.log'),
+
+        behavior=op.join(this_path, '%_fixed.mat' % subject),
+        epoch=op.join(this_path, '%s_%s_%s.mat' % (subject, lock, data_type)),
+        evoked=op.join(this_path, '%s_%s_%s_%s.fif' % (
+            subject, lock, data_type, analysis)),
+        decod=op.join(this_path, '%s_%s_%s_%s.pickle' % (
+            subject, lock, data_type, analysis)),
+        generalize=op.join(this_path, '%s_%s_%s_%s.pickle' % (
+            subject, lock, data_type, analysis)),
+    if log:
+        fname = paths('log')
+        print '%s: %s ' % (fname, path_template[typ])
+        with open(fname, "a") as myfile:
+            myfile.write("%s \n" % path_template[typ])
+
+    if not op.exists(os.path.dirname(path_template[typ])):
+        os.mkdir(path_template[typ])
+
+    return path_template[typ]
+
+if not op.exists(paths('report')):
+    os.mkdir(paths('report'))
 
 subjects = [
     'ak130184', 'el130086', 'ga130053', 'gm130176', 'hn120493',

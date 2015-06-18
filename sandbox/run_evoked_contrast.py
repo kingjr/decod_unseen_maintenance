@@ -19,14 +19,14 @@ from config import (
     data_path,
     pyoutput_path,
     subjects,
-    results_dir,
+    paths('report'),
     contrasts,
     open_browser,
     chan_types,
 )
 
-report, run_id, results_dir, logger = setup_provenance(script=__file__,
-                                                       results_dir=results_dir)
+report, run_id, _, logger = setup_provenance(script=__file__,
+                                                       results_dir=paths('report'))
 
 mne.set_log_level('INFO')
 

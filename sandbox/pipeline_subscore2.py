@@ -16,7 +16,7 @@ from meeg_preprocessing import setup_provenance
 from toolbox.utils import fill_betweenx_discontinuous, plot_eb
 
 from config import (
-    results_dir,
+    paths('report'),
     pyoutput_path,
     subjects,
     data_types,
@@ -32,8 +32,8 @@ from temp.pipeline_subscore import (sel_events,
 
 # Setup logs:
 # mne.set_log_level('INFO')
-report, run_id, results_dir, logger = setup_provenance(
-    script=__file__, results_dir=results_dir)
+report, run_id, _, logger = setup_provenance(
+    script=__file__, results_dir=paths('report'))
 
 for data_type in data_types:
     # logger.info(data_type)
