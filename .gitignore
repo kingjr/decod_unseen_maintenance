@@ -1,4 +1,5 @@
 *.pyc
 results/
 reports/
+data/
 *~
