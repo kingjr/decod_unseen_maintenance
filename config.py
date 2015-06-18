@@ -68,7 +68,7 @@ from orientations.conditions import contrasts
 # analyses = [format_analysis(contrast) for contrast in contrasts]
 
 # ############## Define type of input (erf,frequenct etc...) ##################
-data_types = ['erf'] + ['freq' + freq for freq in [7, 10, 12, 18, 29, 70, 105]]
+data_types = ['erf'] + ['freq%s' % f for f in [7, 10, 12, 18, 29, 70, 105]]
 
 # ##################################""
 # # UNCOMMENT TO SUBSELECTION FOR FAST PROCESSING
