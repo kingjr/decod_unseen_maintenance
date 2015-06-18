@@ -14,7 +14,7 @@ from config import (
     paths,
     subjects,
     data_types,
-    analyses,
+    evoked_analyses as analyses,  # FIXME
     chan_types,
     open_browser,
 )
@@ -24,6 +24,7 @@ from config import (
 #
 # mne.set_log_level('INFO')
 
+chan_type = meg_to_gradmag(chan_types)
 
 for subject, data_type in product(subjects, data_types):
     print(subject, data_type)
@@ -36,6 +37,12 @@ for subject, data_type in product(subjects, data_types):
         coef, evokeds = build_analysis(analysis['conditions'], epochs, events,
                                        operator=analysis['operator'])
 
+        # Save all_evokeds
+        fname = paths('evoked', subject=subject, data_type=data_type,
+                      analysis=analysis['name'])
+        with open(fname, 'wb') as f:
+            pickle.dump([coef, evokeds, analysis, events], f)
+
         # Prepare plot delta (subtraction, or regression)
         fig1, ax1 = plt.subplots(1, len(chan_types))
         if type(ax1) not in [list, np.ndarray]:
@@ -44,14 +51,8 @@ for subject, data_type in product(subjects, data_types):
         fig2, ax2 = plt.subplots(len(evokeds['coef']), len(chan_types))
         ax2 = np.reshape(ax2, len(evokeds['coef']) * len(chan_types))
 
-        # Save all_evokeds
-        fname = paths('evoked', subject=subject, data_type=data_type,
-                      analysis=analysis['name'])
-        with open(fname, 'wb') as f:
-            pickle.dump([coef, evokeds, analysis, events], f)
-
         # Plot per channel type
-        for ch, chan_type in enumerate(meg_to_gradmag(chan_types)):
+        for ch, chan_type in enumerate(chan_types):
             # Select specific types of sensor
             info = coef.info
             picks = [i for k, p in picks_by_type(info)

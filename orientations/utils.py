@@ -24,9 +24,7 @@ def meg_to_gradmag(chan_types):
     """force separation of magnetometers and gradiometers"""
     if 'meg' in [chan['name'] for chan in chan_types]:
         chan_types = [dict(name='mag'), dict(name='grad')] + \
-                     [dict(name=chan['name'])
-                      for chan in chan_types
-                      if chan['name'] != 'meg']
+                     [chan for chan in chan_types if chan['name'] != 'meg']
     return chan_types
 
 
@@ -236,38 +234,6 @@ def scorer_spearman(y_true, y_pred):
     from scipy.stats import spearmanr
     rho, p = spearmanr(y_true, y_pred[:, 0])
     return rho
-
-
-def format_analysis(contrast):
-    """This functions takes the contrasts defined for decoding  and format it
-    so as to be usable by the univariate scripts
-
-    We need to homogeneize the two types of analysis definitions
-     """
-    name = contrast['name']
-    if contrast['scorer'] == scorer_spearman:
-        operator = evoked_spearman
-    elif contrast['scorer'] == scorer_auc:
-        operator = evoked_subtract
-    elif contrast['scorer'] == scorer_angle:
-        # TODO evoked_vtest
-        return
-    # exclude
-    exclude = dict()
-    for exclude_ in contrast['exclude']:
-        cond = exclude_['cond']
-        exclude[cond] = exclude_['values']
-
-    # include
-    conditions = list()
-    cond = contrast['include']['cond']
-    for value in contrast['include']['values']:
-        include_ = dict()
-        include_[cond] = value
-        conditions.append(dict(name=cond + str(value), include=include_,
-                               exclude=exclude))
-    analysis = dict(name=name, operator=operator, conditions=conditions)
-    return analysis
 
 
 def build_analysis(evoked_list, epochs, events, operator=None):
