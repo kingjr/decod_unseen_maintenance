@@ -36,32 +36,21 @@ def angle2circle(angles):
 
 
 def load_FieldTrip_data(meg_fname):
-    # FIXME will be fixed with mne preprocessing
     from mne.io.meas_info import create_info
     from mne.epochs import EpochsArray
-    """load behavioural and meg data (erf and time freq)"""
+    """XXX Here explain what this does"""
     # import information from fieldtrip data to get data shape
     ft_data = sio.loadmat(meg_fname[:-4] + '.mat', squeeze_me=True,
                           struct_as_record=True)['data']
-    if 'erf' in meg_fname:
-        # import binary MEG data
-        bin_data = np.fromfile(meg_fname, dtype=np.float32)
-        Xdim = ft_data['Xdim'].item()
-        bin_data = np.reshape(bin_data, Xdim[[2, 1, 0]]).transpose([2, 1, 0])
-        # define data
-        data = bin_data
-        time = ft_data['time'].item()[0]
-
-    else:
-        # import structure MEG data
-        matdata = ft_data['powspctrm'].item()
-        # define data
-        data = matdata
-        time = ft_data['time'].item()
+    # import binary MEG data
+    bin_data = np.fromfile(meg_fname[:-4] + '.dat', dtype=np.float32)
+    Xdim = ft_data['Xdim'].item()
+    bin_data = np.reshape(bin_data, Xdim[[2, 1, 0]]).transpose([2, 1, 0])
 
     # Create an MNE Epoch
-    n_trial, n_chans, n_time = data.shape
-    sfreq = 1. / (time[1] - time[0])
+    n_trial, n_chans, n_time = bin_data.shape
+    sfreq = ft_data['fsample'].item()
+    time = ft_data['time'].item()[0]
     tmin = min(time)
     chan_names = [str(label) for label in ft_data['label'].item()]
     chan_types = np.squeeze(np.concatenate(
@@ -71,7 +60,8 @@ def load_FieldTrip_data(meg_fname):
     events = np.c_[np.cumsum(np.ones(n_trial)) * 5 * sfreq,
                    np.zeros(n_trial),
                    ft_data['trialinfo'].item()]
-    epochs = EpochsArray(data, info, events=events, tmin=tmin)
+    epochs = EpochsArray(bin_data, info, events=events, tmin=tmin)
+
     return epochs
 
 
@@ -101,6 +91,9 @@ def get_events(bhv_fname):
         for key in keys:
                 event[key] = trial[key]
         # manual new keys
+        event['targetContrast'] = contrasts[event['contrast']-1]
+        event['seen_unseen'] = event['response_visibilityCode'] > 1
+
         event['orientation_target'] = event['orientation']*30-15
         event['orientation_probe'] = (event['orientation']*30-15 +
                                       event['tilt'] * 30) % 180
