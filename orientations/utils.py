@@ -9,6 +9,24 @@ from sklearn.svm import LinearSVR, SVC
 from sklearn.linear_model import LogisticRegression
 
 
+def load_epochs_events(subject, data_type, data_path):
+    # FIXME: cleanup this mess by renaming files properly
+    if data_type == 'erf':
+        fname_appendix = ''
+        fileformat = '.dat'
+    else:
+        fname_appendix = '_Tfoi_mtm_' + data_type[4:] + 'Hz'
+        fileformat = '.mat'
+    # Get MEG data
+    meg_fname = op.join(data_path, subject, 'preprocessed',
+                        subject + '_preprocessed' + fname_appendix)
+    epochs = load_FieldTrip_data(meg_fname, fileformat)
+    # Get behavioral data
+    bhv_fname = op.join(data_path, subject, 'behavior', subject + '_fixed.mat')
+    events = get_events(bhv_fname)
+    return epochs, events
+
+
 def meg_to_gradmag(chan_types):
     """force separation of magnetometers and gradiometers"""
     if 'meg' in [chan['name'] for chan in chan_types]:
@@ -22,12 +40,6 @@ def meg_to_gradmag(chan_types):
 def angle2circle(angles):
     """from degree to radians multipled by rm2"""
     return np.deg2rad(2 * (np.array(angles) + 7.5))
-
-
-def get_data(meg_fname, bhv_fname, fileformat):
-    epochs = load_FieldTrip_data(meg_fname, fileformat)
-    events = get_events(bhv_fname)
-    return epochs, events
 
 
 def load_FieldTrip_data(meg_fname, fileformat):

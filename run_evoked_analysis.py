@@ -8,7 +8,8 @@ import mne
 from mne.io.pick import _picks_by_type as picks_by_type
 from meeg_preprocessing import setup_provenance
 
-from orientations.utils import meg_to_gradmag, build_analysis, get_data
+from orientations.utils import (meg_to_gradmag, build_analysis, get_data,
+                                load_epochs_events)
 
 from config import (
     data_path,
@@ -27,23 +28,9 @@ mne.set_log_level('INFO')
 
 for subject in subjects:
     print(subject)
-    # Extract events from mat file
-    bhv_fname = op.join(data_path, subject, 'behavior', subject + '_fixed.mat')
 
     for data_type in data_types:  # Input type ERFs or frequency power
-        print(data_type)
-        if data_type == 'erf':
-            fname_appendix = ''
-            fileformat = '.dat'
-        else:
-            fname_appendix = '_Tfoi_mtm_' + data_type[4:] + 'Hz'
-            fileformat = '.mat'
-        # Get MEG data
-
-        meg_fname = op.join(data_path, subject, 'preprocessed',
-                            subject + '_preprocessed' + fname_appendix)
-        epochs, events = get_data(meg_fname, bhv_fname, fileformat)
-
+        epochs, events = load_epochs_events(subject, data_type, data_path)
         # Apply each analysis
         for analysis in analyses:
             print(analysis['name'])
