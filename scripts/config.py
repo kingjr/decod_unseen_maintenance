@@ -1,10 +1,14 @@
+import sys
+sys.path.insert(0, './')
+
 import os
 import os.path as op
 
 # Experiment parameters
 open_browser = True
 base_path = op.dirname(op.dirname(__file__))
-data_path = op.join(base_path, '../data/')
+print base_path
+data_path = op.join(base_path, 'data/')
 # XXX what to do with this ad hoc paths?
 # script_path = '/home/niccolo/Dropbox/DOCUP/scripts/python/'
 # pyoutput_path = op.join(base_path, '/media', 'niccolo', 'ParisPy', 'data')
@@ -42,7 +46,7 @@ def paths(typ, subject='fsaverage', data_type='erf', lock='target',
     if folder and not op.exists(folder):
         os.mkdir(folder)
 
-    return
+    return file
 
 subjects = [
     'ak130184', 'el130086', 'ga130053', 'gm130176', 'hn120493',
