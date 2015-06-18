@@ -24,7 +24,7 @@ unseen = dict(cond='seen_unseen', values=[0])
 seen = dict(cond='seen_unseen', values=[1])
 
 
-contrasts = (
+analyses = (
     dict(name='4visibilitiesPresent',
          include=dict(cond='response_visibilityCode', values=[1, 2, 3, 4]),
          exclude=[absent],

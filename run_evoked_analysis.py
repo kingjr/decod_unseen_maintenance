@@ -19,10 +19,10 @@ from config import (
     open_browser,
 )
 
-report, run_id, _, logger = setup_provenance(
-    script=__file__, results_dir=paths('report'))
-
-mne.set_log_level('INFO')
+# report, run_id, _, logger = setup_provenance(
+#     script=__file__, results_dir=paths('report'))
+#
+# mne.set_log_level('INFO')
 
 
 for subject, data_type in product(subjects, data_types):

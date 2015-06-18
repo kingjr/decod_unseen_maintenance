@@ -59,7 +59,7 @@ chan_types = [dict(name='meg', connectivity=meg_connectivity)]
 preproc = dict()
 
 # ###################### Define contrasts #####################
-from orientations.conditions import contrasts
+from orientations.conditions import analyses
 
 # #############################################################################
 # univariate analyses definition: transform the input used for the decoding to
