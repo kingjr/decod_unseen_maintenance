@@ -2,9 +2,9 @@
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import Pipeline
 from sklearn.svm import LinearSVR
-from utils import (
-    clf_2class_proba, SVR_angle, angle2circle,
-    scorer_angle, scorer_auc, scorer_spearman)
+from utils import clf_2class_proba, SVR_angle, angle2circle
+from base import (scorer_angle, scorer_auc, scorer_spearman,
+                  evoked_spearman, evoked_subtract, evoked_circularlinear)
 
 scaler = StandardScaler()
 
@@ -24,9 +24,6 @@ unseen = dict(cond='seen_unseen', values=[0])
 seen = dict(cond='seen_unseen', values=[1])
 missed = dict(cond='response_tilt', values=[0])
 angles = angle2circle([15, 45, 75, 105, 135, 165])
-
-
-from .utils import evoked_spearman, evoked_subtract, evoked_circularlinear
 
 
 def analysis(name, include, exclude=[absent], contrast=None, typ=None):
