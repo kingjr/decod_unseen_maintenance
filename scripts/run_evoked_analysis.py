@@ -53,14 +53,15 @@ for subject, data_type in product(subjects, data_types):
         report.add_figs_to_section(fig1, ('%s (%s) %s: COEF' % (
             subject, data_type, analysis['name'])), analysis['name'])
 
-        # # Plot subcondition # FIXME #2220
-        # fig2, ax2 = plt.subplots(len(meg_to_gradmag(chan_types)),
-        #                          len(evokeds['coef']))
-        # for e, evoked in enumerate(evokeds['coef']):
-        #     evoked.data = evoked.data
-        #     evoked.plot_image(axes=ax2[:, e], show=False)
-        # report.add_figs_to_section(fig2, ('%s (%s) %s: CONDITIONS' % (
-        #     subject, data_type, analysis['name'])), analysis['name'])
+        # Plot subcondition # FIXME #2220
+        fig2, ax2 = plt.subplots(len(meg_to_gradmag(chan_types)),
+                                 len(evokeds['coef']), figsize=[19, 10])
+        for e, evoked in enumerate(evokeds['coef']):
+            evoked.data = evoked.data
+            evoked.plot_image(axes=ax2[:, e], show=False,
+                              titles=dict(grad='grad', mag='mag'))
+        report.add_figs_to_section(fig2, ('%s (%s) %s: CONDITIONS' % (
+            subject, data_type, analysis['name'])), analysis['name'])
 
 
 report.save(open_browser=open_browser)
