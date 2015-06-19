@@ -364,14 +364,14 @@ def evoked_circularlinear(epochs, angles):
     # regress = CL1stOrderRegression()
     n_trials, n_chans, n_times = epochs._data.shape
     # transform to 2D array
-    x = epochs._data.reshape(n_trials, n_chans * n_times)
+    X = epochs._data.reshape(n_trials, n_chans * n_times)
     # duplicate angles for each time / chan
-    angles = np.tile(angles, [x.shape[1], 1]).T
+    angles = np.tile(angles, [X.shape[1], 1]).T
     # compute
-    r, r2, pval = circular_linear_correlation(angles, x)
+    coef = pairwise(X, angles, circular_linear_correlation)
     # store in format readable to build_analysis
     evoked = epochs.average()
-    evoked.data = r.reshape(n_chans, n_times)
+    evoked.data = coef[:, :, 0].reshape(n_chans, n_times)  # only store rho
     return evoked
 
 
