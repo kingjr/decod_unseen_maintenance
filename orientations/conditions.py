@@ -22,23 +22,24 @@ pipeline_svrangle = SVR_angle()
 absent = dict(cond='present', values=[0])
 unseen = dict(cond='seen_unseen', values=[0])
 seen = dict(cond='seen_unseen', values=[1])
+angles = angle2circle([15, 45, 75, 105, 135, 165])
 
 
 def analysis(name, include, exclude=[absent], clf=None, scorer=None,
-             change=None, chance=None):
+             change=None, chance=None, contrast=None):
     if len(include['values']) == 2:
+        # Default contrast analyses
         clf = pipeline_svc if clf is None else clf
         scorer = scorer_auc if scorer is None else scorer
         chance = .5 if chance is None else chance
     else:
+        # Default regression analysis
         clf = pipeline_svr if clf is None else clf
         scorer = scorer_spearman if scorer is None else scorer
         chance = 0. if chance is None else chance
     return dict(name=name, include=include, exclude=exclude, clf=clf,
-                chance=chance, scorer=scorer)
+                chance=chance, scorer=scorer, contrast=None)
 
-
-angles = angle2circle([15, 45, 75, 105, 135, 165])
 analyses = (
     analysis('s_presence', dict(cond='present', values=[0, 1]), exclude=[]),
     analysis('s_targetContrast',
@@ -58,168 +59,21 @@ analyses = (
 )
 
 # ###################### Define subscores #####################################
-subscores = [
-    dict(name='4visibilitiesPresentAll',
-         contrast='4visibilitiesPresent',
-         include=dict(cond='response_visibilityCode', values=[1, 2, 3, 4]),
-         exclude=[absent],
-         clf=pipeline_svr, chance=0,
-         scorer=scorer_spearman),
-    dict(name='visibilityPresentAll',
-         contrast='visibilityPresent',
-         include=dict(cond='seen_unseen', values=[0, 1]),
-         exclude=[absent],
-         clf=pipeline_svc, chance=.5,
-         scorer=scorer_auc),
-    dict(name='presentAbsentAll',
-         contrast='presentAbsent',
-         include=dict(cond='present', values=[0, 1]),
-         exclude=[],
-         clf=pipeline_svc, chance=.5,
-         scorer=scorer_auc),
-    dict(name='presentAbsentANDseen',
-         contrast='presentAbsent',
-         include=dict(cond='present', values=[0, 1]),
-         exclude=[unseen],
-         clf=pipeline_svc, chance=.5,
-         scorer=scorer_auc),
-    dict(name='presentAbsentANDunseen',
-         contrast='presentAbsent',
-         include=dict(cond='present', values=[0, 1]),
-         exclude=[seen],
-         clf=pipeline_svc, chance=.5,
-         scorer=scorer_auc),
-    dict(name='accuracyAll',
-         contrast='accuracy',
-         include=dict(cond='correct', values=[0, 1]),
-         exclude=[dict(cond='correct', values=[float('NaN')])],
-         clf=pipeline_svc, chance=.5,
-         scorer=scorer_auc),
-    dict(name='accuracyANDseen',
-         contrast='accuracy',
-         include=dict(cond='correct', values=[0, 1]),
-         exclude=[dict(cond='correct', values=[float('NaN')]), unseen],
-         clf=pipeline_svc, chance=.5,
-         scorer=scorer_auc),
-    dict(name='accuracyANDunseen',
-         contrast='accuracy',
-         include=dict(cond='correct', values=[0, 1]),
-         exclude=[dict(cond='correct', values=[float('NaN')]), seen],
-         clf=pipeline_svc, chance=.5,
-         scorer=scorer_auc),
-    dict(name='lambdaAll',
-         contrast='lambda',
-         include=dict(cond='lambda', values=[1, 2]),
-         exclude=[absent],
-         clf=pipeline_svc, chance=.5,
-         scorer=scorer_auc),
-    dict(name='lambdaANDseen',
-         contrast='lambda',
-         include=dict(cond='lambda', values=[1, 2]),
-         exclude=[absent, unseen],
-         clf=pipeline_svc, chance=.5,
-         scorer=scorer_auc),
-    dict(name='lambdaANDunseen',
-         contrast='lambda',
-         include=dict(cond='lambda', values=[1, 2]),
-         exclude=[absent, seen],
-         clf=pipeline_svc, chance=.5,
-         scorer=scorer_auc),
-    dict(name='tiltAll',
-         contrast='tilt',
-         include=dict(cond='tilt', values=[-1, 1]),
-         exclude=[absent],
-         clf=pipeline_svc, chance=.5,
-         scorer=scorer_auc),
-    dict(name='tiltANDseen',
-         contrast='tilt',
-         include=dict(cond='tilt', values=[-1, 1]),
-         exclude=[absent, unseen],
-         clf=pipeline_svc, chance=.5,
-         scorer=scorer_auc),
-    dict(name='tiltANDunseen',
-         contrast='tilt',
-         include=dict(cond='tilt', values=[-1, 1]),
-         exclude=[absent, seen],
-         clf=pipeline_svc, chance=.5,
-         scorer=scorer_auc),
-    dict(name='responseButtonAll',
-         contrast='responseButton',
-         include=dict(cond='response_tilt', values=[-1, 1]),
-         exclude=[dict(cond='response_tilt', values=[0])],
-         clf=pipeline_svc, chance=.5,
-         scorer=scorer_auc),
-    dict(name='responseButtonANDseen',
-         contrast='responseButton',
-         include=dict(cond='response_tilt', values=[-1, 1]),
-         exclude=[dict(cond='response_tilt', values=[0]), unseen],
-         clf=pipeline_svc, chance=.5,
-         scorer=scorer_auc),
-    dict(name='responseButtonANDunseen',
-         contrast='responseButton',
-         include=dict(cond='response_tilt', values=[-1, 1]),
-         exclude=[dict(cond='response_tilt', values=[0]), seen],
-         clf=pipeline_svc, chance=.5,
-         scorer=scorer_auc),
-    dict(name='targetAngleAll',
-         contrast='targetAngle',
-         include=dict(cond='orientation_target_rad',
-                      values=angle2circle([15, 45, 75, 105, 135, 165])),
-         exclude=[absent],
-         clf=pipeline_svrangle, chance=1. / 6.,
-         scorer=scorer_angle),
-    dict(name='targetAngleANDseen',
-         contrast='targetAngle',
-         include=dict(cond='orientation_target_rad',
-                      values=angle2circle([15, 45, 75, 105, 135, 165])),
-         exclude=[absent, unseen], chance=1. / 6.,
-         scorer=scorer_angle),
-    dict(name='targetAngleANDunseen',
-         contrast='targetAngle',
-         include=dict(cond='orientation_target_rad',
-                      values=angle2circle([15, 45, 75, 105, 135, 165])),
-         exclude=[absent, seen], chance=1. / 6.,
-         scorer=scorer_angle),
-    dict(name='probeAngleAll',
-         contrast='probeAngle',
-         include=dict(cond='orientation_probe_rad',
-                      values=angle2circle([15, 45, 75, 105, 135, 165])),
-         exclude=[absent],
-         clf=pipeline_svrangle, chance=1. / 6.,
-         scorer=scorer_angle),
-    dict(name='probeAngleANDseen',
-         contrast='probeAngle',
-         include=dict(cond='orientation_probe_rad',
-                      values=angle2circle([15, 45, 75, 105, 135, 165])),
-         exclude=[absent, unseen],
-         clf=pipeline_svrangle, chance=1. / 6.,
-         scorer=scorer_angle),
-    dict(name='probeAngleANDunseen',
-         contrast='probeAngle',
-         include=dict(cond='orientation_probe_rad',
-                      values=angle2circle([15, 45, 75, 105, 135, 165])),
-         exclude=[absent, seen],
-         clf=pipeline_svrangle, chance=1. / 6.,
-         scorer=scorer_angle),
-    dict(name='targetContrastAll',
-         contrast='targetContrast',
-         include=dict(cond='targetContrast', values=[0, .5, .75, 1]),
-         exclude=[],
-         clf=pipeline_svr, chance=0.,
-         scorer=scorer_spearman),
-    dict(name='targetContrastANDseen',
-         contrast='targetContrast',
-         include=dict(cond='targetContrast', values=[0, .5, .75, 1]),
-         exclude=[unseen],
-         clf=pipeline_svr, chance=0.,
-         scorer=scorer_spearman),
-    dict(name='targetContrastANDunseen',
-         contrast='targetContrast',
-         include=dict(cond='targetContrast', values=[0, .5, .75, 1]),
-         exclude=[seen],
-         clf=pipeline_svr, chance=0.,
-         scorer=scorer_spearman),
-]
+
+subscores = []
+for analysis in analyses:
+    analysis['contrast'] = analysis['name']
+    subscores.append(analysis)
+    # subdivide by visibility
+    if analysis['name'] not in ['m_visibilities', 'm_seen']:
+        analysis_ = analysis
+        analysis_['name'] += '-seen'
+        analysis_['exclude'] += [unseen]
+        subscores.append(analysis_)
+        analysis_ = analysis
+        analysis_['name'] += '-unseen'
+        analysis_['exclude'] += [seen]
+        subscores.append(analysis_)
 
 # ############# Define second-order subscores #################################
 subscores2 = [
