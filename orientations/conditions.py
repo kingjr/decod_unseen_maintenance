@@ -24,59 +24,37 @@ unseen = dict(cond='seen_unseen', values=[0])
 seen = dict(cond='seen_unseen', values=[1])
 
 
+def analysis(name, include, exclude=[absent], clf=None, scorer=None,
+             change=None, chance=None):
+    if len(include['values']) == 2:
+        clf = pipeline_svc if clf is None else clf
+        scorer = scorer_auc if scorer is None else scorer
+        chance = .5 if chance is None else chance
+    else:
+        clf = pipeline_svr if clf is None else clf
+        scorer = scorer_spearman if scorer is None else scorer
+        chance = 0. if chance is None else chance
+    return dict(name=name, include=include, exclude=exclude, clf=clf,
+                chance=chance, scorer=scorer)
+
+
+angles = angle2circle([15, 45, 75, 105, 135, 165])
 analyses = (
-    dict(name='4visibilitiesPresent',
-         include=dict(cond='response_visibilityCode', values=[1, 2, 3, 4]),
-         exclude=[absent],
-         clf=pipeline_svr, chance=0,
-         scorer=scorer_spearman),
-    dict(name='visibilityPresent',
-         include=dict(cond='seen_unseen', values=[0, 1]),
-         exclude=[absent],
-         clf=pipeline_svc, chance=.5,
-         scorer=scorer_auc),
-    dict(name='presentAbsent',
-         include=dict(cond='present', values=[0, 1]),
-         exclude=[],
-         clf=pipeline_svc, chance=.5,
-         scorer=scorer_auc),
-    dict(name='accuracy',
-         include=dict(cond='correct', values=[0, 1]),
-         exclude=[dict(cond='correct', values=[float('NaN')])],
-         clf=pipeline_svc, chance=.5,
-         scorer=scorer_auc),
-    dict(name='lambda',
-         include=dict(cond='lambda', values=[1, 2]),
-         exclude=[absent],
-         clf=pipeline_svc, chance=.5,
-         scorer=scorer_auc),
-    dict(name='tilt',
-         include=dict(cond='tilt', values=[-1, 1]),
-         exclude=[absent],
-         clf=pipeline_svc, chance=.5,
-         scorer=scorer_auc),
-    dict(name='responseButton',
-         include=dict(cond='response_tilt', values=[-1, 1]),
-         exclude=[dict(cond='response_tilt', values=[0])],
-         clf=pipeline_svc, chance=.5,
-         scorer=scorer_auc),
-    dict(name='targetAngle',
-         include=dict(cond='orientation_target_rad',
-                      values=angle2circle([15, 45, 75, 105, 135, 165])),
-         exclude=[absent],
-         clf=pipeline_svrangle, chance=1. / 6.,
-         scorer=scorer_angle),
-    dict(name='probeAngle',
-         include=dict(cond='orientation_probe_rad',
-                      values=angle2circle([15, 45, 75, 105, 135, 165])),
-         exclude=[absent],
-         clf=pipeline_svrangle, chance=1. / 6.,
-         scorer=scorer_angle),
-    dict(name='targetContrast',
-         include=dict(cond='targetContrast', values=[0, .5, .75, 1]),
-         exclude=[],
-         clf=pipeline_svr, chance=0.,
-         scorer=scorer_spearman),
+    analysis('s_presence', dict(cond='present', values=[0, 1]), exclude=[]),
+    analysis('s_targetContrast',
+             dict(cond='targetContrast', values=[0, .5, .75, 1]), exclude=[]),
+    analysis('s_lambda', dict(cond='lambda', values=[1, 2])),
+    analysis('s_targetAngle', dict(cond='orientation_target_rad', values=angles),
+             clf=pipeline_svrangle, chance=1. / 6., scorer=scorer_angle),
+    analysis('s_probeAngle', dict(cond='orientation_probe_rad', values=angles),
+             clf=pipeline_svrangle, chance=1. / 6., scorer=scorer_angle),
+    analysis('s_tilt', dict(cond='tilt', values=[-1, 1])),
+    analysis('m_responseButton', dict(cond='response_tilt', values=[-1, 1]),
+             exclude=[dict(cond='response_tilt', values=[0])]),
+    analysis('m_accuracy', dict(cond='correct', values=[0, 1])),  # XXX Absent?
+    analysis('m_visibilities',
+             dict(cond='response_visibilityCode', values=[1, 2, 3, 4])),
+    analysis('m_seen', dict(cond='seen_unseen', values=[0, 1])),
 )
 
 # ###################### Define subscores #####################################
