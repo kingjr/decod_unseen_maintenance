@@ -315,21 +315,46 @@ def evoked_weighted_subtract(evokeds):
     return coef
 
 
-def evoked_spearman(evokeds):
+def evoked_spearman(evokeds, n_jobs=1):
     from scipy.stats import spearmanr
-    n_chan, n_time = evokeds['coef'][0].data.shape
-    coef = np.zeros((n_chan, n_time))
-    # TODO: need parallelization
-    for chan in range(n_chan):
-        for t in range(n_time):
-            y = range(len(evokeds['coef']))
-            X = list()
-            for i in y:
-                X.append(evokeds['coef'][i].data[chan, t])
-            coef[chan, t], _ = spearmanr(X, y)
+    coef = np.zeros_like(evokeds['coef'][0].data)
+    y = range(len(evokeds['coef']))
+    X = np.array([evokeds['coef'][i].data for i in y])
+    n_trials, n_chan, n_time = X.shape
+    coef = pairwise(X,
+                    np.tile(y, [n_chan, n_time, 1]).transpose([2, 0, 1]),
+                    spearmanr)
     evoked = evokeds['coef'][0]
-    evoked.data = coef
+    evoked.data = coef[:, :, 0]  # only store rho
     return evoked
+    return evoked
+
+
+def pairwise(X, Y, func, n_jobs=-1):
+    from mne.parallel import parallel_func
+    if X.shape != Y.shape:
+        raise ValueError('X and Y must have identical shapes')
+    parallel, p_pairwise, n_jobs = parallel_func(_pairwise, n_jobs)
+    dims = X.shape
+    X = np.reshape(X, [dims[0], np.prod(dims[1:])])
+    Y = np.reshape(Y, [dims[0], np.prod(dims[1:])])
+    n_cols = X.shape[1]
+    n_chunks = min(n_cols, n_jobs)
+    chunks = np.array_split(range(n_cols), n_chunks)
+    out = parallel(p_pairwise(X[:, chunk], Y[:, chunk], func)
+                   for chunk in chunks)
+    # unpack
+    out = np.reshape(out + list(), dims[1:] + np.shape(out)[2:])
+    return out
+
+
+def _pairwise(X, Y, func):
+    n_cols = X.shape[1]
+    out_ = func(X[:, 0], Y[:, 0])
+    out = np.empty((n_cols, len(out_)))
+    for col in range(n_cols):
+        out[col, :] = func(X[:, col], Y[:, col])
+    return out
 
 
 def evoked_circularlinear(epochs, angles):
