@@ -22,23 +22,31 @@ pipeline_svrangle = SVR_angle()
 absent = dict(cond='present', values=[0])
 unseen = dict(cond='seen_unseen', values=[0])
 seen = dict(cond='seen_unseen', values=[1])
+missed = dict(cond='response_tilt', values=[0])
 angles = angle2circle([15, 45, 75, 105, 135, 165])
 
 
-def analysis(name, include, exclude=[absent], clf=None, scorer=None,
-             change=None, chance=None, contrast=None):
-    if len(include['values']) == 2:
-        # Default contrast analyses
-        clf = pipeline_svc if clf is None else clf
-        scorer = scorer_auc if scorer is None else scorer
-        chance = .5 if chance is None else chance
-    else:
-        # Default regression analysis
-        clf = pipeline_svr if clf is None else clf
-        scorer = scorer_spearman if scorer is None else scorer
-        chance = 0. if chance is None else chance
+from .utils import evoked_spearman, evoked_subtract, evoked_circularlinear
+
+
+def analysis(name, include, exclude=[absent], contrast=None, typ=None):
+    if typ == 'contrast' or len(include['values']) == 2:
+        clf = pipeline_svc
+        scorer = scorer_auc
+        operator = evoked_subtract
+        chance = .5
+    elif typ == 'regression' or len(include['values']) > 2:
+        clf = pipeline_svr
+        scorer = scorer_spearman
+        chance = 0.
+        operator = evoked_spearman
+    elif typ == 'circ_regression':
+        clf = pipeline_svrangle
+        scorer = scorer_angle
+        chance = 1. / 6.
+        operator = evoked_circularlinear
     return dict(name=name, include=include, exclude=exclude, clf=clf,
-                chance=chance, scorer=scorer, contrast=None)
+                chance=chance, scorer=scorer, contrast=None, operator=operator)
 
 analyses = (
     analysis('s_presence', dict(cond='present', values=[0, 1]), exclude=[]),
@@ -46,13 +54,13 @@ analyses = (
              dict(cond='targetContrast', values=[0, .5, .75, 1]), exclude=[]),
     analysis('s_lambda', dict(cond='lambda', values=[1, 2])),
     analysis('s_targetAngle', dict(cond='orientation_target_rad', values=angles),
-             clf=pipeline_svrangle, chance=1. / 6., scorer=scorer_angle),
+             typ='circ_regression'),
     analysis('s_probeAngle', dict(cond='orientation_probe_rad', values=angles),
-             clf=pipeline_svrangle, chance=1. / 6., scorer=scorer_angle),
+             typ='circ_regression'),
     analysis('s_tilt', dict(cond='tilt', values=[-1, 1])),
     analysis('m_responseButton', dict(cond='response_tilt', values=[-1, 1]),
-             exclude=[dict(cond='response_tilt', values=[0])]),
-    analysis('m_accuracy', dict(cond='correct', values=[0, 1])),  # XXX Absent?
+             exclude=[missed]),
+    analysis('m_accuracy', dict(cond='correct', values=[0, 1])),
     analysis('m_visibilities',
              dict(cond='response_visibilityCode', values=[1, 2, 3, 4])),
     analysis('m_seen', dict(cond='seen_unseen', values=[0, 1])),
@@ -91,16 +99,8 @@ def format_analysis(contrast):
     so as to be usable by the univariate scripts
 
     We need to homogeneize the two types of analysis definitions
-     """
-    from .utils import evoked_spearman, evoked_subtract
-    name = contrast['name']
-    if contrast['scorer'] == scorer_spearman:
-        operator = evoked_spearman
-    elif contrast['scorer'] == scorer_auc:
-        operator = evoked_subtract
-    elif contrast['scorer'] == scorer_angle:
-        # TODO evoked_vtest
-        return
+    """
+
     # exclude
     exclude = dict()
     for exclude_ in contrast['exclude']:
@@ -115,5 +115,5 @@ def format_analysis(contrast):
         include_[cond] = value
         conditions.append(dict(name=cond + str(value), include=include_,
                                exclude=exclude))
-    analysis = dict(name=name, operator=operator, conditions=conditions)
-    return analysis
+    contrast['conditions'] = conditions
+    return contrast
