@@ -1,4 +1,5 @@
 # Decoding parameters
+import copy
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import Pipeline
 from sklearn.svm import LinearSVR
@@ -71,11 +72,11 @@ for analysis in analyses:
     subscores.append(analysis)
     # subdivide by visibility
     if analysis['name'] not in ['m_visibilities', 'm_seen']:
-        analysis_ = analysis
+        analysis_ = copy.deepcopy(analysis)
         analysis_['name'] += '-seen'
         analysis_['exclude'] += [unseen]
         subscores.append(analysis_)
-        analysis_ = analysis
+        analysis_ = copy.deepcopy(analysis)
         analysis_['name'] += '-unseen'
         analysis_['exclude'] += [seen]
         subscores.append(analysis_)
@@ -85,9 +86,10 @@ subscores2 = []
 
 for analysis in analyses:
     if analysis['name'] not in ['m_visibilities', 'm_seen']:
-        analysis['contrast1'] = analysis_['name'] + '-seen'
-        analysis['contrast2'] = analysis_['name'] + '-unseen'
-        analysis['chance'] = 0
+        analysis_ = copy.deepcopy(analysis)
+        analysis_['contrast1'] = analysis_['name'] + '-seen'
+        analysis_['contrast2'] = analysis_['name'] + '-unseen'
+        analysis_['chance'] = 0
         subscores2.append(analysis)
 
 
