@@ -377,48 +377,30 @@ def Evokeds_to_Epochs(inst, info=None, events=None):
     epochs: epochs object"""
     from mne.epochs import EpochsArray
     from mne.evoked import Evoked
-    import warnings
-    import copy
 
     if (not(isinstance(inst, list)) or
             not np.all([isinstance(x, Evoked) for x in inst])):
-        raise('inst mus be a list of evoked')
+        raise ValueError('inst mus be a list of evoked')
 
     # concatenate signals
     times = inst[0].times
     if not np.all([np.array_equal(times, x.times) for x in inst]):
         raise ValueError('evokeds do not share a common timing')
 
-    ch_names = np.unique([x.ch_names for x in inst])
-    if not np.all([np.array_equal(ch_names, x.ch_names) for x in inst]):
-        warnings.warn('Evokeds do not share a common set of channels')
+    if not np.all([np.array_equal(inst[0].ch_names, x.ch_names) for x in inst]):
+        raise ValueError('Evokeds do not share a common set of channels')
 
-    data = np.nan * np.zeros((len(inst), len(ch_names), len(times)))
-    for sample, x in enumerate(inst):
-        for ch, ch_name in enumerate(x.ch_names):
-            ch_ = np.where(ch_names == ch_name)[0]
-            if ch_:
-                data[sample, ch_[0], :] = x.data[ch, :]
+    data = np.array([x.data for x in inst])
 
     # extract meta data
     if info is None:
-        info = copy.deepcopy(inst[0].info)
-        info['chs'] = list()
-        for current_ch in ch_names:
-            for evoked in inst:
-                evoked_ch = [ch['ch_name'] for ch in evoked.info['chs']]
-                idx = np.where([ii == current_ch for ii in evoked_ch])[0]
-                if len(idx):
-                    info['chs'].append(evoked.info['chs'][idx])
-                    break
-        info['nchan'] = len(ch_names)
-
+        info = inst[0].info
     if events is None:
         n = len(inst)
         events = np.c_[np.cumsum(np.ones(n)) * info['sfreq'],
                        np.zeros(n), np.ones(n)]
 
-    return EpochsArray(data, info, events=events, tmin=inst[0].times.min())
+    return EpochsArray(data, info, events=events, tmin=times)
 
 
 # DECODING ####################################################################
