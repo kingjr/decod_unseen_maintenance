@@ -179,6 +179,60 @@ def scorer_spearman(y_true, y_pred):
     return rho
 
 
+def circular_linear_correlation(X, alpha):
+    # Authors:  Jean-Remi King <jeanremi.king@gmail.com>
+    #           Niccolo Pescetelli <niccolo.pescetelli@gmail.com>
+    #
+    # Licence : BSD-simplified
+    """
+
+    Parameters
+    ----------
+        X : numpy.array, shape (n_angles, n_dims)
+            The linear data
+        alpha : numpy.array, shape (n_angles,)
+            The angular data (if n_dims == 1, repeated across all x dimensions)
+    Returns
+    -------
+        R : numpy.array, shape (n_dims)
+            R values
+        R2 : numpy.array, shape (n_dims)
+            R square values
+        p_val : numpy.array, shape (n_dims)
+            P values
+
+    Adapted from:
+        Circular Statistics Toolbox for Matlab
+        By Philipp Berens, 2009
+        berens@tuebingen.mpg.de - www.kyb.mpg.de/~berens/circStat.html
+        Equantion 27.47
+    """
+
+    from scipy.stats import chi2
+    import numpy as np
+
+    # computes correlation for sin and cos separately
+    rxs = repeated_corr(X, np.sin(alpha))
+    rxc = repeated_corr(X, np.cos(alpha))
+    rcs = repeated_corr(np.sin(alpha), np.cos(alpha))
+
+    # tile alpha across multiple dimension without requiring memory
+    if X.ndim > 1 and alpha.ndim == 1:
+        rcs = tile_memory_free(rcs, X.shape[1:])
+
+    # Adapted from equation 27.47
+    R = (rxc ** 2 + rxs ** 2 - 2 * rxc * rxs * rcs) / (1 - rcs ** 2)
+
+    # JR adhoc way of having a sign....
+    R = np.sign(rxs) * np.sign(rxc) * R
+    R2 = np.sqrt(R ** 2)
+
+    # Get degrees of freedom
+    n = len(alpha)
+    pval = 1 - chi2.cdf(n * R2, 2)
+
+    return R, R2, pval
+
 
 # LOAD ########################################################################
 
