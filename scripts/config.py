@@ -26,7 +26,7 @@ def paths(typ, subject='fsaverage', data_type='erf', lock='target',
 
         behavior=op.join(this_path, '%s_fixed.mat' % subject),
         epoch=op.join(this_path, '%s_%s_%s.mat' % (subject, lock, data_type)),
-        evoked=op.join(this_path, '%s_%s_%s_%s.fif' % (
+        evoked=op.join(this_path, '%s_%s_%s_%s.pickle' % (
             subject, lock, data_type, analysis)),
         decod=op.join(this_path, '%s_%s_%s_%s.pickle' % (
             subject, lock, data_type, analysis)),
@@ -81,7 +81,7 @@ data_types = ['erf'] + ['freq%s' % f for f in [7, 10, 12, 18, 29, 70, 105]]
 # ##################################""
 # # UNCOMMENT TO SUBSELECTION FOR FAST PROCESSING
 # #
-subjects = [subjects[1]]
+# subjects = [subjects[1]]
 data_types = [data_types[0]]
 # analyses = [ana for ana in analyses if ana['name'] == 'target_circAngle']
 preproc = dict(decim=2, crop=dict(tmin=-.2, tmax=1.200))
