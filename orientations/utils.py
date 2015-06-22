@@ -14,6 +14,7 @@ def load_epochs_events(subject, paths=None, data_type='erf',
     # Get behavioral data
     bhv_fname = paths('behavior', subject=subject)
     events = get_events(bhv_fname)
+    epochs.crop(-.200, 1.200)
     return epochs, events
 
 
@@ -57,48 +58,46 @@ def get_events(bhv_fname):
     trials = sio.loadmat(bhv_fname, squeeze_me=True,
                          struct_as_record=True)["trials"]
 
-    keys = ['ISI', 'response_keyPressed', 'time_jitter',
-            'block', 'response_responsed', 'time_maskIn',
-            'break', 'response_tilt', 'time_preparation',
-            'contrast', 'response_time', 'time_probe',
-            'correct', 'response_vis_RT', 'time_prompt',
-            'feedback', 'response_vis_keyPressed', 'time_response',
-            'gabors', 'response_vis_responsed', 'time_targetIn',
-            'lambda', 'response_vis_time', 'time_targetOut',
-            'localizer', 'response_visibilityCode', 'trialid',
-            'orientation', 'tilt', 'ttl_value',
-            'present', 'time_delay', 'response_RT', 'time_feedback_on']
+    def trial2event(trial):
+        event = dict()
+        # Change meaningless values with NaNs
+        event['target_present'] = trial['present'] == 1
+        event['discrim_pressed'] = trial['response_responsed'] == 1
+        event['detect_pressed'] = trial['response_vis_responsed'] == 1
+        nan_default = lambda check, value: value if check else np.nan
+        target_present = lambda v: nan_default(event['target_present'], v)
+        # discrim_pressed = lambda v: nan_default(event['discrim_pressed'], v)
+        discrim_buttons = lambda v: nan_default(
+            v in ['left_green', 'left_yellow'], 1. * (v == 'left_green'))
+        detect_pressed = lambda v: nan_default(event['detect_pressed'], v)
+        # Target
+        event['target_contrast'] = [0, .5, .75, 1][trial['contrast'] - 1]
+        event['target_spatialFreq'] = target_present(trial['lambda'] == 1)
+        event['target_angle'] = target_present(trial['orientation'] * 30 - 15)
+        event['target_circAngle'] = angle2circle(event['target_angle'])
+        # Probe
+        event['probe_angle'] = (trial['orientation'] * 30 - 15 +
+                                trial['tilt'] * 30) % 180
+        event['probe_circAngle'] = angle2circle(event['probe_angle'])
+        event['probe_tilt'] = target_present(trial['tilt'])
+        # Response 1: forced choice discrimination
+        event['discrim_button'] = discrim_buttons(trial['response_keyPressed'])
 
-    contrasts = [0, .5, .75, 1]
+        event['discrim_correct'] = target_present(trial['correct'] == 1)
+        # Response 2: detection/visibility
+        event['detect_button'] = \
+            detect_pressed(trial['response_visibilityCode'] - 1)
+        event['detect_seen'] = event['detect_button'] > 0
+        return event
+
     events = list()
     for t, trial in enumerate(trials):
-        event = dict()
         # define previous trial
-        prevtrial = trials[t-1]
-        for key in keys:
-                event[key] = trial[key]
-        # manual new keys
-        event['targetContrast'] = contrasts[event['contrast']-1]
-        event['seen_unseen'] = event['response_visibilityCode'] > 1
-
-        event['orientation_target'] = event['orientation']*30-15
-        event['orientation_probe'] = (event['orientation']*30-15 +
-                                      event['tilt'] * 30) % 180
-        event['orientation_target_rad'] = angle2circle(
-            event['orientation_target'])
-        event['orientation_probe_rad'] = angle2circle(
-            event['orientation_probe'])
-        event['targetContrast'] = contrasts[event['contrast']-1]
-        event['seen_unseen'] = event['response_visibilityCode'] > 1
-        event['previous_trial_visibility'] = prevtrial[
-            'response_visibilityCode']
-        event['previous_orientation_target'] = prevtrial[
-            'orientation']*30-15
-        event['previous_orientation_probe'] = (prevtrial[
-            'orientation']*30-15 +
-            trial['tilt'] * 30) % 180
-
-        # append to all events
+        event = trial2event(trial)
+        if t > 1:
+            previous_event = trial2event(trials[t-1])
+            for key in previous_event:
+                event['previous_' + key] = previous_event[key]
         events.append(event)
     events = pd.DataFrame(events)
     return events
