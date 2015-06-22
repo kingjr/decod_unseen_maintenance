@@ -18,7 +18,7 @@ from config import (
     subjects,
     results_dir,
     open_browser,
-    inputTypes,
+    data_types,
     open_browser
 )
 
@@ -28,8 +28,8 @@ report, run_id, results_dir, logger = setup_provenance(
 
 
 # Apply contrast to ERFs or frequency power
-for typ in inputTypes:
-    print(typ)
+for data_type in data_types:
+    print(data_type)
 
     # loop only once if ERF and across all frequencies of interest if frequency power
     for freq in typ['values']:
@@ -52,12 +52,12 @@ for typ in inputTypes:
                     if s==1:
                         continue
                     print('load GAT %s %s %s %s %s' %
-                        (subject, contrast['name'], clf_type['name'],typ['name'], freq))
+                        (subject, contrast['name'], clf_type['name'],data_type, freq))
 
                     # define meg_path appendix
-                    if typ['name']=='erf':
+                    if data_type=='erf':
                         fname_appendix = ''
-                    elif typ['name']=='power':
+                    elif data_type=='power':
                         fname_appendix = op.join('_Tfoi_mtm_',freq,'Hz')
 
                     # define path to file to be loaded

@@ -8,7 +8,7 @@ from toolbox.utils import build_analysis
 from utils import get_events
 from config import (
     subjects,
-    inputTypes,
+    data_types,
     contrasts,
     chan_types,
 )
@@ -40,7 +40,7 @@ if 'meg' in [i['name'] for i in chan_types]:
                   if i['name'] != 'meg']
 
 subject = subjects[0]
-typ = inputTypes[-1]
+typ = data_types[-1]
 fname_appendix = ''
 fileformat = '.dat'
 

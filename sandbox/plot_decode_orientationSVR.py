@@ -10,7 +10,7 @@ from pycircstat import (rayleigh,
                         corrcc)
 from config import (subjects,
                     data_path,
-                    inputTypes)
+                    data_types)
 
 from myfunctions import (recombine_svr_prediction)
 
@@ -20,8 +20,8 @@ contrasts = ['orientation_target']
 
 # Loop across conditions
 # Input type defines whether we decode ERFs or frequency power
-for typ in inputTypes:
-    print(typ)
+for data_type in data_types:
+    print(data_type)
     for contrast in contrasts:
         # define condition string
         cond_name_sin = contrast + '_sin'
@@ -43,10 +43,10 @@ for typ in inputTypes:
         # loop across subjects
         for s, subject in enumerate(subjects):
             print(subject)
-            if typ['name'] == 'erf':
+            if data_type == 'erf':
                 fname_appendix = ''
             else:
-                fname_appendix = op.join('_Tfoi_mtm_', typ['name'][4:], 'Hz')
+                fname_appendix = op.join('_Tfoi_mtm_', data_type[4:], 'Hz')
 
             # # load behavioral data
             # meg_fname = op.join(data_path, subject, 'preprocessed',

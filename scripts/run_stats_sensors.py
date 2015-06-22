@@ -1,24 +1,21 @@
-import os
-import os.path as op
 import pickle
 import numpy as np
 import mne
 from toolbox.utils import (cluster_stat, Evokeds_to_Epochs, decim)
-from meeg_preprocessing import setup_provenance
+from meeg_preprocessing.utils import setup_provenance
 
 from config import (
-    data_path,
+    paths,
     subjects,
-    inputTypes,
+    data_types,
     analyses,
     chan_types,
-    results_dir,
     open_browser
 )
 
 # XXX uncomment
-report, run_id, results_dir, logger = setup_provenance(
-    script=__file__, results_dir=results_dir)
+report, run_id, _, logger = setup_provenance(
+    script=__file__, results_dir=paths('report'))
 
 
 if 'meg' in [i['name'] for i in chan_types]:
@@ -30,13 +27,13 @@ if 'meg' in [i['name'] for i in chan_types]:
     chan_types[i] = dict(name='mag', **meg_type)
 
 # Apply contrast on each type of epoch
-for typ in inputTypes:  # Input type ERFs or frequency power
-    print(typ)
-    if typ['name'] == 'erf':
+for data_type in data_types:  # Input type ERFs or frequency power
+    print(data_type)
+    if data_type == 'erf':
         fname_appendix = ''
         fileformat = '.dat'
     else:
-        fname_appendix = '_Tfoi_mtm_' + typ['name'][4:] + 'Hz'
+        fname_appendix = '_Tfoi_mtm_' + data_type[4:] + 'Hz'
         fileformat = '.mat'
 
     for analysis in analyses:
@@ -45,10 +42,10 @@ for typ in inputTypes:  # Input type ERFs or frequency power
 
         # Load data across all subjects
         for s, subject in enumerate(subjects):
-            pkl_fname = op.join(data_path, 'MEG', subject, 'evokeds',
-                                '%s-cluster_sensors_%s.pickle' % (
-                                    typ['name'], analysis['name']))
-            with open(pkl_fname) as f:
+            pkl_fname = paths('evoked', subject=subject,
+                              data_type=data_type,
+                              analysis=analysis['name'])
+            with open(pkl_fname, 'rb') as f:
                 coef, evoked, _, _ = pickle.load(f)
             evokeds.append(coef)
 
@@ -83,8 +80,8 @@ for typ in inputTypes:  # Input type ERFs or frequency power
             i_clus = np.where(cluster.p_values_ < .01)
             fig = cluster.plot(i_clus=i_clus, show=False)
             report.add_figs_to_section(fig, '{}: {}: Clusters time'.format(
-                typ['name'], analysis['name']),
-                typ['name'] + analysis['name'])
+                data_type, analysis['name']),
+                data_type + analysis['name'])
 
             # plot T vales
             fig = cluster.plot_topomap(sensors=False, contours=False,
@@ -106,22 +103,20 @@ for typ in inputTypes:  # Input type ERFs or frequency power
                                       vmin=-mM, vmax=mM, colorbar=True)
 
             report.add_figs_to_section(fig, '{}: {}: topos'.format(
-                typ['name'], analysis['name']),
-                typ['name'] + analysis['name'])
+                data_type, analysis['name']),
+                data_type + analysis['name'])
 
             report.add_figs_to_section(fig, '{}: {}: Clusters'.format(
-                typ['name'], analysis['name']),
-                typ['name'] + analysis['name'])
+                data_type, analysis['name']),
+                data_type + analysis['name'])
 
             # Save contrast
             # TODO CHANGE SAVING TO SAVE MULTIPLE CHAN TYPES
-            save_dir = op.join(data_path, 'MEG', 'fsaverage')
-            if not op.exists(save_dir):
-                os.makedirs(save_dir)
-            pkl_fname = op.join(save_dir,
-                                '%s-cluster_sensors_%s.pickle' % (
-                                    typ['name'], analysis['name']))
 
+            pkl_fname = paths('evoked', subject='fsaverage',
+                              data_type=data_type,
+                              analysis=('stats_' + analysis['name']),
+                              log=True)
             with open(pkl_fname, 'wb') as f:
                 pickle.dump([cluster, evokeds, analysis], f)
 

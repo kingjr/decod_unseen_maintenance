@@ -9,7 +9,7 @@ from mne.io.pick import _picks_by_type as picks_by_type
 from mne.preprocessing import read_ica
 from mne.viz import plot_drop_log
 
-from meeg_preprocessing import setup_provenance, set_eog_ecg_channels
+from meeg_preprocessing.utils import setup_provenance, set_eog_ecg_channels
 
 from toolbox.utils import find_in_df, build_contrast, save_to_dict
 
@@ -19,14 +19,14 @@ from config import (
     data_path,
     pyoutput_path,
     subjects,
-    results_dir,
+    paths('report'),
     contrasts,
     open_browser,
     chan_types,
 )
 
-report, run_id, results_dir, logger = setup_provenance(script=__file__,
-                                                       results_dir=results_dir)
+report, run_id, _, logger = setup_provenance(script=__file__,
+                                                       results_dir=paths('report'))
 
 mne.set_log_level('INFO')
 

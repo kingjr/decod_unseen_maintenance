@@ -8,7 +8,7 @@ import numpy as np
 
 from config import (
     subjects,
-    inputTypes,
+    data_types,
     pyoutput_path,
     angle2circle,
     absent,
@@ -36,10 +36,10 @@ def sel_events(events, contrast):
 
 def pkl_fname(typ, subject, name):
     # define meg_path appendix
-    if typ['name'] == 'erf':
+    if data_type == 'erf':
         fname_appendix = ''
     else:
-        fname_appendix = '_Tfoi_mtm_' + typ['name'][4:] + 'Hz'
+        fname_appendix = '_Tfoi_mtm_' + data_type[4:] + 'Hz'
 
     # define path to file to be loaded
     pkl_fname = op.join(
@@ -181,7 +181,7 @@ def default_subscore(sel):
 
 subscores = [default_subscore(ii) for ii in range(0, 4)]
 
-typ = inputTypes[-1]
+typ = data_types[-1]
 scores_list = list()
 for subject in subjects:
     print(subject)

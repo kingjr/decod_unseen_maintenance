@@ -9,7 +9,7 @@ import mne
 from config import (subjects,
                     data_path,
                     pyoutput_path,
-                    inputTypes,
+                    data_types,
                     clf_types)
 from utils import get_data
 from postproc_functions import (realign_angle)

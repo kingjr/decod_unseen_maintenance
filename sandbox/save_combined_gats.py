@@ -11,7 +11,7 @@ import scipy.io as sio
 from postproc_functions import recombine_svr_prediction
 from config import (pyoutput_path,
                     subjects,
-                    inputTypes,
+                    data_types,
                     clf_types
                     )
 

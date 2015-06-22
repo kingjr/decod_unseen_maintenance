@@ -4,7 +4,7 @@ import copy
 # import matplotlib.pyplot as plt
 
 from toolbox.utils import fill_betweenx_discontinuous, plot_eb
-from meeg_preprocessing import setup_provenance
+from meeg_preprocessing.utils import setup_provenance
 
 from mne.stats import spatio_temporal_cluster_1samp_test
 
@@ -13,16 +13,15 @@ import pickle
 ###############################################################################
 
 from config import (
+    paths,
     subjects,
-    pyoutput_path,
-    results_dir,
     open_browser,
-    inputTypes,
+    data_types,
     contrasts)
 
 
-report, run_id, results_dir, logger = setup_provenance(
-    script=__file__, results_dir=results_dir)
+report, run_id, _, logger = setup_provenance(
+    script=__file__, results_dir=paths('report'))
 
 # subjects = [subjects[i] for i in range(20)] # XXX to be be removed
 
@@ -33,8 +32,8 @@ subselections = (dict(name='allTrials'),
                  dict(name='unseenOnly'))
 
 # Apply contrast to ERFs or frequency power
-for typ in inputTypes:
-    print(typ)
+for data_type in data_types:
+    print(data_type)
 
     # Loop across contrasts
     for contrast in contrasts:
@@ -44,20 +43,12 @@ for typ in inputTypes:
             # DATA
             for s, subject in enumerate(subjects):
                 print('load GAT %s %s %s' % (subject, contrast['name'],
-                                             typ['name']))
-
-                # define meg_path appendix
-                if typ['name'] == 'erf':
-                    fname_appendix = ''
-                else:
-                    fname_appendix = op.join('_Tfoi_mtm_',
-                                             typ['name'][4:], 'Hz')
+                                             data_type))
 
                 # define path to file to be loaded
-                pkl_fname = op.join(
-                    pyoutput_path, subject, 'mvpas',
-                    '{}-decod_{}{}.pickle'.format(
-                        subject, contrast['name'], fname_appendix))
+                pkl_fname = paths('decod', subject=subject,
+                                  data_type=data_type,
+                                  analysis=contrast['name'])
 
                 # retrieve classifier data
                 with open(pkl_fname) as f:
@@ -130,8 +121,8 @@ for typ in inputTypes:
             # plt.show()
             report.add_figs_to_section(
                 fig, '%s (%s) - %s: Decoding GAT' %
-                (typ['name'], contrast['name'], subselection['name']),
-                typ['name'])
+                (data_type, contrast['name'], subselection['name']),
+                data_type)
 
             # ------ Plot Decoding
             fig = gat.plot_diagonal(show=False)
@@ -153,15 +144,15 @@ for typ in inputTypes:
             # plt.show()
             report.add_figs_to_section(
                 fig, '%s (%s) - %s: Decoding diag' %
-                (typ['name'], contrast['name'], subselection['name']),
-                typ['name'])
+                (data_type, contrast['name'], subselection['name']),
+                data_type)
 
             # SAVE
-            pkl_fname = op.join(
-                pyoutput_path, 'fsaverage', 'decoding',
-                'decod_stats_{}{}{}.pickle'.format(contrast['name'],
-                                                   fname_appendix,
-                                                   subselection['name']))
+            pkl_fname = paths('decod', subject='fsaverage',
+                              data_type=data_type,
+                              analysis=('stats_' + contrast['name'] +
+                                        '-' + subselection['name']),
+                              log=True)
             with open(pkl_fname, 'wb') as f:
                 pickle.dump([scores, p_values], f)
 
