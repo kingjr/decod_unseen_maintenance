@@ -3,65 +3,52 @@ import copy
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import Pipeline
 from sklearn.svm import LinearSVR
-from utils import clf_2class_proba, SVR_angle, angle2circle
-from base import (scorer_angle, scorer_auc, scorer_spearman,
-                  evoked_spearman, evoked_subtract, evoked_circularlinear)
-
-scaler = StandardScaler()
-
-# SVC
-svc = clf_2class_proba(C=1, class_weight='auto')
-pipeline_svc = Pipeline([('scaler', scaler), ('svc', svc)])
-
-# SVR
-svr = LinearSVR(C=1)
-pipeline_svr = Pipeline([('scaler', scaler), ('svr', svr)])
-
-# SVR angles
-pipeline_svrangle = SVR_angle()
-
-absent = dict(cond='present', values=[0])
-unseen = dict(cond='seen_unseen', values=[0])
-seen = dict(cond='seen_unseen', values=[1])
-missed = dict(cond='response_tilt', values=[0])
-angles = angle2circle([15, 45, 75, 105, 135, 165])
+from utils import clf_2class_proba, SVR_angle
+from base import (scorer_angle, scorer_auc, scorer_spearman, scorer_circLinear)
 
 
-def analysis(name, include, exclude=[absent], contrast=None, typ=None):
-    if typ == 'contrast' or len(include['values']) == 2:
-        clf = pipeline_svc
+def analysis(name, typ, condition=None, query=None):
+    single_trial = False
+    erf_function = None
+    if typ == 'categorize':
+        clf = Pipeline([('scaler', StandardScaler()),
+                        ('svc', clf_2class_proba(C=1, class_weight='auto'))])
         scorer = scorer_auc
-        operator = evoked_subtract
         chance = .5
-    elif typ == 'regression' or len(include['values']) > 2:
-        clf = pipeline_svr
+    elif typ == 'regress':
+        clf = Pipeline([('scaler', StandardScaler()), ('svr', LinearSVR(C=1))])
         scorer = scorer_spearman
+        single_trial = True  # with non param need single trial here
         chance = 0.
-        operator = evoked_spearman
-    elif typ == 'circ_regression':
-        clf = pipeline_svrangle
+    elif typ == 'circ_regress':
+        clf = SVR_angle()
         scorer = scorer_angle
         chance = 1. / 6.
-        operator = evoked_circularlinear
-    return dict(name=name, include=include, exclude=exclude, clf=clf,
-                chance=chance, scorer=scorer, contrast=None, operator=operator)
+        single_trial = True
+        erf_function = scorer_circLinear
+    if condition is None:
+        condition = name
+    return dict(name=name, condition=condition, query=query, clf=clf,
+                scorer=scorer, chance=chance, erf_function=erf_function,
+                single_trial=single_trial)
 
 analyses = (
-    analysis('s_presence', dict(cond='present', values=[0, 1]), exclude=[]),
-    analysis('s_targetContrast',
-             dict(cond='targetContrast', values=[0, .5, .75, 1]), exclude=[]),
-    analysis('s_lambda', dict(cond='lambda', values=[1, 2])),
-    analysis('s_targetAngle', dict(cond='orientation_target_rad', values=angles),
-             typ='circ_regression'),
-    analysis('s_probeAngle', dict(cond='orientation_probe_rad', values=angles),
-             typ='circ_regression'),
-    analysis('s_tilt', dict(cond='tilt', values=[-1, 1])),
-    analysis('m_responseButton', dict(cond='response_tilt', values=[-1, 1]),
-             exclude=[missed]),
-    analysis('m_accuracy', dict(cond='correct', values=[0, 1])),
-    analysis('m_visibilities',
-             dict(cond='response_visibilityCode', values=[1, 2, 3, 4])),
-    analysis('m_seen', dict(cond='seen_unseen', values=[0, 1])),
+    analysis('target_present',      'categorize'),
+    analysis('target_contrast',     'regress'),
+    analysis('target_contrast_pst', 'regress', condition='target_contrast',
+             query='target_present == True'),
+    analysis('target_spatialFreq',  'categorize'),
+    analysis('target_circAngle',    'circ_regress'),
+    analysis('probe_circAngle',     'circ_regress'),
+    analysis('probe_tilt',          'categorize'),
+    analysis('discrim_button',      'categorize'),
+    analysis('discrim_correct',     'categorize'),
+    analysis('detect_button',       'regress'),
+    analysis('detect_button_pst',   'regress', condition='detect_button',
+             query='target_present == True'),
+    analysis('detect_seen',         'categorize'),
+    analysis('detect_seen_pst',     'categorize', condition='detect_seen',
+             query='target_present == True')
 )
 
 # ###################### Define subscores #####################################
@@ -71,15 +58,18 @@ for analysis in analyses:
     analysis['contrast'] = analysis['name']
     subscores.append(analysis)
     # subdivide by visibility
+    query = '(%s) and ' % analysis['query'] if analysis['query'] else ''
     if analysis['name'] not in ['m_visibilities', 'm_seen']:
+        # Seen
         analysis_ = copy.deepcopy(analysis)
         analysis_['name'] += '-seen'
-        analysis_['exclude'] += [unseen]
+        analysis_['query'] = query + 'detect_seen == True'
         subscores.append(analysis_)
+        # Unseen
         analysis_ = copy.deepcopy(analysis)
-        analysis_['name'] += '-unseen'
-        analysis_['exclude'] += [seen]
+        analysis_['query'] = query + 'detect_seen == False'
         subscores.append(analysis_)
+
 
 # ############# Define second-order subscores #################################
 subscores2 = []
@@ -91,28 +81,3 @@ for analysis in analyses:
         analysis_['contrast2'] = analysis_['name'] + '-unseen'
         analysis_['chance'] = 0
         subscores2.append(analysis)
-
-
-def format_analysis(contrast):
-    """This functions takes the contrasts defined for decoding  and format it
-    so as to be usable by the univariate scripts
-
-    We need to homogeneize the two types of analysis definitions
-    """
-
-    # exclude
-    exclude = dict()
-    for exclude_ in contrast['exclude']:
-        cond = exclude_['cond']
-        exclude[cond] = exclude_['values']
-
-    # include
-    conditions = list()
-    cond = contrast['include']['cond']
-    for value in contrast['include']['values']:
-        include_ = dict()
-        include_[cond] = value
-        conditions.append(dict(name=cond + str(value), include=include_,
-                               exclude=exclude))
-    contrast['conditions'] = conditions
-    return contrast
