@@ -42,6 +42,8 @@ for s, subject in enumerate(subjects):  # Loop across each subject
             sel = [ii for ii in sel if ~np.isnan(events[condition][sel][ii])]
             y = np.array(events[condition], dtype=np.float32)
 
+            print analysis['name'], np.unique(y[sel]), len(sel)
+
             if len(sel) == 0:
                 logger.warning('%s: no epoch in %s for %s.' % (
                     subject, data_type, analysis['name']))
@@ -55,6 +57,14 @@ for s, subject in enumerate(subjects):  # Loop across each subject
             gat.fit(epochs[sel], y=y[sel])
             gat.score(epochs[sel], y=y[sel])
 
+            # Save analysis
+            pkl_fname = paths('decod', subject=subject, data_type=data_type,
+                              analysis=analysis['name'], log=True)
+
+            # Save classifier results
+            with open(pkl_fname, 'wb') as f:
+                pickle.dump([gat, analysis, sel, events], f)
+
             # Plot
             fig = gat.plot_diagonal(show=False)
             report.add_figs_to_section(fig, ('%s %s %s: (diagonal)' %
@@ -66,14 +76,5 @@ for s, subject in enumerate(subjects):  # Loop across each subject
             report.add_figs_to_section(fig, ('%s %s %s: GAT' % (
                                        subject, data_type, analysis['name'])),
                                        analysis['name'])
-
-            # Save analysis
-            pkl_fname = paths('decod', subject=subject, data_type=data_type,
-                              analysis=analysis['name'])
-
-            # Save classifier results
-            with open(pkl_fname, 'wb') as f:
-                pickle.dump([gat, analysis, sel, events], f)
-
 
 report.save(open_browser=open_browser)

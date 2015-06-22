@@ -43,7 +43,7 @@ for subject, data_type in product(subjects, data_types):
 
         # Save all_evokeds
         fname = paths('evoked', subject=subject, data_type=data_type,
-                      analysis=analysis['name'])
+                      analysis=analysis['name'], log=True)
         with open(fname, 'wb') as f:
             pickle.dump([evoked, sub, evoked, analysis, events], f)
 
