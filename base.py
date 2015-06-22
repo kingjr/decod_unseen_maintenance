@@ -234,6 +234,37 @@ def circular_linear_correlation(X, alpha):
     return R, R2, pval
 
 
+def repeated_corr(X, y, dtype=float):
+    """Computes pearson correlations between a vector and a matrix.
+
+    Adapted from Jona-Sassenhagen's PR #L1772 on mne-python.
+
+    Parameters
+    ----------
+        y : np.array, shape (n_samples)
+            Data vector.
+        X : np.array, shape (n_samples, n_measures)
+            Data matrix onto which the vector is correlated.
+        dtype : type, optional
+            Data type used to compute correlation values to optimize memory.
+
+    Returns
+    -------
+        rho : np.array, shape (n_measures)
+    """
+    from sklearn.utils.extmath import fast_dot
+    if X.ndim not in [1, 2] or y.ndim != 1 or X.shape[0] != y.shape[0]:
+        raise ValueError('y must be a vector, and X a matrix with an equal'
+                         'number of rows.')
+    if X.ndim == 1:
+        X = X[:, None]
+    y -= np.array(y.mean(0), dtype=dtype)
+    X -= np.array(X.mean(0), dtype=dtype)
+    y_sd = y.std(0, ddof=1)
+    X_sd = X.std(0, ddof=1)[:, None if y.shape == X.shape else Ellipsis]
+    return (fast_dot(y.T, X) / float(len(y) - 1)) / (y_sd * X_sd)
+
+
 # LOAD ########################################################################
 
 
