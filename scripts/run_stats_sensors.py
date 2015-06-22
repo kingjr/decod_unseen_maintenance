@@ -54,16 +54,14 @@ for data_type, analysis in product(data_types, analyses):
             # For now, only apply stats to mag and grad.
             continue
         elif chan_type['name'] == 'mag':
-            pick_type = dict(meg='mag')
+            chan_type_ = dict(meg='mag')
         else:
-            pick_type = dict(meg=chan_type['name'] == 'meg',
-                             eeg=chan_type['name'] == 'eeg',
-                             seeg=chan_type['name'] == 'seeg')
+            chan_type_ = dict(meg=chan_type['name'] == 'meg',
+                              eeg=chan_type['name'] == 'eeg',
+                              seeg=chan_type['name'] == 'seeg')
 
-        pick_type = mne.pick_types(epochs.info, **pick_type)
+        pick_type = mne.pick_types(epochs.info, **chan_type_)
         picks = [epochs.ch_names[ii] for ii in pick_type]
-
-        # Stats
         epochs_ = epochs.copy()
         epochs_.pick_channels(picks)
 
@@ -73,7 +71,7 @@ for data_type, analysis in product(data_types, analyses):
         _, clusters, p_values, _ = stats(
             X, out_type='mask', n_permutations=2 ** 10,
             connectivity=chan_type['connectivity'],
-            threshold=dict(start=1., step=1.), n_jobs=-1)
+            threshold=dict(start=.1, step=2.), n_jobs=-1)
         p_values = np.sum(clusters *
                           tile_memory_free(p_values, clusters[0].shape),
                           axis=0).T
@@ -101,7 +99,6 @@ for data_type, analysis in product(data_types, analyses):
                        extent=[np.min(xx), np.max(xx), ylim[0], ylim[1]],
                        aspect='auto', clip_path=patch, clip_on=True,
                        zorder=-1)
-        plt.show()
 
         # Plot image
         fig2, ax = plt.subplots(1)
