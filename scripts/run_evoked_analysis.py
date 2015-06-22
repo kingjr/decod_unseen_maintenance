@@ -30,11 +30,13 @@ for subject, data_type in product(subjects, data_types):
     from aws.utils import dropbox_download
     import os
     f_local = paths('epoch', subject=subject, data_type='erf')[:-4] + '.dat'
-    f_dropbox = subject + '_preprocessed.dat'
-    dropbox_download(f_dropbox, f_local)
-
-    epochs, events = load_epochs_events(subject, paths, data_type=data_type)
-    os.remove(f_local)
+    if not os.path.exists(f_local):
+        f_dropbox = subject + '_preprocessed.dat'
+        dropbox_download(f_dropbox, f_local)
+        epochs, events = load_epochs_events(subject, paths, data_type=data_type)
+        os.remove(f_local)
+    else:
+        epochs, events = load_epochs_events(subject, paths, data_type=data_type)
 
     # Apply each analysis
     for analysis in analyses:
@@ -53,7 +55,7 @@ for subject, data_type in product(subjects, data_types):
         fname = paths('evoked', subject=subject, data_type=data_type,
                       analysis=analysis['name'], log=True)
         with open(fname, 'wb') as f:
-            pickle.dump([evoked, sub, evoked, analysis, events], f)
+            pickle.dump([evoked, sub, analysis], f)
 
         # Prepare plot delta (subtraction, or regression)
         fig1, ax1 = plt.subplots(1, len(chan_types))
