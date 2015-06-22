@@ -3,12 +3,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 import mne
+from mne.epochs import EpochsArray
 from mne.stats import spatio_temporal_cluster_1samp_test as stats
 
 from meeg_preprocessing.utils import setup_provenance
 
-from base import (meg_to_gradmag, share_clim, fill_betweenx_discontinuous,
-                  Evokeds_to_Epochs, decim, tile_memory_free)
+from base import (meg_to_gradmag, share_clim, tile_memory_free)
 from orientations.utils import fix_wrong_channel_names
 
 from config import (
@@ -21,8 +21,8 @@ from config import (
 )
 
 # XXX uncomment
-# report, run_id, _, logger = setup_provenance(
-#     script=__file__, results_dir=paths('report'))
+report, run_id, _, logger = setup_provenance(
+    script=__file__, results_dir=paths('report'))
 
 # Apply contrast on each type of epoch
 for data_type in data_types:  # Input type ERFs or frequency power
@@ -30,7 +30,7 @@ for data_type in data_types:  # Input type ERFs or frequency power
         print(analysis['name'])
 
         # Load data across all subjects
-        evokeds = list()
+        data = list()
         for s, subject in enumerate(subjects):
             pkl_fname = paths('evoked', subject=subject,
                               data_type=data_type,
@@ -39,9 +39,11 @@ for data_type in data_types:  # Input type ERFs or frequency power
                 evoked, sub, _ = pickle.load(f)
             # FIXME
             evoked = fix_wrong_channel_names(evoked)
-            evokeds.append(evoked)
+            data.append(evoked.data)
 
-        epochs = Evokeds_to_Epochs(evokeds)
+        epochs = EpochsArray(np.array(data), evoked.info,
+                             events=np.zeros((len(data), 3)),
+                             tmin=evoked.times[0])
 
         # TODO warning if subjects has missing condition
         p_values_chans = list()
@@ -78,15 +80,17 @@ for data_type in data_types:  # Input type ERFs or frequency power
             alpha = .05
             mask = p_values < alpha
 
+            # Plot
+            evoked = epochs_.average()
+
             # Plot butterfly
             # FIXME should concatenate p value across chan types first
-            evoked = epochs_.average()
-            fig, ax = plt.subplots(1)
-            sig_times = np.array(np.sum(mask, axis=0) > 0., dtype=int)
-            ylim = ax.get_ylim()
             from matplotlib.path import Path
             from matplotlib.patches import PathPatch
-
+            fig1, ax = plt.subplots(1)
+            evoked.plot(axes=ax, show=False)
+            sig_times = np.array(np.sum(mask, axis=0) > 0., dtype=int)
+            ylim = ax.get_ylim()
             xx = np.hstack((evoked.times[0], evoked.times * 1000))
             yy = [ylim[ii] for ii in sig_times] + [ylim[0]]
             path = Path(np.array([xx, yy]).transpose())
@@ -95,10 +99,12 @@ for data_type in data_types:  # Input type ERFs or frequency power
             im = ax.imshow(xx.reshape(np.size(yy), 1), cmap=plt.cm.gray,
                            origin='lower', alpha=.2,
                            extent=[np.min(xx), np.max(xx), ylim[0], ylim[1]],
-                           aspect='auto', clip_path=patch, clip_on=True)
+                           aspect='auto', clip_path=patch, clip_on=True,
+                           zorder=-1)
+            plt.show()
 
             # Plot image
-            fig, ax = plt.subplots(1)
+            fig2, ax = plt.subplots(1)
             evoked.plot_image(axes=ax, show=False)
             x, y = np.meshgrid(evoked.times * 1000,
                                np.arange(len(evoked.ch_names)),
@@ -107,10 +113,18 @@ for data_type in data_types:  # Input type ERFs or frequency power
 
             # Plot topo
             sel_times = np.linspace(min(evoked.times), max(evoked.times), 20)
-            fig = evoked.plot_topomap(mask=mask, scale=1., sensors=False,
-                                      contours=False, times=sel_times,
-                                      colorbar=True)
-            share_clim(fig.get_axes())
+            fig3 = evoked.plot_topomap(mask=mask, scale=1., sensors=False,
+                                       contours=False, times=sel_times,
+                                       colorbar=True, show=False)
+            share_clim(fig3.get_axes())
+
+            # Add to report
+            for fig, fig_name in zip([fig1, fig2, fig3],
+                                     ('butterfly', 'image', 'topo')):
+                report.add_figs_to_section(
+                    fig, ('%s (%s) %s: CONDITIONS (%s)' % (
+                        subject, data_type, analysis['name'], fig_name)),
+                    analysis['name'])
 
         p_values_chans.append(p_values)
         # Save contrast
@@ -119,6 +133,6 @@ for data_type in data_types:  # Input type ERFs or frequency power
                           analysis=('stats_' + analysis['name']),
                           log=True)
         with open(pkl_fname, 'wb') as f:
-            pickle.dump([p_values_chans, evokeds, analysis], f)
+            pickle.dump([p_values_chans, evoked, analysis], f)
 
-# report.save(open_browser=open_browser)
+report.save(open_browser=open_browser)
