@@ -6,6 +6,104 @@ import matplotlib.pyplot as plt
 # ANALYSES ####################################################################
 
 
+def nested_analysis(X, df, condition, function=None, query=None,
+                    single_trial=False, y=None, n_jobs=-1):
+    """ Apply a nested set of analyses.
+    Parameters
+    ----------
+    X : np.array, shape(n_samples, ...)
+        Data array.
+    df : pandas.DataFrame
+        Condition DataFrame
+    condition : str | list
+        If string, get the samples for each unique value of df[condition]
+        If list, nested call nested_analysis.
+    query : str | None, optional
+        To select a subset of trial using pandas.DataFrame.query()
+    function : function
+        Computes across list of evoked. Must be of the form:
+        function(X[:], y[:])
+    y : np.array, shape(n_conditions)
+    n_jobs : int
+        Number of core to compute the function. Defaults to -1.
+
+    Returns
+    -------
+    scores : np.array, shape(...)
+        The results of the function
+    sub : dict()
+        Contains results of sub levels.
+    """
+    import numpy as np
+
+    if isinstance(condition, str):
+        # Subselect data using pandas.DataFrame queries
+        sel = range(len(X)) if query is None else df.query(query).index
+        X = X.take(sel, axis=0)
+        y = np.array(df[condition][sel])
+        # Find unique conditions
+        values = [ii for ii in np.unique(y) if ~np.isnan(ii)]
+        # Subsubselect for each unique condition
+        y_sel = [np.where(y == value)[0] for value in values]
+        # Mean condition:
+        X_mean = np.zeros(np.hstack((len(y_sel), X.shape[1:])))
+        y_mean = np.zeros(len(y_sel))
+        for ii, sel_ in enumerate(y_sel):
+            X_mean[ii, ...] = np.mean(X[sel_, ...], axis=0)
+            y_mean[ii] = y[sel_[0]]
+        if single_trial:
+            X = X.take(np.hstack(y_sel), axis=0)  # ERROR COME FROM HERE
+            y = y.take(np.hstack(y_sel), axis=0)
+        else:
+            X = X_mean
+            y = y_mean
+        # Store values to keep track
+        sub_list = dict(X=X_mean, y=y_mean, sel=sel, query=query,
+                        condition=condition, values=values,
+                        single_trial=single_trial)
+    elif isinstance(condition, list):
+        # If condition is a list, we must recall the function to gather
+        # the results of the lower levels
+        sub_list = list()
+        X_list = list()  # FIXME use numpy array
+        for subcondition in condition:
+            X, sub = nested_analysis(
+                X, df, subcondition, n_jobs=n_jobs,
+                function=subcondition.get('function', None),
+                query=subcondition.get('query', None))
+            X_list.append(X)
+            sub_list.append(sub)
+        X = np.array(X_list)
+        if y is None:
+            y = np.arange(len(condition))
+        if len(y) != len(X):
+            raise ValueError('X and y must be of identical shape: ' +
+                             '%s <> %s') % (len(X), len(y))
+        sub_list = dict(X=X, y=y, sub=sub_list, condition=condition)
+
+    # Default function
+    function = _default_analysis if function is None else function
+
+    scores = pairwise(X, y, function, n_jobs=n_jobs)
+    return scores, sub_list
+
+
+def _default_analysis(X, y):
+    # Binary contrast
+    unique_y = np.unique(y)
+    if len(unique_y) == 2:
+        y = np.where(y == unique_y[0], 1, -1)
+        # Tile Y to across X dimension without allocating memory
+        Y = tile_memory_free(y, X.shape[1:])
+        return np.mean(X * Y, axis=0)
+
+    # Linear regression:
+    elif len(unique_y) > 2:
+        return repeated_spearman(X, y)
+    else:
+        raise RuntimeError('Please specify a function for this kind of data')
+
+
 def tile_memory_free(y, shape):
     """
     Tile vector along multiple dimension without allocating new memory.
