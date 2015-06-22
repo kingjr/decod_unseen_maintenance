@@ -3,6 +3,7 @@ import numpy as np
 import mne
 from toolbox.utils import (cluster_stat, Evokeds_to_Epochs, decim)
 from meeg_preprocessing.utils import setup_provenance
+from base import meg_to_gradmag
 
 from config import (
     paths,
@@ -16,15 +17,6 @@ from config import (
 # XXX uncomment
 report, run_id, _, logger = setup_provenance(
     script=__file__, results_dir=paths('report'))
-
-
-if 'meg' in [i['name'] for i in chan_types]:
-    # find 'meg' ch_type
-    i = [i for i, le_dict in enumerate(chan_types)
-         if le_dict['name'] == 'meg'][0]
-    meg_type = chan_types[i].copy()
-    meg_type.pop('name', None)
-    chan_types[i] = dict(name='mag', **meg_type)
 
 # Apply contrast on each type of epoch
 for data_type in data_types:  # Input type ERFs or frequency power
@@ -55,11 +47,12 @@ for data_type in data_types:  # Input type ERFs or frequency power
         epochs = decim(epochs, 4)
 
         # TODO warning if subjects has missing condition
-        # XXX JRK: With neuromag, should have virtual sensor in the future.
-        # For now, only apply stats to mag and grad.
-        chan_types = [chan_types[0]]
-        for chan_type in chan_types:
-            # chan_type = chan_types[0]
+        cluster_chans = list()
+        for chan_type in meg_to_gradmag(chan_types):
+            if chan_type == 'grad':
+                # XXX JRK: With neuromag, should use virtual sensors.
+                # For now, only apply stats to mag and grad.
+                continue
 
             # Take first evoked to retrieve all necessary information
             picks = [epochs.ch_names[ii] for ii in mne.pick_types(
@@ -110,14 +103,13 @@ for data_type in data_types:  # Input type ERFs or frequency power
                 data_type, analysis['name']),
                 data_type + analysis['name'])
 
-            # Save contrast
-            # TODO CHANGE SAVING TO SAVE MULTIPLE CHAN TYPES
-
-            pkl_fname = paths('evoked', subject='fsaverage',
-                              data_type=data_type,
-                              analysis=('stats_' + analysis['name']),
-                              log=True)
-            with open(pkl_fname, 'wb') as f:
-                pickle.dump([cluster, evokeds, analysis], f)
+        cluster_chans.append(cluster)
+        # Save contrast
+        pkl_fname = paths('evoked', subject='fsaverage',
+                          data_type=data_type,
+                          analysis=('stats_' + analysis['name']),
+                          log=True)
+        with open(pkl_fname, 'wb') as f:
+            pickle.dump([cluster_chans, evokeds, analysis], f)
 
 report.save(open_browser=open_browser)
