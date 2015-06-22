@@ -72,6 +72,28 @@ def fill_betweenx_discontinuous(ax, ymin, ymax, x, freq=1, **kwargs):
         x = x[(xmax[0] + 1):]
     return ax
 
+
+def share_clim(axes, clim=None):
+    """Share clim across multiple axes
+    Parameters
+    ----------
+    axes : plt.axes
+    clim : np.array | list, shape(2,), optional
+        Defaults is min and max across axes.clim.
+    """
+    # Find min max of clims
+    if clim is None:
+        clim = list()
+        for ax in axes:
+            for im in ax.get_images():
+                clim += np.array(im.get_clim()).flatten().tolist()
+        clim = [np.min(clim), np.max(clim)]
+    # apply common clim
+    for ax in axes:
+        for im in ax.get_images():
+            im.set_clim(clim)
+    plt.draw()
+
 # MNE #########################################################################
 
 def meg_to_gradmag(chan_types):
