@@ -41,10 +41,14 @@ def paths(typ, subject='fsaverage', data_type='erf', lock='target',
         with open(fname, "a") as myfile:
             myfile.write("%s \n" % file)
 
-    # Create folder?
+    # Create subfolder if necessary
     folder = os.path.dirname(file)
-    if folder and not op.exists(folder):
-        os.mkdir(folder)
+    folder_ = folder.split('/')
+    for ii in range(len(folder_)):
+        if not op.exists(folder_[0]):
+            os.mkdir(folder_[0])
+        if len(folder_) > 1:
+            folder_ = [folder_[0] + '/' + folder_[1]] + folder_[2:]
 
     return file
 
@@ -63,8 +67,7 @@ chan_types = [dict(name='meg', connectivity=meg_connectivity)]
 preproc = dict()
 
 # ###################### Define contrasts #####################
-from orientations.conditions import analyses, format_analysis
-evoked_analyses = [format_analysis(ii) for ii in analyses]
+from orientations.conditions import analyses
 
 # #############################################################################
 # univariate analyses definition: transform the input used for the decoding to
@@ -78,8 +81,8 @@ data_types = ['erf'] + ['freq%s' % f for f in [7, 10, 12, 18, 29, 70, 105]]
 # ##################################""
 # # UNCOMMENT TO SUBSELECTION FOR FAST PROCESSING
 # #
-# subjects = [subjects[9]]
+# subjects = [subjects[0]]
 data_types = [data_types[0]]
-# analyses = [ana for ana in analyses if ana['name'] == 'targetAngle']
+# analyses = [ana for ana in analyses if ana['name'] == 'target_circAngle']
 preproc = dict(decim=2, crop=dict(tmin=-.2, tmax=1.200))
 # preproc = dict(decim=2, crop=dict(tmin=-.1, tmax=1.100))
