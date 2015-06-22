@@ -26,8 +26,16 @@ mne.set_log_level('INFO')
 for subject, data_type in product(subjects, data_types):
     print('load %s %s' % (subject, data_type))
 
-    epochs, events = load_epochs_events(subject, paths,
-                                        data_type=data_type)
+    # temporary
+    from aws.utils import dropbox_download
+    import os
+    f_local = paths('epoch', subject=subject, data_type='erf')[:-4] + '.dat'
+    f_dropbox = subject + '_preprocessed.dat'
+    dropbox_download(f_dropbox, f_local)
+
+    epochs, events = load_epochs_events(subject, paths, data_type=data_type)
+    os.remove(f_local)
+
     # Apply each analysis
     for analysis in analyses:
         print(analysis['name'])
@@ -65,7 +73,7 @@ for subject, data_type in product(subjects, data_types):
             evoked.data = X - X_mean
             evoked.plot_image(axes=ax2[:, e], show=False,
                               titles=dict(grad='grad (%.2f)' % y,
-                                          mag='mag (%.2ss)' % y))
+                                          mag='mag (%.2s)' % y))
         for chan_type in range(len(meg_to_gradmag(chan_types))):
             share_clim(ax2[chan_type, :])
 
