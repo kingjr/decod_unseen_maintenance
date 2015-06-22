@@ -179,6 +179,11 @@ def scorer_spearman(y_true, y_pred):
     return rho
 
 
+def scorer_circLinear(y_line, y_circ):
+    R, R2, pval = circular_linear_correlation(y_line, y_circ)
+    return R
+
+
 def circular_linear_correlation(X, alpha):
     # Authors:  Jean-Remi King <jeanremi.king@gmail.com>
     #           Niccolo Pescetelli <niccolo.pescetelli@gmail.com>
