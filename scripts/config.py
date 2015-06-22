@@ -43,7 +43,7 @@ def paths(typ, subject='fsaverage', data_type='erf', lock='target',
 
     # Create subfolder if necessary
     folder = os.path.dirname(file)
-    folder_ = folder.split('/')
+    folder_ = folder.split('/') if folder != '' else []
     for ii in range(len(folder_)):
         if not op.exists(folder_[0]):
             os.mkdir(folder_[0])
@@ -81,7 +81,7 @@ data_types = ['erf'] + ['freq%s' % f for f in [7, 10, 12, 18, 29, 70, 105]]
 # ##################################""
 # # UNCOMMENT TO SUBSELECTION FOR FAST PROCESSING
 # #
-# subjects = [subjects[0]]
+subjects = [subjects[1]]
 data_types = [data_types[0]]
 # analyses = [ana for ana in analyses if ana['name'] == 'target_circAngle']
 preproc = dict(decim=2, crop=dict(tmin=-.2, tmax=1.200))
