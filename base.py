@@ -6,6 +6,33 @@ import matplotlib.pyplot as plt
 # ANALYSES ####################################################################
 
 
+def tile_memory_free(y, shape):
+    """
+    Tile vector along multiple dimension without allocating new memory.
+
+    Parameters
+    ----------
+     y : np.array, shape (n,)
+        data
+    shape : np.array, shape (m),
+    Returns
+    -------
+    Y : np.array, shape (n, *shape)
+    """
+    y = np.lib.stride_tricks.as_strided(y,
+                                        (np.prod(shape), y.size),
+                                        (0, y.itemsize)).T
+    return y.reshape(np.hstack((len(y), shape)))
+
+
+def test_tile_memory_free():
+    from nose.tools import assert_equal
+    y = np.arange(100)
+    Y = tile_memory_free(y, 33)
+    assert_equal(y.shape[0], Y.shape[0])
+    np.testing.assert_array_equal(y, Y[:, 0], Y[:, -1])
+
+
 def pairwise(X, y, func, n_jobs=-1):
     """Applies pairwise operations on two matrices using multicore:
     function(X[:, jj, kk, ...], y[:, jj, kk, ...])
