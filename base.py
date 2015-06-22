@@ -6,6 +6,96 @@ import matplotlib.pyplot as plt
 # ANALYSES ####################################################################
 
 
+def pairwise(X, y, func, n_jobs=-1):
+    """Applies pairwise operations on two matrices using multicore:
+    function(X[:, jj, kk, ...], y[:, jj, kk, ...])
+
+    Parameters
+    ----------
+        X : np.ndarray, shape(n, ...)
+        y : np.array, shape(n, ...) | shape(n,)
+            If shape == X.shape:
+                parallel(X[:, chunk], y[:, chunk ] for chunk in n_chunks)
+            If shape == X.shape[0]:
+                parallel(X[:, chunk], y for chunk in n_chunks)
+        func : function
+        n_jobs : int, optional
+            Number of parallel cpu.
+    Returns
+    -------
+        out : np.array, shape(func(X, y))
+    """
+    import numpy as np
+    from mne.parallel import parallel_func
+    dims = X.shape
+    if y.shape[0] != dims[0]:
+        raise ValueError('X and y must have identical shapes')
+
+    X.resize([dims[0], np.prod(dims[1:])])
+    if y.ndim > 1:
+        Y = np.reshape(y, [dims[0], np.prod(dims[1:])])
+
+    parallel, pfunc, n_jobs = parallel_func(func, n_jobs)
+
+    n_cols = X.shape[1]
+    n_chunks = min(n_cols, n_jobs)
+    chunks = np.array_split(range(n_cols), n_chunks)
+    if y.ndim == 1:
+        out = parallel(pfunc(X[:, chunk], y) for chunk in chunks)
+    else:
+        out = parallel(pfunc(X[:, chunk], Y[:, chunk]) for chunk in chunks)
+
+    # size back in case higher dependencies
+    X.resize(dims)
+
+    # unpack
+    if isinstance(out[0], tuple):
+        return [np.reshape(out_, dims[1:]) for out_ in zip(*out)]
+    else:
+        return np.reshape(out, dims[1:])
+
+
+def _dummy_function_1(x, y):
+    return x[0, :]
+
+
+def _dummy_function_2(x, y):
+    return x[0, :], 0. * x[0, :]
+
+
+def test_pairwise():
+    from nose.tools import assert_equal, assert_raises
+    n_obs = 20
+    n_dims1 = 5
+    n_dims2 = 10
+    y = np.linspace(0, 1, n_obs)
+    X = np.zeros((n_obs, n_dims1, n_dims2))
+    for dim1 in range(n_dims1):
+        for dim2 in range(n_dims2):
+            X[:, dim1, dim2] = dim1 + 10*dim2
+
+    # test size
+    score = pairwise(X, y, _dummy_function_1, n_jobs=2)
+    assert_equal(score.shape, X.shape[1:])
+    np.testing.assert_array_equal(score[:, 0], np.arange(n_dims1))
+    np.testing.assert_array_equal(score[0, :], 10 * np.arange(n_dims2))
+
+    # Test that X has not changed becaus of resize
+    np.testing.assert_array_equal(X.shape, [n_obs, n_dims1, n_dims2])
+
+    # test multiple out
+    score1, score2 = pairwise(X, y, _dummy_function_2, n_jobs=2)
+    np.testing.assert_array_equal(score1[:, 0], np.arange(n_dims1))
+    np.testing.assert_array_equal(score2[:, 0], 0 * np.arange(n_dims1))
+
+    # Test array vs vector
+    score1, score2 = pairwise(X, X, _dummy_function_2, n_jobs=1)
+
+    # test error check
+    assert_raises(ValueError, pairwise, X, y[1:], _dummy_function_1)
+    assert_raises(ValueError, pairwise, y, X, _dummy_function_1)
+
+
 # PLOT ########################################################################
 
 def plot_eb(x, y, yerr, ax=None, alpha=0.3, color=None, line_args=dict(),
