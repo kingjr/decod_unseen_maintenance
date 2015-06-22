@@ -20,26 +20,18 @@ report, run_id, _, logger = setup_provenance(
 
 # Apply contrast on each type of epoch
 for data_type in data_types:  # Input type ERFs or frequency power
-    print(data_type)
-    if data_type == 'erf':
-        fname_appendix = ''
-        fileformat = '.dat'
-    else:
-        fname_appendix = '_Tfoi_mtm_' + data_type[4:] + 'Hz'
-        fileformat = '.mat'
-
     for analysis in analyses:
         print(analysis['name'])
-        evokeds = list()
 
         # Load data across all subjects
+        evokeds = list()
         for s, subject in enumerate(subjects):
             pkl_fname = paths('evoked', subject=subject,
                               data_type=data_type,
                               analysis=analysis['name'])
             with open(pkl_fname, 'rb') as f:
-                coef, evoked, _, _ = pickle.load(f)
-            evokeds.append(coef)
+                evoked, sub, _ = pickle.load(f)
+            evokeds.append(evoked.data)
 
         epochs = Evokeds_to_Epochs(evokeds)
 
