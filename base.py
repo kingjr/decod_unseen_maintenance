@@ -234,6 +234,45 @@ def circular_linear_correlation(X, alpha):
     return R, R2, pval
 
 
+def repeated_spearman(X, y, dtype=None):
+    """Computes spearman correlations between a vector and a matrix.
+
+    Parameters
+    ----------
+        X : np.array, shape (n_samples, n_measures)
+            Data matrix onto which the vector is correlated.
+        y : np.array, shape (n_samples)
+            Data vector.
+        dtype : type, optional
+            Data type used to compute correlation values to optimize memory.
+
+    Returns
+    -------
+        rho : np.array, shape (n_measures)
+    """
+    if X.ndim not in [1, 2] or y.ndim != 1 or X.shape[0] != y.shape[0]:
+        raise ValueError('y must be a vector, and X a matrix with an equal'
+                         'number of rows.')
+    if X.ndim == 1:
+        X = X[:, None]
+
+    # Rank
+    X = np.argsort(X, axis=0)
+    y = np.argsort(y, axis=0)
+    # Double rank to ensure that normalization step of compute_corr
+    # (X -= mean(X)) remains an integer.
+    if (dtype is None and X.shape[0] < 2 ** 8) or\
+       (dtype in [int, np.int16, np.int32, np.int64]):
+        X *= 2
+        y *= 2
+        dtype = np.int16
+    else:
+        dtype = type(y[0])
+    X = np.array(X, dtype=dtype)
+    y = np.array(y, dtype=dtype)
+    return repeated_corr(X, y, dtype=type(y[0]))
+
+
 def repeated_corr(X, y, dtype=float):
     """Computes pearson correlations between a vector and a matrix.
 
@@ -266,7 +305,9 @@ def repeated_corr(X, y, dtype=float):
 
 
 def test_corr_functions():
+    from scipy.stats import spearmanr
     test_corr(np.corrcoef, repeated_corr, 1)
+    test_corr(spearmanr, repeated_spearman, 0)
 
 
 def test_corr(old_func, new_func, sel_item):
