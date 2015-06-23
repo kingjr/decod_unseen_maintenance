@@ -13,7 +13,7 @@ SCRIPT=${1}
 for i in "${*:2}"
 do
 case $i in
-    -tt|-oLogLevel=quiet|-onlcr|-echo)
+    -tt|-oLogLevel=quiet|-onlcr|-echo|parallel|--number-of-cores)
     REMOVED+=($i)
     ;;
     *)
