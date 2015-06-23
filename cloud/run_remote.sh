@@ -7,6 +7,7 @@ PATH=/home/ubuntu/anaconda/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin
 DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 cd "${DIR}/.."
 echo $(pwd)
+echo $PATH
 echo $(which python)
 
 HOST=$(hostname)
