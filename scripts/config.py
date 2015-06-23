@@ -43,12 +43,8 @@ def paths(typ, subject='fsaverage', data_type='erf', lock='target',
 
     # Create subfolder if necessary
     folder = os.path.dirname(file)
-    folder_ = folder.split('/') if folder != '' else []
-    for ii in range(len(folder_)):
-        if (folder_[0] != '') and (not op.exists(folder_[0])):
-            os.mkdir(folder_[0])
-        if len(folder_) > 1:
-            folder_ = [folder_[0] + '/' + folder_[1]] + folder_[2:]
+    if (folder != '') and (not op.exists(folder)):
+        os.mkdirs(folder)
 
     return file
 
@@ -59,9 +55,10 @@ subjects = [
     'tc120199', 'ts130283', 'yp130276', 'av130322', 'ps120458']
 
 # Define type of sensors used (useful for ICA correction, plotting etc)
-from mne.channels import read_ch_connectivity
-meg_connectivity, _ = read_ch_connectivity('neuromag306mag')
-chan_types = [dict(name='meg', connectivity=meg_connectivity)]
+# FIXME unknown connectivity; must be mag
+# from mne.channels import read_ch_connectivity
+# meg_connectivity, _ = read_ch_connectivity('neuromag306meg')
+chan_types = [dict(name='meg')]
 
 # Decoding preprocessing steps
 preproc = dict()
@@ -78,11 +75,31 @@ from orientations.conditions import analyses
 # ############## Define type of input (erf,frequenct etc...) ##################
 data_types = ['erf'] + ['freq%s' % f for f in [7, 10, 12, 18, 29, 70, 105]]
 
+
+# EXTERNAL PARAMETER ##########################################################
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument('--time_id', default='')
+parser.add_argument('--subject', default=None)
+parser.add_argument('--data_type', default=data_types)
+parser.add_argument('--analysis', default=analyses)
+parser.add_argument('--overwrite', default='False')
+parser.add_argument('--pyscript', default='config.py')
+args = parser.parse_args()
+
+time_id = args.time_id
+subjects = [args.subject] if args.subject is not None else subjects
+if isinstance(args.analysis, str):
+    idx = [d['name'] == args.analysis for d in analyses]
+    analyses = [analyses[idx]]
+pyscript = args.pyscript
+overwrite = args.overwrite == 'True'
+
 # ##################################""
 # # UNCOMMENT TO SUBSELECTION FOR FAST PROCESSING
 # #
-# subjects = [subjects[1]]
+subjects = [subjects[0]]
 data_types = [data_types[0]]
-analyses = [ana for ana in analyses if ana['name'] == 'target_circAngle']
+analyses = [ana for ana in analyses if ana['name'] == 'target_present']
 preproc = dict(decim=2, crop=dict(tmin=-.2, tmax=1.200))
 # preproc = dict(decim=2, crop=dict(tmin=-.1, tmax=1.100))
