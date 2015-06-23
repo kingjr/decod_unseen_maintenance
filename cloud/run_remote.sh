@@ -3,6 +3,7 @@
 
 
 # XXX define python as /opt/anaconda/bin/python
+PATH=/home/ubuntu/anaconda/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games
 DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 cd "${DIR}/.."
 echo $(pwd)
