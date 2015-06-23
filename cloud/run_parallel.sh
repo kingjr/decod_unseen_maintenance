@@ -24,8 +24,7 @@ SSHLOGINS=$(echo --sshlogin $NODES)
 echo "Running setup_remote.sh on all nodes"
 for node in ${NODES//,/ }; do
 	echo "Running on ${node}"
-	parallel --ungroup --tag -S $node --transfer --cleanup "bash {1} setup" ::: "cloud/run_remote.sh"
-	# parallel $node --transfer "bash {1} setup" ::: "Paris_orientation-decoding/cloud/run_remote.sh"
+	parallel --ungroup --tag -S $node --transfer --cleanup "bash {1}" ::: "cloud/setup.sh"
 	if [ $? -ne 0 ]; then
 		echo "An error ocurred while setting up ${node}"
 		exit
