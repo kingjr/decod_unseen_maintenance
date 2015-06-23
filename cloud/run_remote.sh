@@ -37,19 +37,22 @@ elif [ "$SCRIPT" == "upload" ]; then
 	cd "${DIR}/../"
 	python -c "from scripts.transfer_data import upload_all(); upload_all();" --pyscript=$SCRIPT ${PARAMS[@]}
 else
-	cd "${DIR}/../"
 
 	echo "Downloading data #####################################################"
 	echo "python -c \"from scripts.transfer_data import download_all; download_all();\" --pyscript=$SCRIPT ${PARAMS[@]}"
+	cd "${DIR}/../"
 	python -c "from scripts.transfer_data import download_all; download_all();" --pyscript=$SCRIPT ${PARAMS[@]}
 
 	echo "Running ${SCRIPT} ####################################################"
-	echo python $SCRIPT --pyscript=$SCRIPT ${PARAMS[@]}
-  python $SCRIPT --pyscript=$SCRIPT ${PARAMS[@]}
+	echo python "${SCRIPT} --pyscript=$SCRIPT ${PARAMS[@]}"
+  python -c "from ${SCRIPT} import *" --pyscript=$SCRIPT ${PARAMS[@]}
+  # FIXME why are additional arguments passed?
 
   # XXX concatenate log
 
 	echo "Uploading data #######################################################"
 	echo "python -c \"from scripts.transfer_data import upload_all; upload_all();\" --pyscript=$SCRIPT ${PARAMS[@]}"
 	python -c "from scripts.transfer_data import upload_all; upload_all();" --pyscript=$SCRIPT ${PARAMS[@]}
+
+  echo 'All good!'
 fi
