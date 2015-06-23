@@ -87,8 +87,9 @@ parser.add_argument('--data_type', default=data_types)
 parser.add_argument('--analysis', default=analyses)
 parser.add_argument('--overwrite', default='False')
 parser.add_argument('--pyscript', default='config.py')
-parser.add_argument('kwargs', nargs='*')
+parser.add_argument('args', nargs=argparse.REMAINDER)
 args = parser.parse_args()
+
 
 time_id = args.time_id
 subjects = [args.subject] if args.subject is not None else subjects
