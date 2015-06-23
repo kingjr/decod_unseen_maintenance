@@ -1,3 +1,6 @@
+import sys
+sys.path.insert(0, './')
+
 def download_depencies(overwrite=False):
     from itertools import product
     from cloud.utils import download
