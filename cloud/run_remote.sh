@@ -21,6 +21,7 @@ if [ "$SCRIPT" == "clean" ]; then
 elif [ "$SCRIPT" == "setup" ]; then
   echo "Setting-up ${HOST}  ##################################################"
   # update libraries
+	git config --global user.email "jeanremi.king+github@gmail.com"
   cd ~/mne-python
   git pull git://github.com/mne-tools/mne-python
 	cd ~/meeg-preprocessing
