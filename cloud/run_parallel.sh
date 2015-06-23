@@ -37,7 +37,7 @@ rm -f output.log
 rm -f error.log
 
 # COMPUTE
-parallel --joblog job-pipeline.log --resume --resume-failed --tag --delay 1 $SSHLOGINS "bash cloud/run_remote.sh ${SCRIPT} --subject={1} --time_id=${TIME_ID}" ::: $SUBJECTS > output.log 2> error.log
+parallel --joblog job-pipeline.log --resume --resume-failed --tag --delay 1 $SSHLOGINS "bash cloud/run_remote.sh ${SCRIPT} --subject={1} --time_id=${TIME_ID};" ::: $SUBJECTS > output.log 2> error.log
 
 # log concatenation
 # cleanup

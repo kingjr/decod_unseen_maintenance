@@ -9,20 +9,7 @@ cd "${DIR}/.."
 echo $(pwd)
 HOST=$(hostname)
 SCRIPT=${1}
-# Clean unwanted arguments from parallel
-for i in "${*:2}"
-do
-case $i in
-    -tt|-oLogLevel=quiet|-onlcr|-echo|parallel|--number-of-cores)
-    REMOVED+=($i)
-    ;;
-    *)
-    PARAMS+=($i)
-    ;;
-esac
-done
-echo "/!\ Removed arguments: ${REMOVED[@]}"
-
+PARAMS=${*:2}
 
 DATA_PATH="${DIR}/../data"
 
