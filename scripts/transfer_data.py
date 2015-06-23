@@ -46,4 +46,4 @@ def upload_report(report):
         for filename in filenames:
             fname = os.path.join(root, filename)
             upload('dropbox', fname,
-                   op.join('reports/', base_path, fname), True)
+                   op.join('reports', base_path[2:], fname), True)

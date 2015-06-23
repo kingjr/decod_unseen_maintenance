@@ -59,9 +59,8 @@ def upload(server, f_client, f_server, overwrite=False):
         raise RuntimeError('%s does not exist.' % f_client)
     if server == 'dropbox':
         f = open(f_client, 'rb')
+        # FIXME overwrite + check error
         response = dropbox_client.put_file(f_server, f)
-        print response
-        # FIXME overwrite
     elif server == 's3':
         key = boto_client.get_key(f_server)
         if key is None:
