@@ -9,7 +9,21 @@ cd "${DIR}/.."
 echo $(pwd)
 HOST=$(hostname)
 SCRIPT=${1}
-PARAMS=${*:2}
+# Clean unwanted arguments from parallel
+for i in "${*:2}"
+do
+case $i in
+    -tt|-oLogLevel=quiet|-onlcr|-echo)
+    REMOVED+=($i)
+    ;;
+    *)
+    PARAMS+=($i)
+    ;;
+esac
+done
+echo "/!\ Removed arguments: ${REMOVED[@]}"
+
+
 DATA_PATH="${DIR}/../data"
 
 echo "REMOTE ${HOST}: python ${SCRIPT} ${PARAMS[@]}"
