@@ -11,3 +11,11 @@ cd ~/gat
 git pull https://github.com/kingjr/gat
 cd ~/Paris_orientation-decoding
 git pull https://github.com/kingjr/Paris_orientation-decoding
+
+echo $PATH
+echo $(which python)
+PATH=/home/ubuntu/anaconda/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games
+cd "${DIR}/.."
+echo $(pwd)
+echo $PATH
+echo $(which python)
