@@ -3,7 +3,6 @@
 
 
 # XXX define python as /opt/anaconda/bin/python
-
 DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 cd "${DIR}/.."
 echo $(pwd)
@@ -11,48 +10,34 @@ HOST=$(hostname)
 SCRIPT=${1}
 PARAMS=${*:2}
 
-DATA_PATH="${DIR}/../data"
-
 echo "REMOTE ${HOST}: python ${SCRIPT} ${PARAMS[@]}"
 
-if [ "$SCRIPT" == "clean" ]; then
-  echo "Cleaning up ${HOST}  #################################################"
-	# rm -rf $DATA_PATH
-	# rm -rf $RESULTS_PATH
-elif [ "$SCRIPT" == "setup" ]; then
-  echo "Setting-up ${HOST}  ##################################################"
-  # update libraries
-	git config --global user.email "jeanremi.king+github@gmail.com"
-  cd ~/mne-python
-  git pull git://github.com/mne-tools/mne-python
-	cd ~/meeg-preprocessing
-  git pull https://github.com/dengemann/meeg-preprocessing
-	cd ~/meg_perceptual_decision_symbols
-  git pull https://github.com/kingjr/Paris_orientation-decoding clean_up
-	cd ~/gat
-  git pull https://github.com/kingjr/gat
-
-elif [ "$SCRIPT" == "upload" ]; then
-  echo "Manual upload ########################################################"
-	cd "${DIR}/../"
-	python -c "from scripts.transfer_data import upload_all(); upload_all();" --pyscript=$SCRIPT ${PARAMS[@]}
-else
-
-	echo "Downloading data #####################################################"
-	echo "python -c \"from scripts.transfer_data import download_all; download_all();\" --pyscript=$SCRIPT ${PARAMS[@]}"
-	cd "${DIR}/../"
-	python -c "from scripts.transfer_data import download_all; download_all();" --pyscript=$SCRIPT ${PARAMS[@]}
-
-	echo "Running ${SCRIPT} ####################################################"
-	echo python "${SCRIPT} --pyscript=$SCRIPT ${PARAMS[@]}"
-  python -c "from ${SCRIPT} import *" --pyscript=$SCRIPT ${PARAMS[@]}
-  # FIXME why are additional arguments passed?
-
-  # XXX concatenate log
-
-	echo "Uploading data #######################################################"
-	echo "python -c \"from scripts.transfer_data import upload_all; upload_all();\" --pyscript=$SCRIPT ${PARAMS[@]}"
-	python -c "from scripts.transfer_data import upload_all; upload_all();" --pyscript=$SCRIPT ${PARAMS[@]}
-
-  echo 'All good!'
-fi
+# if [ "$SCRIPT" == "setup" ]; then
+#   echo "Setting-up ${HOST}  ##################################################"
+#   # update libraries
+# 	git config --global user.email "jeanremi.king+github@gmail.com"
+#   cd ~/mne-python
+#   git pull git://github.com/mne-tools/mne-python
+# 	cd ~/meeg-preprocessing
+#   git pull https://github.com/dengemann/meeg-preprocessing
+# 	cd ~/gat
+#   git pull https://github.com/kingjr/gat
+#   cd ~/Paris_orientation-decoding
+#   git pull https://github.com/kingjr/Paris_orientation-decoding
+#
+# else
+#
+# 	cd ~/Paris_orientation-decoding
+# 	echo "Downloading data"
+#   /home/ubuntu/anaconda/bin/python -c "from scripts.transfer_data import download_all; download_all();" --pyscript=$SCRIPT ${PARAMS[@]}
+#
+# 	echo "Running ${SCRIPT}"
+#   /home/ubuntu/anaconda/bin/python python $SCRIPT --pyscript=$SCRIPT ${PARAMS[@]}
+#
+#   # XXX concatenate log
+#
+# 	echo "Uploading data"
+#   /home/ubuntu/anaconda/bin/python python -c "from scripts.transfer_data import upload_all; upload_all();" --pyscript=$SCRIPT ${PARAMS[@]}
+#
+#   echo 'All good!'
+# fi
