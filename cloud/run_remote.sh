@@ -40,8 +40,8 @@ else
 	cd "${DIR}/../"
 
 	echo "Downloading data #####################################################"
-	echo "python -c \"from scripts.transfer_data import download_all; download_all()\" --pyscript=$SCRIPT ${PARAMS[@]}"
-	python -c "from scripts.transfer_data import download_all; download_all()" --pyscript=$SCRIPT ${PARAMS[@]}
+	echo "python -c \"from scripts.transfer_data import download_all; download_all();\" --pyscript=$SCRIPT ${PARAMS[@]}"
+	python -c "from scripts.transfer_data import download_all; download_all();" --pyscript=$SCRIPT ${PARAMS[@]}
 
 	echo "Running ${SCRIPT} ####################################################"
 	echo python $SCRIPT --pyscript=$SCRIPT ${PARAMS[@]}
@@ -50,6 +50,6 @@ else
   # XXX concatenate log
 
 	echo "Uploading data #######################################################"
-	echo "python -c \"from scripts.transfer_data import upload_all; upload_all()\" --pyscript=$SCRIPT ${PARAMS[@]}"
+	echo "python -c \"from scripts.transfer_data import upload_all; upload_all();\" --pyscript=$SCRIPT ${PARAMS[@]}"
 	python -c "from scripts.transfer_data import upload_all; upload_all();" --pyscript=$SCRIPT ${PARAMS[@]}
 fi
