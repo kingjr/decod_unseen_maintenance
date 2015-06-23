@@ -26,7 +26,7 @@ elif [ "$SCRIPT" == "setup" ]; then
 	cd ~/meeg-preprocessing
   git pull https://github.com/dengemann/meeg-preprocessing
 	cd ~/meg_perceptual_decision_symbols
-  git pull -https://github.com/kingjr/Paris_orientation-decoding clean_up
+  git pull https://github.com/kingjr/Paris_orientation-decoding clean_up
 	cd ~/gat
   git pull https://github.com/kingjr/gat
 
