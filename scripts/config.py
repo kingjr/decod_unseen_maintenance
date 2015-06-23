@@ -1,11 +1,13 @@
 import sys
 sys.path.insert(0, './')
+import matplotlib
+matplotlib.use('Agg')
 
 import os
 import os.path as op
 
 # Experiment parameters
-open_browser = True
+open_browser = False
 base_path = op.dirname(op.dirname(__file__))
 print base_path
 data_path = op.join(base_path, 'data/')
@@ -44,7 +46,7 @@ def paths(typ, subject='fsaverage', data_type='erf', lock='target',
     # Create subfolder if necessary
     folder = os.path.dirname(file)
     if (folder != '') and (not op.exists(folder)):
-        os.mkdirs(folder)
+        os.makedirs(folder)
 
     return file
 

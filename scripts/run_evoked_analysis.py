@@ -1,5 +1,7 @@
 import sys
 sys.path.insert(0, './')
+import matplotlib
+matplotlib.use('Agg')
 
 import pickle
 import numpy as np
@@ -29,17 +31,7 @@ mne.set_log_level('INFO')
 for subject, data_type in product(subjects, data_types):
     print('load %s %s' % (subject, data_type))
 
-    # temporary
-    from aws.utils import dropbox_download
-    import os
-    f_local = paths('epoch', subject=subject, data_type='erf')[:-4] + '.dat'
-    if not os.path.exists(f_local):
-        f_dropbox = subject + '_preprocessed.dat'
-        dropbox_download(f_dropbox, f_local)
-        epochs, events = load_epochs_events(subject, paths, data_type=data_type)
-        os.remove(f_local)
-    else:
-        epochs, events = load_epochs_events(subject, paths, data_type=data_type)
+    epochs, events = load_epochs_events(subject, paths, data_type=data_type)
 
     # Apply each analysis
     for analysis in analyses:

@@ -1,3 +1,8 @@
+import sys
+sys.path.insert(0, './')
+import matplotlib
+matplotlib.use('Agg')
+
 import os.path as op
 import numpy as np
 import copy
@@ -12,12 +17,13 @@ import pickle
 
 ###############################################################################
 
-from config import (
+from scripts.config import (
     paths,
     subjects,
     open_browser,
     data_types,
-    contrasts)
+    contrasts
+)
 
 
 report, run_id, _, logger = setup_provenance(
@@ -59,6 +65,7 @@ for data_type in data_types:
                 # define seen vs unseen
                 vis = np.array(events['seen_unseen'][sel])
 
+                # FIXME? WTH??
                 # define subselection of trials of interest
                 if subselection['name'] == 'allTrials':
                     # select all trials used for classification

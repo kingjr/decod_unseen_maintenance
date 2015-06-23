@@ -1,5 +1,7 @@
 import sys
 sys.path.insert(0, './')
+import matplotlib
+matplotlib.use('Agg')
 
 
 def download_all(overwrite=False):

@@ -1,5 +1,7 @@
 import sys
 sys.path.insert(0, './')
+import matplotlib
+matplotlib.use('Agg')
 
 import pickle
 import numpy as np
