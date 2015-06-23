@@ -87,6 +87,8 @@ parser.add_argument('--data_type', default=data_types)
 parser.add_argument('--analysis', default=analyses)
 parser.add_argument('--overwrite', default='False')
 parser.add_argument('--pyscript', default='config.py')
+parser.add_argument('-tt', default=None)  # FIXME
+parser.add_argument('-oLogLevel', default='quiet')  # FIXME
 parser.add_argument('args', nargs=argparse.REMAINDER)
 args = parser.parse_args()
 
