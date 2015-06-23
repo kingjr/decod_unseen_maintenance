@@ -8,17 +8,17 @@ TIME_ID=$(python cloud/time_id.py)
 SCRIPT="scripts/run_evoked_analysis.py"
 echo $TIME_ID: $SCRIPT '<' $SUBJECTS
 
-# # SETUP NODES
-# # Configure to run on all nodes except this
-# THISIP=$(ifconfig | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*' | grep -v '127.0.0.1')
-# HEADNODE=$(hostname)
-# # seq 0 27 | xargs -I{} echo 1/10.0.0.{} | grep -v $THISIP > nodes.slf
-# echo 1/$THISIP > nodes.slf
-# echo '' > running.slf
-# # Check for running nodes
-# bash cloud/update_nodes.sh
+# SETUP NODES
+# Configure to run on all nodes except this
+THISIP=$(ifconfig | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*' | grep -v '127.0.0.1')
+HEADNODE=$(hostname)
+# seq 0 27 | xargs -I{} echo 1/10.0.0.{} | grep -v $THISIP > nodes.slf
+echo 1/$THISIP > nodes.slf
+echo '' > running.slf
+# Check for running nodes
+bash cloud/update_nodes.sh
+# NODES="2/:" # Run Locally
 
-NODES="2/:" # Run Locally
 SSHLOGINS=$(echo --sshlogin $NODES)
 echo "Running setup_remote.sh on all nodes"
 for node in ${NODES//,/ }; do
