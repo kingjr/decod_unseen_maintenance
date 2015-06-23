@@ -1,3 +1,8 @@
+import sys
+sys.path.insert(0, './')
+import matplotlib
+matplotlib.use('Agg')
+
 import numpy as np
 import pickle
 from mne.decoding import GeneralizationAcrossTime
@@ -7,7 +12,7 @@ from meeg_preprocessing.utils import setup_provenance
 from orientations.utils import load_epochs_events
 from base import resample_epochs, decim
 
-from config import (
+from scripts.config import (
     open_browser,
     paths,
     subjects,
@@ -15,6 +20,8 @@ from config import (
     preproc,
     analyses
 )
+
+from scripts.transfer_data import upload_report
 
 report, run_id, _, logger = setup_provenance(
     script=__file__, results_dir=paths('report'))
@@ -78,3 +85,4 @@ for s, subject in enumerate(subjects):  # Loop across each subject
                                        analysis['name'])
 
 report.save(open_browser=open_browser)
+upload_report(report)

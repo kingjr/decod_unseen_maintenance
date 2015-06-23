@@ -23,6 +23,8 @@ from scripts.config import (
     open_browser,
 )
 
+from scripts.transfer_data import upload_report
+
 report, run_id, _, logger = setup_provenance(
     script=__file__, results_dir=paths('report'))
 
@@ -79,3 +81,4 @@ for subject, data_type in product(subjects, data_types):
 
 
 report.save(open_browser=open_browser)
+upload_report(report)

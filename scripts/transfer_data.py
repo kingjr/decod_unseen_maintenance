@@ -3,10 +3,11 @@ sys.path.insert(0, './')
 import matplotlib
 matplotlib.use('Agg')
 
+from cloud.utils import download, upload
+
 
 def download_all(overwrite=False):
     from itertools import product
-    from cloud.utils import download
     # XXX This will have to be specified for later scripts
     from scripts.config import paths, subjects, data_types
 
@@ -27,7 +28,6 @@ def download_all(overwrite=False):
 
 def upload_all(overwrite=False):
     from scripts.config import paths
-    from cloud.utils import upload
 
     with open(paths('log'), 'r') as f:
         file_list = f.readlines()
@@ -36,3 +36,14 @@ def upload_all(overwrite=False):
     for fname in file_list:
         for fname in file_list:
             upload('s3', fname, fname, overwrite)
+
+
+def upload_report(report):
+    import os
+    import os.path as op
+    base_path = op.dirname(__file__)
+    for root, dirnames, filenames in os.walk(report.data_path):
+        for filename in filenames:
+            fname = os.path.join(root, filename)
+            upload('dropbox', fname,
+                   op.join('reports/', base_path, fname), True)

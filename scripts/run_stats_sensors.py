@@ -17,7 +17,7 @@ from meeg_preprocessing.utils import setup_provenance
 from base import (meg_to_gradmag, share_clim, tile_memory_free)
 from orientations.utils import fix_wrong_channel_names
 
-from config import (
+from scripts.config import (
     paths,
     subjects,
     data_types,
@@ -25,6 +25,8 @@ from config import (
     chan_types,
     open_browser
 )
+
+from script.transfer_data import upload_report
 
 # XXX uncomment
 report, run_id, _, logger = setup_provenance(
@@ -138,3 +140,4 @@ for data_type, analysis in product(data_types, analyses):
         pickle.dump([p_values_chans, evoked, analysis], f)
 
 report.save(open_browser=open_browser)
+upload_report(report)

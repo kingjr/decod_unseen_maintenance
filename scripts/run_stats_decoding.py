@@ -24,6 +24,7 @@ from scripts.config import (
     data_types,
     contrasts
 )
+from script.transfer_data import upload_report
 
 
 report, run_id, _, logger = setup_provenance(
@@ -164,3 +165,4 @@ for data_type in data_types:
                 pickle.dump([scores, p_values], f)
 
 report.save(open_browser=open_browser)
+upload_report(report)
