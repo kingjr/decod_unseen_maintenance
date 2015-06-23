@@ -10,6 +10,7 @@ def fix_wrong_channel_names(inst):
     from mne.epochs import EpochsArray
     from mne.evoked import Evoked
     inst.info['chs'] = inst.info['chs'][:306]
+    inst.info['ch_names'] = inst.info['ch_names'][:306]
     inst.info['nchan'] = 306
     if isinstance(inst, Evoked):
         inst.data = inst.data[:306, :]
