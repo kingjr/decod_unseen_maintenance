@@ -87,7 +87,6 @@ parser.add_argument('--data_type', default=data_types)
 parser.add_argument('--analysis', default=analyses)
 parser.add_argument('--overwrite', default='False')
 parser.add_argument('--pyscript', default='config.py')
-#parser.add_argument('args', nargs=argparse.REMAINDER)
 args = parser.parse_args()
 
 
@@ -105,5 +104,5 @@ overwrite = args.overwrite == 'True'
 subjects = [subjects[0]]
 data_types = [data_types[0]]
 analyses = [ana for ana in analyses if ana['name'] == 'target_present']
-preproc = dict(decim=2, crop=dict(tmin=-.2, tmax=1.200))
+preproc = dict(decim=4, crop=dict(tmin=-.1, tmax=.300))
 # preproc = dict(decim=2, crop=dict(tmin=-.1, tmax=1.100))

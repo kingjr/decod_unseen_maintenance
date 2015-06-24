@@ -41,9 +41,9 @@ def upload_all(overwrite=False):
 def upload_report(report):
     import os
     import os.path as op
-    base_path = op.dirname(__file__)
+    base_path = op.abspath(__file__).split('scripts/')[0].split('/')[-1]
     for root, dirnames, filenames in os.walk(report.data_path):
         for filename in filenames:
-            fname = os.path.join(root, filename)
-            upload('dropbox', fname,
-                   op.join('reports', base_path[2:], fname), True)
+            fname_client = op.join(root, filename)
+            fname_server = op.join('reports', base_path, root, filename)
+            upload('dropbox', fname_client, fname_server, True)
