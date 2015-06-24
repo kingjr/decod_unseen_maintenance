@@ -128,7 +128,7 @@ for data_type, analysis in product(data_types, analyses):
         #         mask=mask, scale=1., sensors=False, contours=False,
         #         times=time, colorbar=True, show=False))
         # share_clim([ax_ for fig in fig_list for ax_ in fig.get_axes()])
-        # report.add_slider_to_section(fig_list, evoked.times, image_format='svg')
+        # report.add_slider_to_section(fig_list, evoked.times)
 
         # Add to report
         for fig, fig_name in zip([fig1, fig2, fig3],
