@@ -1,11 +1,13 @@
 import sys
 sys.path.insert(0, './')
+import matplotlib
+matplotlib.use('Agg')
 
 import os
 import os.path as op
 
 # Experiment parameters
-open_browser = True
+open_browser = False
 base_path = op.dirname(op.dirname(__file__))
 print base_path
 data_path = op.join(base_path, 'data/')
@@ -26,7 +28,7 @@ def paths(typ, subject='fsaverage', data_type='erf', lock='target',
 
         behavior=op.join(this_path, '%s_fixed.mat' % subject),
         epoch=op.join(this_path, '%s_%s_%s.mat' % (subject, lock, data_type)),
-        evoked=op.join(this_path, '%s_%s_%s_%s.fif' % (
+        evoked=op.join(this_path, '%s_%s_%s_%s.pickle' % (
             subject, lock, data_type, analysis)),
         decod=op.join(this_path, '%s_%s_%s_%s.pickle' % (
             subject, lock, data_type, analysis)),
@@ -41,10 +43,10 @@ def paths(typ, subject='fsaverage', data_type='erf', lock='target',
         with open(fname, "a") as myfile:
             myfile.write("%s \n" % file)
 
-    # Create folder?
+    # Create subfolder if necessary
     folder = os.path.dirname(file)
-    if folder and not op.exists(folder):
-        os.mkdir(folder)
+    if (folder != '') and (not op.exists(folder)):
+        os.makedirs(folder)
 
     return file
 
@@ -55,16 +57,16 @@ subjects = [
     'tc120199', 'ts130283', 'yp130276', 'av130322', 'ps120458']
 
 # Define type of sensors used (useful for ICA correction, plotting etc)
-from mne.channels import read_ch_connectivity
-meg_connectivity, _ = read_ch_connectivity('neuromag306mag')
-chan_types = [dict(name='meg', connectivity=meg_connectivity)]
+# FIXME unknown connectivity; must be mag
+# from mne.channels import read_ch_connectivity
+# meg_connectivity, _ = read_ch_connectivity('neuromag306meg')
+chan_types = [dict(name='meg')]
 
 # Decoding preprocessing steps
 preproc = dict()
 
 # ###################### Define contrasts #####################
-from orientations.conditions import analyses, format_analysis
-evoked_analyses = [format_analysis(ii) for ii in analyses]
+from orientations.conditions import analyses
 
 # #############################################################################
 # univariate analyses definition: transform the input used for the decoding to
@@ -75,11 +77,32 @@ evoked_analyses = [format_analysis(ii) for ii in analyses]
 # ############## Define type of input (erf,frequenct etc...) ##################
 data_types = ['erf'] + ['freq%s' % f for f in [7, 10, 12, 18, 29, 70, 105]]
 
+
+# EXTERNAL PARAMETER ##########################################################
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument('--time_id', default='')
+parser.add_argument('--subject', default=None)
+parser.add_argument('--data_type', default=data_types)
+parser.add_argument('--analysis', default=analyses)
+parser.add_argument('--overwrite', default='False')
+parser.add_argument('--pyscript', default='config.py')
+args = parser.parse_args()
+
+
+time_id = args.time_id
+subjects = [args.subject] if args.subject is not None else subjects
+if isinstance(args.analysis, str):
+    idx = [d['name'] == args.analysis for d in analyses]
+    analyses = [analyses[idx]]
+pyscript = args.pyscript
+overwrite = args.overwrite == 'True'
+
 # ##################################""
 # # UNCOMMENT TO SUBSELECTION FOR FAST PROCESSING
 # #
-# subjects = [subjects[9]]
+subjects = [subjects[0]]
 data_types = [data_types[0]]
-# analyses = [ana for ana in analyses if ana['name'] == 'targetAngle']
-preproc = dict(decim=2, crop=dict(tmin=-.2, tmax=1.200))
+analyses = [ana for ana in analyses if ana['name'] == 'target_present']
+preproc = dict(decim=4, crop=dict(tmin=-.1, tmax=.300))
 # preproc = dict(decim=2, crop=dict(tmin=-.1, tmax=1.100))

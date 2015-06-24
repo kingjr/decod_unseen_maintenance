@@ -30,7 +30,7 @@ def analysis(name, typ, condition=None, query=None):
         condition = name
     return dict(name=name, condition=condition, query=query, clf=clf,
                 scorer=scorer, chance=chance, erf_function=erf_function,
-                single_trial=single_trial)
+                single_trial=single_trial, cv=8)
 
 analyses = (
     analysis('target_present',      'categorize'),

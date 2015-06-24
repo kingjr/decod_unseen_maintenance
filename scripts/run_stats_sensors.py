@@ -1,10 +1,23 @@
+import sys
+sys.path.insert(0, './')
+import matplotlib
+matplotlib.use('Agg')
+
 import pickle
 import numpy as np
+import matplotlib.pyplot as plt
+from itertools import product
+
 import mne
-from toolbox.utils import (cluster_stat, Evokeds_to_Epochs, decim)
+from mne.epochs import EpochsArray
+from mne.stats import spatio_temporal_cluster_1samp_test as stats
+
 from meeg_preprocessing.utils import setup_provenance
 
-from config import (
+from base import (meg_to_gradmag, share_clim, tile_memory_free)
+from orientations.utils import fix_wrong_channel_names
+
+from scripts.config import (
     paths,
     subjects,
     data_types,
@@ -13,111 +26,126 @@ from config import (
     open_browser
 )
 
+from scripts.transfer_data import upload_report
+
 # XXX uncomment
 report, run_id, _, logger = setup_provenance(
     script=__file__, results_dir=paths('report'))
 
-
-if 'meg' in [i['name'] for i in chan_types]:
-    # find 'meg' ch_type
-    i = [i for i, le_dict in enumerate(chan_types)
-         if le_dict['name'] == 'meg'][0]
-    meg_type = chan_types[i].copy()
-    meg_type.pop('name', None)
-    chan_types[i] = dict(name='mag', **meg_type)
-
 # Apply contrast on each type of epoch
-for data_type in data_types:  # Input type ERFs or frequency power
-    print(data_type)
-    if data_type == 'erf':
-        fname_appendix = ''
-        fileformat = '.dat'
-    else:
-        fname_appendix = '_Tfoi_mtm_' + data_type[4:] + 'Hz'
-        fileformat = '.mat'
+for data_type, analysis in product(data_types, analyses):
+    print data_type, analysis['name']
 
-    for analysis in analyses:
-        print(analysis['name'])
-        evokeds = list()
+    # Load data across all subjects
+    data = list()
+    for s, subject in enumerate(subjects):
+        pkl_fname = paths('evoked', subject=subject,
+                          data_type=data_type,
+                          analysis=analysis['name'])
+        with open(pkl_fname, 'rb') as f:
+            evoked, sub, _ = pickle.load(f)
+        # FIXME
+        evoked = fix_wrong_channel_names(evoked)
+        data.append(evoked.data)
 
-        # Load data across all subjects
-        for s, subject in enumerate(subjects):
-            pkl_fname = paths('evoked', subject=subject,
-                              data_type=data_type,
-                              analysis=analysis['name'])
-            with open(pkl_fname, 'rb') as f:
-                coef, evoked, _, _ = pickle.load(f)
-            evokeds.append(coef)
+    epochs = EpochsArray(np.array(data), evoked.info,
+                         events=np.zeros((len(data), 3)),
+                         tmin=evoked.times[0])
 
-        epochs = Evokeds_to_Epochs(evokeds)
+    # TODO warning if subjects has missing condition
+    p_values_chans = list()
+    for chan_type in meg_to_gradmag(chan_types):
+        # FIXME: clean this up by cleaning ch_types definition
+        if chan_type['name'] == 'grad':
+            # XXX JRK: With neuromag, should use virtual sensors.
+            # For now, only apply stats to mag and grad.
+            continue
+        elif chan_type['name'] == 'mag':
+            chan_type_ = dict(meg='mag')
+        else:
+            chan_type_ = dict(meg=chan_type['name'] == 'meg',
+                              eeg=chan_type['name'] == 'eeg',
+                              seeg=chan_type['name'] == 'seeg')
 
-        # XXX to be removed later on
-        epochs = decim(epochs, 4)
+        pick_type = mne.pick_types(epochs.info, **chan_type_)
+        picks = [epochs.ch_names[ii] for ii in pick_type]
+        epochs_ = epochs.copy()
+        epochs_.pick_channels(picks)
 
-        # TODO warning if subjects has missing condition
-        # XXX JRK: With neuromag, should have virtual sensor in the future.
-        # For now, only apply stats to mag and grad.
-        chan_types = [chan_types[0]]
-        for chan_type in chan_types:
-            # chan_type = chan_types[0]
+        # Run stats
+        X = np.transpose(epochs_._data, [0, 2, 1])
 
-            # Take first evoked to retrieve all necessary information
-            picks = [epochs.ch_names[ii] for ii in mne.pick_types(
-                     epochs.info, meg=chan_type['name'])]
+        _, clusters, p_values, _ = stats(
+            X, out_type='mask', n_permutations=2 ** 10,
+            connectivity=chan_type['connectivity'],
+            threshold=dict(start=.1, step=2.), n_jobs=-1)
+        p_values = np.sum(clusters *
+                          tile_memory_free(p_values, clusters[0].shape),
+                          axis=0).T
+        alpha = .05
+        mask = p_values < alpha
 
-            # Stats
-            epochs_ = epochs.copy()
-            epochs_.pick_channels(picks)
+        # Plot
+        evoked = epochs_.average()
 
-            # XXX wont work for eeg
-            # Run stats
-            cluster = cluster_stat(epochs_, n_permutations=2 ** 11,
-                                   connectivity=chan_type['connectivity'],
-                                   threshold=dict(start=1., step=1.),
-                                   n_jobs=-1)
+        # Plot butterfly
+        # FIXME should concatenate p value across chan types first
+        from matplotlib.path import Path
+        from matplotlib.patches import PathPatch
+        fig1, ax = plt.subplots(1)
+        evoked.plot(axes=ax, show=False)
+        sig_times = np.array(np.sum(mask, axis=0) > 0., dtype=int)
+        ylim = ax.get_ylim()
+        xx = np.hstack((evoked.times[0], evoked.times * 1000))
+        yy = [ylim[ii] for ii in sig_times] + [ylim[0]]
+        path = Path(np.array([xx, yy]).transpose())
+        patch = PathPatch(path, facecolor='none', edgecolor='none')
+        ax.add_patch(patch)
+        im = ax.imshow(xx.reshape(np.size(yy), 1), cmap=plt.cm.gray,
+                       origin='lower', alpha=.2,
+                       extent=[np.min(xx), np.max(xx), ylim[0], ylim[1]],
+                       aspect='auto', clip_path=patch, clip_on=True,
+                       zorder=-1)
 
-            # Plots
-            i_clus = np.where(cluster.p_values_ < .01)
-            fig = cluster.plot(i_clus=i_clus, show=False)
-            report.add_figs_to_section(fig, '{}: {}: Clusters time'.format(
-                data_type, analysis['name']),
-                data_type + analysis['name'])
+        # Plot image
+        fig2, ax = plt.subplots(1)
+        evoked.plot_image(axes=ax, show=False)
+        x, y = np.meshgrid(evoked.times * 1000,
+                           np.arange(len(evoked.ch_names)),
+                           copy=False, indexing='xy')
+        ax.contour(x, y, p_values < alpha, colors='black', levels=[0])
 
-            # plot T vales
-            fig = cluster.plot_topomap(sensors=False, contours=False,
-                                       show=False)
+        # Plot topo
+        sel_times = np.linspace(min(evoked.times), max(evoked.times), 20)
+        fig3 = evoked.plot_topomap(mask=mask, scale=1., sensors=False,
+                                   contours=False, times=sel_times,
+                                   colorbar=True, show=False)
+        share_clim(fig3.get_axes())
 
-            # Plot contrasted ERF + select sig sensors
-            evoked = epochs.average()
-            evoked.pick_channels(picks)
+        # fig_list = []
+        # for time in evoked.times:
+        #     fig_list.append(evoked.plot_topomap(
+        #         mask=mask, scale=1., sensors=False, contours=False,
+        #         times=time, colorbar=True, show=False))
+        # share_clim([ax_ for fig in fig_list for ax_ in fig.get_axes()])
+        # report.add_slider_to_section(fig_list, evoked.times)
 
-            # Create mask of significant clusters
-            mask, _, _ = cluster._get_mask(i_clus)
-            # Define color limits
-            mM = np.percentile(np.abs(evoked.data), 99)
-            # XXX JRK: pass plotting function to config
-            times = np.linspace(min(evoked.times), max(evoked.times), 20)
-            fig = evoked.plot_topomap(mask=mask.T, scale=1., sensors=False,
-                                      contours=False,
-                                      times=times,
-                                      vmin=-mM, vmax=mM, colorbar=True)
+        # Add to report
+        for fig, fig_name in zip([fig1, fig2, fig3],
+                                 ('butterfly', 'image', 'topo')):
+            report.add_figs_to_section(
+                fig, ('%s (%s) %s: CONDITIONS (%s)' % (
+                    subject, data_type, analysis['name'], fig_name)),
+                analysis['name'])
 
-            report.add_figs_to_section(fig, '{}: {}: topos'.format(
-                data_type, analysis['name']),
-                data_type + analysis['name'])
-
-            report.add_figs_to_section(fig, '{}: {}: Clusters'.format(
-                data_type, analysis['name']),
-                data_type + analysis['name'])
-
-            # Save contrast
-            # TODO CHANGE SAVING TO SAVE MULTIPLE CHAN TYPES
-
-            pkl_fname = paths('evoked', subject='fsaverage',
-                              data_type=data_type,
-                              analysis=('stats_' + analysis['name']),
-                              log=True)
-            with open(pkl_fname, 'wb') as f:
-                pickle.dump([cluster, evokeds, analysis], f)
+    p_values_chans.append(p_values)
+    # Save contrast
+    pkl_fname = paths('evoked', subject='fsaverage',
+                      data_type=data_type,
+                      analysis=('stats_' + analysis['name']),
+                      log=True)
+    with open(pkl_fname, 'wb') as f:
+        pickle.dump([p_values_chans, evoked, analysis], f)
 
 report.save(open_browser=open_browser)
+upload_report(report)

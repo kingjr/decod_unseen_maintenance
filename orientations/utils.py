@@ -6,11 +6,27 @@ from sklearn.svm import LinearSVR, SVC
 from sklearn.linear_model import LogisticRegression
 
 
+def fix_wrong_channel_names(inst):
+    from mne.epochs import EpochsArray
+    from mne.evoked import Evoked
+    inst.info['chs'] = inst.info['chs'][:306]
+    inst.info['ch_names'] = inst.info['ch_names'][:306]
+    inst.info['nchan'] = 306
+    if isinstance(inst, Evoked):
+        inst.data = inst.data[:306, :]
+    elif isinstance(inst, EpochsArray):
+        inst._data = inst._data[:, :306, :]
+    else:
+        raise ValueError('Unknown instance')
+    return inst
+
+
 def load_epochs_events(subject, paths=None, data_type='erf',
                        lock='target'):
     # Get MEG data
     meg_fname = paths('epoch', subject=subject, data_type=data_type, lock=lock)
     epochs = load_FieldTrip_data(meg_fname)
+    epochs = fix_wrong_channel_names(epochs)
     # Get behavioral data
     bhv_fname = paths('behavior', subject=subject)
     events = get_events(bhv_fname)

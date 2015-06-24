@@ -1,3 +1,8 @@
+import sys
+sys.path.insert(0, './')
+import matplotlib
+matplotlib.use('Agg')
+
 import numpy as np
 import pickle
 from mne.decoding import GeneralizationAcrossTime
@@ -5,9 +10,9 @@ from mne.decoding import GeneralizationAcrossTime
 from meeg_preprocessing.utils import setup_provenance
 
 from orientations.utils import load_epochs_events
-from base import resample_epochs, decim, find_in_df
+from base import resample_epochs, decim
 
-from config import (
+from scripts.config import (
     open_browser,
     paths,
     subjects,
@@ -15,6 +20,8 @@ from config import (
     preproc,
     analyses
 )
+
+from scripts.transfer_data import upload_report
 
 report, run_id, _, logger = setup_provenance(
     script=__file__, results_dir=paths('report'))
@@ -36,14 +43,18 @@ for s, subject in enumerate(subjects):  # Loop across each subject
 
         # Apply to each analysis
         for analysis in analyses:
-            sel = find_in_df(events, analysis['include'], analysis['exclude'])
+            query, condition = analysis['query'], analysis['condition']
+            sel = range(len(events)) if query is None \
+                else events.query(query).index
+            sel = [ii for ii in sel if ~np.isnan(events[condition][sel][ii])]
+            y = np.array(events[condition], dtype=np.float32)
+
+            print analysis['name'], np.unique(y[sel]), len(sel)
 
             if len(sel) == 0:
                 logger.warning('%s: no epoch in %s for %s.' % (
-                    subject, data_type['name'], analysis['name']))
+                    subject, data_type, analysis['name']))
                 continue
-
-            y = np.array(events[analysis['key']].tolist())
 
             # Apply analysis
             gat = GeneralizationAcrossTime(clf=analysis['clf'],
@@ -53,26 +64,25 @@ for s, subject in enumerate(subjects):  # Loop across each subject
             gat.fit(epochs[sel], y=y[sel])
             gat.score(epochs[sel], y=y[sel])
 
-            # Plot
-            fig = gat.plot_diagonal(show=False)
-            report.add_figs_to_section(
-                fig, ('%s %s %s: (diagonal)' % (
-                    subject, data_type['name'],  analysis['name'])), subject)
-
-            fig = gat.plot(vmin=np.min(gat.scores_),
-                           vmax=np.max(gat.scores_), show=False)
-            report.add_figs_to_section(
-                fig, ('%s %s %s: GAT' % (
-                    subject, data_type['name'], analysis['name'])),
-                subject)
-
             # Save analysis
             pkl_fname = paths('decod', subject=subject, data_type=data_type,
-                              analysis=analysis['name'])
+                              analysis=analysis['name'], log=True)
 
             # Save classifier results
             with open(pkl_fname, 'wb') as f:
                 pickle.dump([gat, analysis, sel, events], f)
 
+            # Plot
+            fig = gat.plot_diagonal(show=False)
+            report.add_figs_to_section(fig, ('%s %s %s: (diagonal)' %
+                                       (subject, data_type, analysis['name'])),
+                                       analysis['name'])
+
+            fig = gat.plot(vmin=np.min(gat.scores_),
+                           vmax=np.max(gat.scores_), show=False)
+            report.add_figs_to_section(fig, ('%s %s %s: GAT' % (
+                                       subject, data_type, analysis['name'])),
+                                       analysis['name'])
 
 report.save(open_browser=open_browser)
+upload_report(report)

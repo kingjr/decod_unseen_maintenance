@@ -1,3 +1,8 @@
+import sys
+sys.path.insert(0, './')
+import matplotlib
+matplotlib.use('Agg')
+
 import pickle
 import numpy as np
 import matplotlib.pyplot as plt
@@ -18,6 +23,8 @@ from scripts.config import (
     open_browser,
 )
 
+from scripts.transfer_data import upload_report
+
 report, run_id, _, logger = setup_provenance(
     script=__file__, results_dir=paths('report'))
 
@@ -26,8 +33,8 @@ mne.set_log_level('INFO')
 for subject, data_type in product(subjects, data_types):
     print('load %s %s' % (subject, data_type))
 
-    epochs, events = load_epochs_events(subject, paths,
-                                        data_type=data_type)
+    epochs, events = load_epochs_events(subject, paths, data_type=data_type)
+
     # Apply each analysis
     for analysis in analyses:
         print(analysis['name'])
@@ -43,9 +50,9 @@ for subject, data_type in product(subjects, data_types):
 
         # Save all_evokeds
         fname = paths('evoked', subject=subject, data_type=data_type,
-                      analysis=analysis['name'])
+                      analysis=analysis['name'], log=True)
         with open(fname, 'wb') as f:
-            pickle.dump([evoked, sub, evoked, analysis, events], f)
+            pickle.dump([evoked, sub, analysis], f)
 
         # Prepare plot delta (subtraction, or regression)
         fig1, ax1 = plt.subplots(1, len(chan_types))
@@ -65,7 +72,7 @@ for subject, data_type in product(subjects, data_types):
             evoked.data = X - X_mean
             evoked.plot_image(axes=ax2[:, e], show=False,
                               titles=dict(grad='grad (%.2f)' % y,
-                                          mag='mag (%.2ss)' % y))
+                                          mag='mag (%.2s)' % y))
         for chan_type in range(len(meg_to_gradmag(chan_types))):
             share_clim(ax2[chan_type, :])
 
@@ -74,3 +81,4 @@ for subject, data_type in product(subjects, data_types):
 
 
 report.save(open_browser=open_browser)
+upload_report(report)
