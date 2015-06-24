@@ -43,6 +43,7 @@ for s, subject in enumerate(subjects):  # Loop across each subject
 
         # Apply to each analysis
         for analysis in analyses:
+            logger.info('%s: %s: %s' % (subject, data_type, analysis['name']))
             query, condition = analysis['query'], analysis['condition']
             sel = range(len(events)) if query is None \
                 else events.query(query).index
@@ -83,6 +84,6 @@ for s, subject in enumerate(subjects):  # Loop across each subject
             report.add_figs_to_section(fig, ('%s %s %s: GAT' % (
                                        subject, data_type, analysis['name'])),
                                        analysis['name'])
-
+logger.info('All good :)')
 report.save(open_browser=open_browser)
 upload_report(report)

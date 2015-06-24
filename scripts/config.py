@@ -104,5 +104,5 @@ overwrite = args.overwrite == 'True'
 subjects = [subjects[0]]
 data_types = [data_types[0]]
 analyses = [ana for ana in analyses if ana['name'] == 'target_present']
-preproc = dict(decim=4, crop=dict(tmin=-.1, tmax=.300))
+# preproc = dict(decim=4, crop=dict(tmin=-.1, tmax=.300))
 # preproc = dict(decim=2, crop=dict(tmin=-.1, tmax=1.100))
