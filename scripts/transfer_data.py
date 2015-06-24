@@ -41,7 +41,7 @@ def upload_all(overwrite=False):
 def upload_report(report):
     import os
     import os.path as op
-    base_path = op.abspath(__file__).split('scripts/')[0].split('/')[-1]
+    base_path = op.abspath(__file__).split('scripts/')[0].split('/')[-2]
     for root, dirnames, filenames in os.walk(report.data_path):
         for filename in filenames:
             fname_client = op.join(root, filename)
