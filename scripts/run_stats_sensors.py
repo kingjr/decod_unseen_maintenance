@@ -26,7 +26,7 @@ from scripts.config import (
     open_browser
 )
 
-from script.transfer_data import upload_report
+from scripts.transfer_data import upload_report
 
 # XXX uncomment
 report, run_id, _, logger = setup_provenance(
@@ -121,6 +121,14 @@ for data_type, analysis in product(data_types, analyses):
                                    contours=False, times=sel_times,
                                    colorbar=True, show=False)
         share_clim(fig3.get_axes())
+
+        # fig_list = []
+        # for time in evoked.times:
+        #     fig_list.append(evoked.plot_topomap(
+        #         mask=mask, scale=1., sensors=False, contours=False,
+        #         times=time, colorbar=True, show=False))
+        # share_clim([ax_ for fig in fig_list for ax_ in fig.get_axes()])
+        # report.add_slider_to_section(fig_list, evoked.times, image_format='svg')
 
         # Add to report
         for fig, fig_name in zip([fig1, fig2, fig3],
