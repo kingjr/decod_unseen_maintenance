@@ -11,7 +11,7 @@ echo $TIME_ID: $SCRIPT '<' $SUBJECTS
 
 # # SETUP NODES
 # NODES="2/:" # Run Locally
-NODES="2/10.0.0.17" # Run on 1 slave
+NODES="2/10.0.0.8" # Run on 1 slave
 # Configure to run on all nodes except this
 THISIP=$(ifconfig | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*' | grep -v '127.0.0.1')
 HEADNODE=$(hostname)
@@ -22,7 +22,7 @@ echo '' > running.slf
 # bash cloud/update_nodes.sh
 
 SSHLOGINS=$(echo --sshlogin $NODES)
-echo "Running setup_remote.sh on all nodes"
+echo "Running cloud/setup.sh on all nodes"
 for node in ${NODES//,/ }; do
 	echo "Running on ${node}"
 	parallel --ungroup --tag -S $node --transfer --cleanup "bash {1}" ::: "cloud/setup.sh"
