@@ -2,6 +2,7 @@ import sys
 sys.path.insert(0, './')
 import matplotlib
 matplotlib.use('Agg')
+import numpy as np
 
 import os
 import os.path as op
@@ -92,7 +93,7 @@ args = parser.parse_args()
 time_id = args.time_id
 subjects = [args.subject] if args.subject is not None else subjects
 if isinstance(args.analysis, str):
-    idx = [d['name'] == args.analysis for d in analyses]
+    idx = np.where([d['name'] == args.analysis for d in analyses])[0]
     analyses = [analyses[idx]]
 pyscript = args.pyscript
 
