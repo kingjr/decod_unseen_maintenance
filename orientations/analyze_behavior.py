@@ -83,6 +83,28 @@ def make_3d_plot(ax, xs, y, zs, colors):
     return pretty_ax(ax)
 
 
+
+def fill_between_gradient(xx, yy, clim=None, cmap='RdBu_r', alpha=1., ax=None,
+                          zorder=-1):
+    """/!\ should not change ylim as it vary the color"""
+    from matplotlib.path import Path
+    from matplotlib.patches import PathPatch
+    if ax is None:
+        fig, ax = plt.subplots(1)
+        xlim, ylim = (np.min(xx), np.max(xx)), (np.min(yy), np.max(yy))
+    else:
+        xlim, ylim = ax.get_xlim(), ax.get_ylim()
+    if clim is None:
+        clim = [0, 1]
+    path = Path(np.array([xx, yy]).transpose())
+    patch = PathPatch(path, facecolor='none', edgecolor='none')
+    ax.add_patch(patch)
+    ax.imshow(xx.reshape(np.size(yy), 1), vmin=clim[0], vmax=clim[1],
+              origin='lower', cmap=cmap,
+              alpha=alpha, aspect='auto', clip_path=patch, clip_on=True,
+              extent=xlim + ylim, zorder=zorder)
+    return ax
+
 # #############################################################################
 # 1. report of visibility as a function of contrast
 x = np.zeros((len(subjects), len(contrasts), len(visibilities)))
@@ -177,3 +199,37 @@ for metric, ylim, in zip(['Accuracy', 'D prime'], ((.5, 1.), (0., 3.))):
 plt.show()
 # XXX /!\ Dprime is sig for unseen but this is only if nan are counted as 0,
 # and not removed.
+
+# #############################################################################
+# Effect of previous trial on current visibility
+x = np.zeros((len(subjects), len(contrasts), len(visibilities), 2))
+for (s, subject), (c, contrast), (v, visibility) in product(
+        enumerate(subjects), enumerate(contrasts), enumerate(visibilities)):
+    query = 'subject=="%s" and target_contrast==%s and detect_button==%s' % (
+        subject, contrast, visibility)
+    x[s, c, v, 0] = len(data.query(query + ' and previous_detect_seen==False'))
+    x[s, c, v, 1] = len(data.query(query + ' and previous_detect_seen==True'))
+# normalize per subject per contrast
+for (s, subject), (c, contrast) in product(
+        enumerate(subjects), enumerate(contrasts)):
+    x[s, c, :, 0] /= np.sum(x[s, c, :, 0])
+    x[s, c, :, 1] /= np.sum(x[s, c, :, 1])
+
+
+fig, ax = plt.subplots(1, figsize=[4, 3])
+contrast = np.squeeze(np.mean(x[:, :, :, 1] - x[:, :, :, 0], axis=1))
+ax.set_ylim([-.15, .15])
+plot_sem(np.linspace(0, 1, 4), contrast, color='k', ax=ax)
+fill_between_gradient(np.hstack((0, np.linspace(0, 1, 4), 1)),
+                      np.hstack((0, contrast.mean(0), 0)),
+                      ax=ax, cmap='seismic', clim=[-.5, 1.5])
+ax = pretty_ax(ax)
+ax.set_xticks([0, 1])
+ylim = ax.get_ylim()
+ax.axhline(0., linestyle='--', color='k')
+ax.set_yticks(ylim[0], ylim[1])
+ax.set_xlabel('Visibilities')
+ax.set_xlabel('Previsously Seen - Previously Unseen')
+
+# #############################################################################
+# Effect of previous trial on current orientation XXX for later
