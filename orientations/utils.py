@@ -119,14 +119,14 @@ def get_events(bhv_fname):
     return events
 
 
-class clf_2class_proba(LogisticRegression):  # XXX not used?
+class clf_2class_proba(LogisticRegression):
     """Probabilistic SVC for 2 classes only"""
     def predict(self, x):
         probas = super(clf_2class_proba, self).predict_proba(x)
         return probas[:, 1]
 
 
-class SVC_2class_proba(SVC):
+class SVC_2class_proba(SVC):  # XXX not used
     """Probabilistic SVC for 2 classes only"""
     def predict(self, x):
         probas = super(clf_2class_proba, self).predict_proba(x)
