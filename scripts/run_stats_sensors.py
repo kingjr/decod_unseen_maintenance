@@ -76,9 +76,9 @@ for data_type, analysis in product(data_types, analyses):
         X = np.transpose(epochs_._data, [0, 2, 1])
 
         _, clusters, p_values, _ = stats(
-            X, out_type='mask', n_permutations=2 ** 10,
+            X, out_type='mask', n_permutations=2 ** 11,
             connectivity=chan_type['connectivity'],
-            threshold=dict(start=.1, step=2.), n_jobs=-1)
+            threshold=dict(start=0, step=.1), n_jobs=1)
         p_values = np.sum(clusters *
                           tile_memory_free(p_values, clusters[0].shape),
                           axis=0).T

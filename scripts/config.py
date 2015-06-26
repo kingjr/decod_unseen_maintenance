@@ -3,7 +3,8 @@ sys.path.insert(0, './')
 import matplotlib
 matplotlib.use('Agg')
 import numpy as np
-
+# from time import gmtime, strftime
+# launch_time = strftime("_%Y-%m-%d_%H-%M-%S_", gmtime())
 import os
 import os.path as op
 
@@ -26,7 +27,6 @@ def paths(typ, subject='fsaverage', data_type='erf', lock='target',
         data_path=data_path,
         report=op.join(base_path, 'results'),
         log=op.join(base_path, pyscript.strip('.py') + '.log'),
-
         behavior=op.join(this_path, '%s_fixed.mat' % subject),
         epoch=op.join(this_path, '%s_%s_%s.mat' % (subject, lock, data_type)),
         evoked=op.join(this_path, '%s_%s_%s_%s.pickle' % (
