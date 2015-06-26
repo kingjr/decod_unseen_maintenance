@@ -71,7 +71,7 @@ def nested_analysis(X, df, condition, function=None, query=None,
         X_list = list()  # FIXME use numpy array
         for subcondition in condition:
             X, sub = nested_analysis(
-                X, df, subcondition, n_jobs=n_jobs,
+                X, df, subcondition['condition'], n_jobs=n_jobs,
                 function=subcondition.get('function', None),
                 query=subcondition.get('query', None))
             X_list.append(X)
