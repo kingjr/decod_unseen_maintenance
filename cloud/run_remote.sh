@@ -23,6 +23,6 @@ echo "Uploading data"
 python -c "from scripts.transfer_data import upload_all; upload_all();" --pyscript=$SCRIPT ${PARAMS[@]}
 
 echo "Cleaning up"
-rm -r data/
+rm -f -r data/
 
 echo 'All good!'
