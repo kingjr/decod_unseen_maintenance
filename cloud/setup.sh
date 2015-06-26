@@ -10,6 +10,7 @@ git pull https://github.com/dengemann/meeg-preprocessing
 cd ~/gat
 git pull https://github.com/kingjr/gat
 cd ~/Paris_orientation-decoding
+git reset --hard
 git pull https://github.com/kingjr/Paris_orientation-decoding
 rm -f *.log
 rm -f *.slf
