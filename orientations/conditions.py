@@ -67,6 +67,7 @@ for analysis in analyses:
         subscores.append(analysis_)
         # Unseen
         analysis_ = copy.deepcopy(analysis)
+        analysis_['name'] += '-unseen'
         analysis_['query'] = query + 'detect_seen == False'
         subscores.append(analysis_)
 
