@@ -33,7 +33,7 @@ def paths(typ, subject='fsaverage', data_type='erf', lock='target',
             subject, lock, data_type, analysis)),
         decod=op.join(this_path, '%s_%s_%s_%s.pickle' % (
             subject, lock, data_type, analysis)),
-        generalize=op.join(this_path, '%s_%s_%s_%s.pickle' % (
+        score=op.join(this_path, '%s_%s_%s_%s_scores.pickle' % (
             subject, lock, data_type, analysis)))
     file = path_template[typ]
 
@@ -67,7 +67,7 @@ chan_types = [dict(name='meg')]
 preproc = dict()
 
 # ###################### Define contrasts #####################
-from orientations.conditions import analyses
+from orientations.conditions import analyses, subscores
 
 # #############################################################################
 # univariate analyses definition: transform the input used for the decoding to

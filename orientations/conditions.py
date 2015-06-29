@@ -55,7 +55,7 @@ analyses = (
 
 subscores = []
 for analysis in analyses:
-    analysis['contrast'] = analysis['name']
+    analysis['train_analysis'] = analysis['name']
     subscores.append(analysis)
     # subdivide by visibility
     query = '(%s) and ' % analysis['query'] if analysis['query'] else ''
