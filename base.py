@@ -232,6 +232,34 @@ def test_pairwise():
 # PLOT ########################################################################
 
 
+def plot_widths(xs, ys, widths, ax=None, color='b', xlim=None, ylim=None,
+                **kwargs):
+    if not (len(xs) == len(ys) == len(widths)):
+        raise ValueError('xs, ys, and widths must have identical lengths')
+    fig = None
+    if ax is None:
+        fig, ax = plt.subplots(1)
+
+    segmentx, segmenty = [xs[0]], [ys[0]]
+    current_width = widths[0]
+    for ii, (x, y, width) in enumerate(zip(xs, ys, widths)):
+        segmentx.append(x)
+        segmenty.append(y)
+        if (width != current_width) or (ii == (len(xs) - 1)):
+            ax.plot(segmentx, segmenty, linewidth=current_width, color=color,
+                    **kwargs)
+            segmentx, segmenty = [x], [y]
+            current_width = width
+    if xlim is None:
+        xlim = [min(xs), max(xs)]
+    if ylim is None:
+        ylim = [min(ys), max(ys)]
+    ax.set_xlim(xlim)
+    ax.set_ylim(ylim)
+
+    return ax if fig is None else fig
+
+
 def plot_sem(x, y, **kwargs):
     """
     Parameters
