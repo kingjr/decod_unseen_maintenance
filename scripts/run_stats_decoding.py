@@ -27,37 +27,46 @@ from scripts.config import (
 report, run_id, _, logger = setup_provenance(
     script='scripts/run_stats_decoding.py', results_dir=paths('report'))
 
+# FIXME
+# analyses = [ana for ana in analyses[2:] if ana['name'] not in 'target_circAngle']
+
 # Apply contrast to ERFs or frequency power
 for data_type, analysis in product(data_types, analyses):
+    print analysis['name']
     # DATA
     scores = list()
     y_pred = list()
     for subject in subjects:
+        print subject
         # define path to file to be loaded
         score_fname = paths('score', subject=subject, data_type=data_type,
                             analysis=analysis['name'])
-        if not op.exists(score_fname):
+        overwrite = False
+        if overwrite or not op.exists(score_fname):
             # load
             gat_fname = paths('decod', subject=subject, data_type=data_type,
                               analysis=analysis['train_analysis'])
-            # FIXME
+            # FIXME PATH
             gat_fname = '/media/jrking/My Passport/Niccolo/' + gat_fname
             with open(gat_fname, 'rb') as f:
                 gat, _, sel, events = pickle.load(f)
 
-            # subsel
-            query, condition = analysis['query'], analysis['condition']
-            sel = range(len(events)) if query is None \
-                else events.query(query).index
-            sel = [ii for ii in sel if ~np.isnan(events[condition][sel][ii])]
-            y = np.array(events[condition], dtype=np.float32)
+            if analysis['train_analysis'] != analysis['name']:
+                subevents = events.iloc[sel]
+                query, condition = analysis['query'], analysis['condition']
+                subsel = range(len(subevents)) if query is None \
+                    else subevents.query(query).index
+                subsel = [ii for ii in subsel
+                          if ~np.isnan(np.array(subevents[condition])[ii])]
+                y = np.array(events[condition], dtype=np.float32)
+                # subscore
+                if len(np.unique(y[subsel])) > 1:
+                    gat.scores_ = subscore(gat, subsel, y[subsel])
+                else:
+                    gat.scores_ = np.nan * np.array(gat.scores_)
 
-            # subscore
-            if len(np.unique(y[sel])) > 1:
-                gat.scores_ = subscore(gat, sel, y[sel])
-            else:
-                gat.scores_ = np.nan * np.array(gat.scores_)
-            gat.y_pred_ = mean_ypred(gat, classes=np.unique(y))
+            # only keep mean prediction
+            gat.y_pred_ = mean_ypred(gat, classes=np.unique(gat.y_train_))
 
             # optimize memory
             gat.estimators_ = list()
@@ -85,16 +94,21 @@ for data_type, analysis in product(data_types, analyses):
             out_type='mask',
             stat_fun=stat_fun,
             n_permutations=128,
-            threshold=dict(start=2, step=2.),
-            n_jobs=1)
+            threshold=dict(start=.1, step=.1),
+            n_jobs=2)
 
         # ------ combine clusters & retrieve min p_values for each feature
         return p_values.reshape(X.shape[1:])
 
+    scores = [score for score in scores if not np.isnan(score[0][0])]
     chance = analysis['chance']
+    # FIXME should be in scorer
+    if (chance - np.pi / 2) < 1e4:
+        scores = np.pi / 2 - np.array(scores)
+        chance = 0.
     alpha = 0.05
     times = gat.train_times_['times'] * 1000
-
+    # STATS
     p_values = stats(np.array(scores) - chance)
     diag_offdiag = scores - np.tile([np.diag(score) for score in scores],
                                     [len(times), 1, 1]).transpose(1, 0, 2)
@@ -102,15 +116,16 @@ for data_type, analysis in product(data_types, analyses):
 
     # PLOT
     sem = np.std(scores, axis=0) / np.sqrt(len(scores))
-    ymin = round(np.min(np.mean(scores, axis=0) - sem) * 5) / 5
-    ymax = round(np.max(np.mean(scores, axis=0) + sem) * 5) / 5
-
+    ymin, ymax = chance + np.array([-1, 1]) * np.round(np.max(np.abs(
+        np.diag(np.mean(scores, axis=0)) - chance) + sem) * 100) / 100
     widths = 3. * (p_values < .05)
 
     def pretty_plot(ax):
         ax.tick_params(colors='dimgray')
         ax.xaxis.label.set_color('dimgray')
         ax.yaxis.label.set_color('dimgray')
+        ax.xaxis.set_ticks_position('bottom')
+        ax.yaxis.set_ticks_position('left')
         ax.spines['left'].set_color('dimgray')
         ax.spines['bottom'].set_color('dimgray')
         ax.spines['right'].set_visible(False)
@@ -126,10 +141,15 @@ for data_type, analysis in product(data_types, analyses):
     ax_gat.set_xlabel('Test times (ms.)')
     ax_gat.set_ylabel('Train times (ms.)')
     cb = plt.colorbar(im, ax=ax_gat, ticks=[ymin, chance, ymax])
-    cb.ax.set_yticklabels(['%.2f' % ymin, 'Chance', '%.2f' % ymax])
-    pretty_plot(ax_gat)
+    cb.ax.set_yticklabels(['%.2f' % ymin, 'Chance', '%.2f' % ymax],
+                          color='dimgray')
+    cb.ax.xaxis.label.set_color('dimgray')
+    cb.ax.yaxis.label.set_color('dimgray')
+    cb.ax.spines['left'].set_color('dimgray')
+    cb.ax.spines['right'].set_color('dimgray')
     xx, yy = np.meshgrid(times, times, copy=False, indexing='xy')
-    ax_gat.contour(xx, yy, p_values < alpha, colors='black', levels=[0])
+    ax_gat.contour(xx, yy, p_values < alpha, colors='black', levels=[0],
+                   linestyle='--')
 
     # ------ Plot Decoding
     fig_diag, ax_diag = plt.subplots(1, figsize=[5, 2.5])
@@ -168,18 +188,12 @@ for data_type, analysis in product(data_types, analyses):
 
         ax.set_xlim(np.min(times), np.max(times))
         ax.set_ylim(ymin, ymax)
+        ax.set_yticks([ymin, ymax])
+        pretty_plot(ax)
         if ax != axs[-1]:
             ax.set_xticks([])
             ax.set_xlabel('')
             ax.spines['bottom'].set_visible(False)
-
-        ax.tick_params(colors='dimgray')
-        ax.xaxis.label.set_color('dimgray')
-        ax.yaxis.label.set_color('dimgray')
-        ax.spines['left'].set_color('dimgray')
-        ax.spines['bottom'].set_color('dimgray')
-        ax.spines['right'].set_visible(False)
-        ax.spines['top'].set_visible(False)
 
     #  ------ Plot mean prediction # XXX
 
