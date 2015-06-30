@@ -404,7 +404,7 @@ def scorer_angle(truth, prediction):
     angle_error = truth - prediction[:, 0]
     pi = np.pi
     score = np.mean(np.abs((angle_error + pi) % (2 * pi) - pi))
-    return score
+    return np.pi / 2 - score
 
 
 def scorer_auc(y_true, y_pred):
