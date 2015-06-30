@@ -57,28 +57,51 @@ subscores = []
 for analysis in analyses:
     analysis['train_analysis'] = analysis['name']
     subscores.append(analysis)
-    # subdivide by visibility
     query = '(%s) and ' % analysis['query'] if analysis['query'] else ''
-    if analysis['name'] not in ['m_visibilities', 'm_seen']:
-        # Seen
-        analysis_ = copy.deepcopy(analysis)
-        analysis_['name'] += '-seen'
-        analysis_['query'] = query + 'detect_seen == True'
-        subscores.append(analysis_)
+    # Subdivide by visibility
+    if analysis['name'] not in ['detect_button', 'detect_button_pst',
+                                'detect_seen', 'detect_seen_pst']:
         # Unseen
         analysis_ = copy.deepcopy(analysis)
         analysis_['name'] += '-unseen'
         analysis_['query'] = query + 'detect_seen == False'
         subscores.append(analysis_)
-
+        # Seen
+        analysis_ = copy.deepcopy(analysis)
+        analysis_['name'] += '-seen'
+        analysis_['query'] = query + 'detect_seen == True'
+        subscores.append(analysis_)
+        # Seen1
+        analysis_ = copy.deepcopy(analysis)
+        analysis_['name'] += '-pas1'
+        analysis_['query'] = query + 'detect_button == 1.'
+        subscores.append(analysis_)
+        # Seen2
+        analysis_ = copy.deepcopy(analysis)
+        analysis_['name'] += '-pas2'
+        analysis_['query'] = query + 'detect_button == 2.'
+        subscores.append(analysis_)
+        # Seen3
+        analysis_ = copy.deepcopy(analysis)
+        analysis_['name'] += '-pas3'
+        analysis_['query'] = query + 'detect_button == 3.'
+        subscores.append(analysis_)
+    # Subdivide by accuracy
+    if analysis['name'] not in ['discrim_correct']:
+        # Correct
+        analysis_ = copy.deepcopy(analysis)
+        analysis_['name'] += '-correct'
+        analysis_['query'] = query + 'discrim_correct == True'
+        subscores.append(analysis_)
+        # Incorrect
+        analysis_ = copy.deepcopy(analysis)
+        analysis_['name'] += '-incorrect'
+        analysis_['query'] = query + 'discrim_correct == False'
+        subscores.append(analysis_)
 
 # ############# Define second-order subscores #################################
 subscores2 = []
 
 for analysis in analyses:
-    if analysis['name'] not in ['m_visibilities', 'm_seen']:
-        analysis_ = copy.deepcopy(analysis)
-        analysis_['contrast1'] = analysis_['name'] + '-seen'
-        analysis_['contrast2'] = analysis_['name'] + '-unseen'
-        analysis_['chance'] = 0
-        subscores2.append(analysis)
+    # XXX
+    pass
