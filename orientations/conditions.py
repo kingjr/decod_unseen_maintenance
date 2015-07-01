@@ -1,5 +1,6 @@
 # Decoding parameters
-import copy
+import numpy as np
+from itertools import product
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import Pipeline
 from sklearn.svm import LinearSVR
@@ -23,7 +24,7 @@ def analysis(name, typ, condition=None, query=None):
     elif typ == 'circ_regress':
         clf = SVR_angle()
         scorer = scorer_angle
-        chance = 1. / 6.
+        chance = np.pi / 2
         single_trial = True
         erf_function = scorer_circLinear
     if condition is None:
@@ -53,55 +54,22 @@ analyses = (
 
 # ###################### Define subscores #####################################
 
-subscores = []
-for analysis in analyses:
-    analysis['train_analysis'] = analysis['name']
-    subscores.append(analysis)
-    query = '(%s) and ' % analysis['query'] if analysis['query'] else ''
-    # Subdivide by visibility
-    if analysis['name'] not in ['detect_button', 'detect_button_pst',
-                                'detect_seen', 'detect_seen_pst']:
-        # Unseen
-        analysis_ = copy.deepcopy(analysis)
-        analysis_['name'] += '-unseen'
-        analysis_['query'] = query + 'detect_seen == False'
-        subscores.append(analysis_)
-        # Seen
-        analysis_ = copy.deepcopy(analysis)
-        analysis_['name'] += '-seen'
-        analysis_['query'] = query + 'detect_seen == True'
-        subscores.append(analysis_)
-        # Seen1
-        analysis_ = copy.deepcopy(analysis)
-        analysis_['name'] += '-pas1'
-        analysis_['query'] = query + 'detect_button == 1.'
-        subscores.append(analysis_)
-        # Seen2
-        analysis_ = copy.deepcopy(analysis)
-        analysis_['name'] += '-pas2'
-        analysis_['query'] = query + 'detect_button == 2.'
-        subscores.append(analysis_)
-        # Seen3
-        analysis_ = copy.deepcopy(analysis)
-        analysis_['name'] += '-pas3'
-        analysis_['query'] = query + 'detect_button == 3.'
-        subscores.append(analysis_)
-    # Subdivide by accuracy
-    if analysis['name'] not in ['discrim_correct']:
-        # Correct
-        analysis_ = copy.deepcopy(analysis)
-        analysis_['name'] += '-correct'
-        analysis_['query'] = query + 'discrim_correct == True'
-        subscores.append(analysis_)
-        # Incorrect
-        analysis_ = copy.deepcopy(analysis)
-        analysis_['name'] += '-incorrect'
-        analysis_['query'] = query + 'discrim_correct == False'
-        subscores.append(analysis_)
+subscores = [('seen', 'detect_seen == True'),
+             ('unseen', 'detect_seen == False'),
+             ('correct', 'discrim_correct == True'),
+             ('incorrect', 'discrim_correct == False')]
+for pas in [1., 2., 3.]:
+    subscores.append(('pas%s' % pas,
+                      'detect_button == %s' % pas))
+for contrast in [0., .5, .75, 1.]:
+    subscores.append(('contrast%s' % contrast,
+                      'target_contrast == %s' % contrast)),
+for pas, contrast in product([1., 2., 3.], [0., .5, .75, 1.]):
+    subscores.append(('pas%s-contrast%s' % (pas, contrast),
+                      'detect_button == %s and target_contrast == %s' % (pas, contrast)))
 
-# ############# Define second-order subscores #################################
-subscores2 = []
-
-for analysis in analyses:
-    # XXX
-    pass
+analyses_order2 = [
+    analysis('angle_vis', 'categorize', condition=[
+        analysis('target_circAngle-seen', 'circ_regress'),
+        analysis('target_circAngle-unseen', 'circ_regress')])
+]
