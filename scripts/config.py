@@ -13,6 +13,7 @@ open_browser = False
 base_path = op.dirname(op.dirname(__file__))
 print base_path
 data_path = op.join(base_path, 'data/')
+data_path = '/media/jrking/My Passport/Niccolo/data/'
 # XXX what to do with this ad hoc paths?
 # script_path = '/home/niccolo/Dropbox/DOCUP/scripts/python/'
 # pyoutput_path = op.join(base_path, '/media', 'niccolo', 'ParisPy', 'data')
@@ -67,7 +68,7 @@ chan_types = [dict(name='meg')]
 preproc = dict()
 
 # ###################### Define contrasts #####################
-from orientations.conditions import analyses, subscores
+from orientations.conditions import analyses, subscores, analyses_order2
 
 # #############################################################################
 # univariate analyses definition: transform the input used for the decoding to
