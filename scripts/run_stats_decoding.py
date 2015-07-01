@@ -6,12 +6,10 @@ import matplotlib.pyplot as plt
 
 import pickle
 from itertools import product
-import os.path as op
 import numpy as np
 
 from mne.stats import spatio_temporal_cluster_1samp_test
 from meeg_preprocessing.utils import setup_provenance
-from gat.utils import mean_ypred, subscore
 from base import plot_sem, plot_widths
 
 from scripts.config import (
@@ -19,18 +17,14 @@ from scripts.config import (
     subjects,
     open_browser,
     data_types,
-    subscores as analyses
+    analyses
 )
-# from scripts.transfer_data import upload_report
 
 
 report, run_id, _, logger = setup_provenance(
     script='scripts/run_stats_decoding.py', results_dir=paths('report'))
 
-# FIXME
-# analyses = [ana for ana in analyses[2:] if ana['name'] not in 'target_circAngle']
 
-# Apply contrast to ERFs or frequency power
 for data_type, analysis in product(data_types, analyses):
     print analysis['name']
     # DATA
@@ -41,42 +35,9 @@ for data_type, analysis in product(data_types, analyses):
         # define path to file to be loaded
         score_fname = paths('score', subject=subject, data_type=data_type,
                             analysis=analysis['name'])
-        overwrite = False
-        if overwrite or not op.exists(score_fname):
-            # load
-            gat_fname = paths('decod', subject=subject, data_type=data_type,
-                              analysis=analysis['train_analysis'])
-            # FIXME PATH
-            gat_fname = '/media/jrking/My Passport/Niccolo/' + gat_fname
-            with open(gat_fname, 'rb') as f:
-                gat, _, sel, events = pickle.load(f)
-
-            if analysis['train_analysis'] != analysis['name']:
-                subevents = events.iloc[sel]
-                query, condition = analysis['query'], analysis['condition']
-                subsel = range(len(subevents)) if query is None \
-                    else subevents.query(query).index
-                subsel = [ii for ii in subsel
-                          if ~np.isnan(np.array(subevents[condition])[ii])]
-                y = np.array(events[condition], dtype=np.float32)
-                # subscore
-                if len(np.unique(y[subsel])) > 1:
-                    gat.scores_ = subscore(gat, subsel, y[subsel])
-                else:
-                    gat.scores_ = np.nan * np.array(gat.scores_)
-
-            # only keep mean prediction
-            gat.y_pred_ = mean_ypred(gat, classes=np.unique(gat.y_train_))
-
-            # optimize memory
-            gat.estimators_ = list()
-
-            # save
-            with open(score_fname, 'wb') as f:
-                pickle.dump([gat, analysis, sel, events], f)
-        else:
-            with open(score_fname, 'rb') as f:
-                gat, _, sel, events = pickle.load(f)
+        with open(score_fname, 'rb') as f:
+            out = pickle.load(f)
+            gat = out[0]
 
         scores.append(gat.scores_)
         y_pred.append(gat.y_pred_)
@@ -93,17 +54,17 @@ for data_type, analysis in product(data_types, analyses):
             X,
             out_type='mask',
             stat_fun=stat_fun,
-            n_permutations=128,
-            threshold=dict(start=.1, step=.1),
+            n_permutations=2**10,
+            threshold=dict(start=.1, step=.2),
             n_jobs=2)
-
-        # ------ combine clusters & retrieve min p_values for each feature
         return p_values.reshape(X.shape[1:])
 
     scores = [score for score in scores if not np.isnan(score[0][0])]
+    if len(scores) < 7:
+        continue
     chance = analysis['chance']
     # FIXME should be in scorer
-    if (chance - np.pi / 2) < 1e4:
+    if abs(chance - np.pi / 2) < 1e-4:
         scores = np.pi / 2 - np.array(scores)
         chance = 0.
     alpha = 0.05
@@ -149,7 +110,7 @@ for data_type, analysis in product(data_types, analyses):
     cb.ax.spines['right'].set_color('dimgray')
     xx, yy = np.meshgrid(times, times, copy=False, indexing='xy')
     ax_gat.contour(xx, yy, p_values < alpha, colors='black', levels=[0],
-                   linestyle='--')
+                   linestyles='dotted')
 
     # ------ Plot Decoding
     fig_diag, ax_diag = plt.subplots(1, figsize=[5, 2.5])
@@ -158,7 +119,7 @@ for data_type, analysis in product(data_types, analyses):
     plot_sem(times, scores_diag, color='k', ax=ax_diag)
     ax_diag.set_ylim(ymin, ymax)
     plot_widths(times, scores_diag.mean(0), widths_diag, ax=ax_diag, color='k')
-    ax_diag.axhline(chance, linestyle='--', color='k')
+    ax_diag.axhline(chance, linestyle='dotted', color='k')
     ax_diag.set_xlabel('Times (ms.)')
     pretty_plot(ax_diag)
 
@@ -180,7 +141,7 @@ for data_type, analysis in product(data_types, analyses):
         plot_sem(times, scores_off, color='b', ax=ax)
         plot_widths(times, scores_diag.mean(0), widths_diag, ax=ax, color='k')
         plot_widths(times, scores_off.mean(0), widths[idx], ax=ax, color='b')
-        ax.axhline(chance, linestyle='--', color='k')
+        ax.axhline(chance, linestyle='dotted', color='k')
         ax.axvline(0, color='k')
         ax.plot([sel_time] * 2, [ymin, scores_off.mean(0)[idx]], color='b')
         ax.text(sel_time, ymin, '%i ms.' % sel_time,
