@@ -398,6 +398,18 @@ def decim(inst, decim):
 
 # DECODING ####################################################################
 
+def scorer_angle_discrete(truth, prediction):
+    """WIP Scoring function dedicated to SVC_angle"""
+    n_trials, n_angles = prediction.shape
+    angles = np.linspace(0, 2 * np.pi * (1 - 1 / n_angles), n_angles)
+    x_pred = prediction * tile_memory_free(np.cos(angles), [n_trials, 1]).T
+    y_pred = prediction * tile_memory_free(np.sin(angles), [n_trials, 1]).T
+    angle_pred = np.arctan2(y_pred.mean(1), x_pred.mean(1))
+    angle_error = truth - angle_pred
+    pi = np.pi
+    score = np.mean(np.abs((angle_error + pi) % (2 * pi) - pi))
+    return pi / 2 - score
+
 
 def scorer_angle(truth, prediction):
     """Scoring function dedicated to SVR_angle"""
