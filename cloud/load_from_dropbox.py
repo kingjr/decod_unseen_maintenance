@@ -1,6 +1,6 @@
 from scripts.config import subjects, paths
 
-from aws.utils import (upload, download)
+from cloud.utils import (upload, download)
 
 import os
 import os.path as op
