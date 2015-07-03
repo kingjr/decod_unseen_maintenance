@@ -22,7 +22,7 @@ def download_all(overwrite=False):
         file_list.append(fname[:-4] + '.dat')
 
     for fname in file_list:
-        download('dropbox', fname, fname, overwrite)
+        download('s3', fname, fname, overwrite)
 
 
 def upload_all(overwrite=False):
