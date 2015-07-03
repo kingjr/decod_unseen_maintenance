@@ -47,7 +47,13 @@ def nested_analysis(X, df, condition, function=None, query=None,
         values = list()
         for ii in np.unique(y):
             if (ii is not None) and (ii not in [np.nan]):
-                values.append(ii)
+                try:
+                    if np.isnan(ii):
+                        continue
+                    else:
+                        values.append(ii)
+                except TypeError:
+                    values.append(ii)
         # Subsubselect for each unique condition
         y_sel = [np.where(y == value)[0] for value in values]
         # Mean condition:
@@ -397,6 +403,31 @@ def decim(inst, decim):
 
 
 # DECODING ####################################################################
+
+
+def scorer_angle_tuning(truth, prediction, n_bins=19):
+    """WIP XXX should be transformed into a scorer?"""
+    prediction = np.array(prediction)
+    truth = np.array(truth)
+    error = (np.pi - prediction + truth) % (2 * np.pi) - np.pi
+    bins = np.linspace(-np.pi, np.pi, n_bins + 1)
+    h, _ = np.histogram(error, bins)
+    h /= sum(h)
+    return h
+
+# def get_tuning_curve(truth, prediction, n_bin=20):
+#     """WIP XXX should be transformed into a scorer?"""
+#     from itertools import product
+#     error = (np.pi - np.squeeze(prediction) +
+#              np.transpose(tile_memory_free(truth, np.shape(prediction)[:2]),
+#                           [1, 2, 0])) % (2 * np.pi) - np.pi
+#     bins = np.linspace(-np.pi, np.pi, n_bin)
+#     nT, nt, _, _ = np.shape(prediction)
+#     h = np.zeros((nT, nt, n_bin - 1))
+#     for T, t in product(range(nT), range(nt)):
+#         h[T, t, :], _ = np.histogram(error[T, t, :], bins)
+#         h[T, t, :] /= sum(h[T, t, :])
+#     return h
 
 def scorer_angle_discrete(truth, prediction):
     """WIP Scoring function dedicated to SVC_angle"""
