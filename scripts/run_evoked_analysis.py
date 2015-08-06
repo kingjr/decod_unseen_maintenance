@@ -75,7 +75,6 @@ for subject, data_type in product(subjects, data_types):
                                           mag='mag (%.2s)' % y))
         for chan_type in range(len(meg_to_gradmag(chan_types))):
             share_clim(ax2[chan_type, :])
-
         report.add_figs_to_section(fig2, ('%s (%s) %s: CONDITIONS' % (
             subject, data_type, analysis['name'])), analysis['name'])
 
