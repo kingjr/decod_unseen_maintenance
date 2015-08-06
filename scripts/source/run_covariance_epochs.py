@@ -48,7 +48,7 @@ for subject in subjects:
 
         # Plot across subjects
         times, gfp = fig_white.get_children()[2].get_children()[2].get_data()
-        ax_all[c].plot(times, gfp, show=False)
+        ax_all[c].plot(times, gfp)
 
         report.add_figs_to_section(
             [fig_cov, fig_svd, fig_white],
