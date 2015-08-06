@@ -3,7 +3,6 @@ sys.path.insert(0, './')
 
 import copy
 import pickle
-import os.path as op
 from itertools import product
 import numpy as np
 
@@ -29,6 +28,11 @@ for data_type, analysis, subject in product(data_types, analyses, subjects):
 
     # optimize memory
     gat.estimators_ = list()
+
+    # FIXME needs to be removed after next AWS round---------------------------
+    if 'Angle' in analysis['name']:
+        gat.scores_ = np.pi / 2 - np.array(gat.scores_)
+    # FIXME--------------------------------------------------------------------
 
     # Save main score
     gat_ = copy.deepcopy(gat)
