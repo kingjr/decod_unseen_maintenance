@@ -10,10 +10,10 @@ from scripts.config import (
     paths,
     subjects,
     data_types,
-    subscores,
+    # subscores,
 )
 from orientations.conditions import analysis as make_analysis
-from base import tile_memory_free
+from base import scorer_angle_tuning
 
 
 analyses = [
@@ -21,24 +21,35 @@ analyses = [
     make_analysis('probe_circAngle', 'circ_regress')
 ]
 
+analyses = [make_analysis('target_circAngle', 'circ_regress')]
+subscores = [('seen', 'detect_seen == True')]
 # subscores = [('seen', 'detect_seen == True'),
 #              ('unseen', 'detect_seen == False')]
 # for pas in [1., 2., 3.]:
 #     subscores.append(('pas%s' % pas, 'detect_button == %s' % pas))
 
 
-def tuning(y_pred, y_train):
-    error = (np.pi - np.squeeze(y_pred) +
-             np.transpose(tile_memory_free(y_train, np.shape(y_pred)[:2]),
+def tuning(truth, prediction):
+    # XXX can be matricize instead of loop
+    n_bins = 19 + 1
+    from itertools import product
+    from base import tile_memory_free
+    error = (np.pi - np.squeeze(prediction) +
+             np.transpose(tile_memory_free(truth, np.shape(prediction)[:2]),
                           [1, 2, 0])) % (2 * np.pi) - np.pi
-    bins = np.linspace(-np.pi, np.pi, 20)
-    nT, nt, _, _ = np.shape(y_pred)
-    h = np.zeros((nT, nt, len(bins) - 1))
+    bins = np.linspace(-np.pi, np.pi, n_bins)
+    nT, nt, _, _ = np.shape(prediction)
+    h = np.zeros((nT, nt, n_bins - 1))
     for T, t in product(range(nT), range(nt)):
         h[T, t, :], _ = np.histogram(error[T, t, :], bins)
         h[T, t, :] /= sum(h[T, t, :])
+    # nT, nt, _, _ = np.shape(prediction)
+    # h = np.zeros((nT, nt, n_bins))
+    # for T in range(nT):
+    #     for t in range(nt):
+    #         h[T, t, :] = scorer_angle_tuning(truth, prediction[T, t, :],
+    #                                          n_bins=n_bins)
     return h
-
 
 for data_type, analysis, subject in product(data_types, analyses, subjects):
     print analysis['name'], subject
@@ -55,7 +66,7 @@ for data_type, analysis, subject in product(data_types, analyses, subjects):
 
     # Save main score
     gat_ = copy.deepcopy(gat)
-    gat_.y_pred_ = tuning(gat_.y_pred_, gat_.y_train_)
+    gat_.y_pred_ = tuning(gat_.y_train_, gat_.y_pred_)
     score_fname = paths('score', subject=subject, data_type=data_type,
                         analysis=analysis['name'] + '-tuning')
     with open(score_fname, 'wb') as f:
@@ -84,7 +95,7 @@ for data_type, analysis, subject in product(data_types, analyses, subjects):
         else:
             gat_.scores_ = np.nan * np.array(gat_.scores_)
 
-        gat_.y_pred_ = tuning(np.array(gat_.y_pred_)[:, :, subsel, :],
-                              gat_.y_train_[subsel])
+        gat_.y_pred_ = tuning(gat_.y_train_[subsel],
+                              np.array(gat_.y_pred_)[:, :, subsel, :])
         with open(score_fname, 'wb') as f:
             pickle.dump([gat_, analysis, sel, events, subsel], f)
