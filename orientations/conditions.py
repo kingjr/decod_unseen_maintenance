@@ -1,5 +1,4 @@
 # Decoding parameters
-import numpy as np
 from itertools import product
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import Pipeline
@@ -24,7 +23,7 @@ def analysis(name, typ, condition=None, query=None):
     elif typ == 'circ_regress':
         clf = SVR_angle()
         scorer = scorer_angle
-        chance = np.pi / 2
+        chance = 0.
         single_trial = True
         erf_function = scorer_circLinear
     if condition is None:
@@ -52,12 +51,15 @@ analyses = (
              query='target_present == True')
 )
 
+
 # ###################### Define subscores #####################################
 
-subscores = [('seen', 'detect_seen == True'),
-             ('unseen', 'detect_seen == False'),
-             ('correct', 'discrim_correct == True'),
-             ('incorrect', 'discrim_correct == False')]
+subscores = [
+    ('seen', 'detect_seen == True'),
+    ('unseen', 'detect_seen == False'),
+    ('correct', 'discrim_correct == True'),
+    ('incorrect', 'discrim_correct == False')
+]
 for pas in [1., 2., 3.]:
     subscores.append(('pas%s' % pas,
                       'detect_button == %s' % pas))
@@ -66,7 +68,8 @@ for contrast in [0., .5, .75, 1.]:
                       'target_contrast == %s' % contrast)),
 for pas, contrast in product([1., 2., 3.], [0., .5, .75, 1.]):
     subscores.append(('pas%s-contrast%s' % (pas, contrast),
-                      'detect_button == %s and target_contrast == %s' % (pas, contrast)))
+                      'detect_button == %s and target_contrast == %s' % (
+                      pas, contrast)))
 
 analyses_order2 = [
     analysis('angle_vis', 'categorize', condition=[
