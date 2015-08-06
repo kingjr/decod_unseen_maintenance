@@ -4,5 +4,6 @@ reports/
 report/
 data/
 notes/
+.credentials/
 *.log
 *~
