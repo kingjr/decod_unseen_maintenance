@@ -13,7 +13,7 @@ open_browser = False
 base_path = op.dirname(op.dirname(__file__))
 print base_path
 data_path = op.join(base_path, 'data/')
-data_path = '/media/jrking/My Passport/Niccolo/data/'
+data_path = '/media/jrking/harddrive/Niccolo/data/'
 # XXX what to do with this ad hoc paths?
 # script_path = '/home/niccolo/Dropbox/DOCUP/scripts/python/'
 # pyoutput_path = op.join(base_path, '/media', 'niccolo', 'ParisPy', 'data')
@@ -36,7 +36,8 @@ def paths(typ, subject='fsaverage', data_type='erf', lock='target',
             subject, lock, data_type, analysis)),
         score=op.join(this_path, '%s_%s_%s_%s_scores.pickle' % (
             subject, lock, data_type, analysis)),
-        freesurfer=op.join(data_path, 'subjects'))
+        freesurfer=op.join(data_path, 'subjects'),
+        covariance=op.join(this_path, '%s-meg-cov.fif' % (subject)))
     file = path_template[typ]
 
     # Log file ?
@@ -58,6 +59,10 @@ subjects = [
     'ia130315', 'jd110235', 'jm120476', 'ma130185', 'mc130295',
     'mj130216', 'mr080072', 'oa130317', 'rg110386', 'sb120316',
     'tc120199', 'ts130283', 'yp130276', 'av130322', 'ps120458']
+
+missing_mri = [
+    'gm130176',  'ia130315', 'jm120476', 'mc130295', 'ts130283', 'yp130276']
+
 
 # Define type of sensors used (useful for ICA correction, plotting etc)
 # FIXME unknown connectivity; must be mag
@@ -98,6 +103,11 @@ if isinstance(args.analysis, str):
     idx = np.where([d['name'] == args.analysis for d in analyses])[0]
     analyses = [analyses[idx]]
 pyscript = args.pyscript
+
+# COV #########################################################################
+cov_method = ['shrunk', 'empirical']
+cov_reject = dict(grad=4000e-13, mag=4e-12, eog=180e-6)
+
 
 # ##################################""
 # # UNCOMMENT TO SUBSELECTION FOR FAST PROCESSING
