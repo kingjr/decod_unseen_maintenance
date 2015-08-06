@@ -12,7 +12,7 @@ from meeg_preprocessing.utils import setup_provenance
 from scripts.config import paths  # , subjects
 from base import plot_sem
 
-report, run_id, _, logger = setup_provenance(
+report, run_id, results_dir, logger = setup_provenance(
     script=__file__, results_dir=paths('report'))
 
 
@@ -154,7 +154,7 @@ ax.zaxis._PLANES = (tmp_planes[2], tmp_planes[3],
                     tmp_planes[0], tmp_planes[1],
                     tmp_planes[4], tmp_planes[5])
 # fig.show()
-# fig.savefig('visibility3D.png', dpi=300)
+fig.savefig(report.data_path + 'visibility3D.png', dpi=300)
 report.add_figs_to_section(fig, 'visibility 3d', 'visibility')
 
 
@@ -180,7 +180,7 @@ ax.set_xticks(np.linspace(0, 1, 2))
 ax.set_yticks(np.linspace(0, .7, 2))
 ax.set_ylim(0, .75)
 ax = pretty_ax(ax)
-# fig.savefig('visibility2D.png', dpi=300)
+fig.savefig(report.data_path + 'visibility2D.png', dpi=300)
 report.add_figs_to_section(fig, 'visibility 2d', 'visibility')
 # #############################################################################
 # 2. discrimination performance as a function of visibility and contrast
@@ -238,7 +238,7 @@ for metric, ylim, in zip(['Accuracy', 'D prime'], ((.5, 1.), (0., 3.))):
         ax = pretty_ax(ax)
         ax.axhline(ylim[0], linestyle='--', color='k')
         ax.set_ylim(ylim[0] - np.ptp(ylim) / 20, ylim[1])
-        # fig.savefig('%s.png' % metric, dpi=300)
+    fig.savefig(report.data_path + '%s.png' % metric, dpi=300)
     report.add_figs_to_section(fig, metric, 'discrimination')
 # plt.show()
 # XXX /!\ Dprime is sig for unseen but this is only if nan are counted as 0,
@@ -287,7 +287,7 @@ ax.set_yticks(ylim)
 ax.set_xlabel('Visibilities')
 ax.set_ylabel('P. Seen - P. Unseen')
 # plt.show()
-# fig.savefig('visibility_prior.png', dpi=300)
+fig.savefig(report.data_path + 'visibility_prior.png', dpi=300)
 report.add_figs_to_section(fig, 'visibility prior', 'prior')
 # #############################################################################
 # Effect of previous trial on current orientation XXX for later
