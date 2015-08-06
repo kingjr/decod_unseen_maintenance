@@ -1,5 +1,8 @@
 *.pyc
 results/
 reports/
+report/
 data/
+notes/
+*.log
 *~
