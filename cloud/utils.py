@@ -35,9 +35,8 @@ def download(server, f_server, f_client, overwrite=False):
             if not overwrite:
                 warnings.warn('%s was not overwritten.' % f_client)
                 return
-        out = open(f_client, 'wb')
-        out.write(f.read())
-        out.close()
+        with open(f_client, 'wb') as out:
+            out.write(f.read())
     elif server == 's3':
         key = boto_client.get_key(f_server)
         if key is None:
@@ -68,7 +67,7 @@ def upload(server, f_client, f_server, overwrite=False):
         elif not overwrite:
             raise RuntimeError('%s already exists online. '
                                'Set overwrite=True.' % f_server)
-        key.set_contents_from_filename(f_server)
+        key.set_contents_from_filename(f_client)
     else:
         raise RuntimeError('unknown server %s' % server)
     print('uploaded to %s > %s: %s' % (server, f_server, f_client))
