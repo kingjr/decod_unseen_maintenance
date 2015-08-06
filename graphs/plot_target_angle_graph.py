@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pickle
 from scripts.config import paths
-from model.graphs import plot_graph, animate_graph
+from gat.graphs import plot_graph, animate_graph
 stats_fname = paths('score', subject='fsaverage', data_type='erf',
                     analysis=('stats_target_circAngle'))
 with open(stats_fname, 'rb') as f:
