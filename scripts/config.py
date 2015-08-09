@@ -20,7 +20,7 @@ data_path = '/media/jrking/harddrive/Niccolo/data/'
 
 
 def paths(typ, subject='fsaverage', data_type='erf', lock='target',
-          analysis='analysis', pyscript='config.py', log=False):
+          analysis='analysis', pyscript='config.py', run=1, log=False):
     # FIXME: cleanup epochs filenames
     this_path = op.join(data_path, subject, typ)
     path_template = dict(
@@ -29,6 +29,8 @@ def paths(typ, subject='fsaverage', data_type='erf', lock='target',
         report=op.join(base_path, 'results'),
         log=op.join(base_path, pyscript.strip('.py') + '.log'),
         behavior=op.join(this_path, '%s_fixed.mat' % subject),
+        raw=op.join(this_path, '%s_run%02i.fif' % (subject, run)),
+        sss=op.join(this_path, '%s_run%02i_sss.fif' % (subject, run)),
         epoch=op.join(this_path, '%s_%s_%s.mat' % (subject, lock, data_type)),
         evoked=op.join(this_path, '%s_%s_%s_%s.pickle' % (
             subject, lock, data_type, analysis)),
