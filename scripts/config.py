@@ -1,15 +1,17 @@
-import sys
-sys.path.insert(0, './')
-import matplotlib
-matplotlib.use('Agg')
 import numpy as np
-# from time import gmtime, strftime
-# launch_time = strftime("_%Y-%m-%d_%H-%M-%S_", gmtime())
 import os
 import os.path as op
+from jr.utils import OnlineReport
+# import sys
+# sys.path.insert(0, './')
+# import matplotlib
+# matplotlib.use('Agg')
+# from time import gmtime, strftime
+# launch_time = strftime("_%Y-%m-%d_%H-%M-%S_", gmtime())
+
+report = OnlineReport()
 
 # Experiment parameters
-open_browser = False
 base_path = op.dirname(op.dirname(__file__))
 print base_path
 data_path = op.join(base_path, 'data/')

@@ -1,36 +1,14 @@
-import sys
-sys.path.insert(0, './')
-import matplotlib
-matplotlib.use('Agg')
-
 import pickle
 import numpy as np
 import matplotlib.pyplot as plt
 from itertools import product
-
 import mne
 from mne.epochs import EpochsArray
 from mne.stats import spatio_temporal_cluster_1samp_test as stats
-
-from meeg_preprocessing.utils import setup_provenance
-
-from base import (meg_to_gradmag, share_clim, tile_memory_free)
+from base import meg_to_gradmag, share_clim, tile_memory_free
 from orientations.utils import fix_wrong_channel_names
-
-from scripts.config import (
-    paths,
-    subjects,
-    data_types,
-    analyses,
-    chan_types,
-    open_browser
-)
-
-from scripts.transfer_data import upload_report
-
-# XXX uncomment
-report, run_id, _, logger = setup_provenance(
-    script=__file__, results_dir=paths('report'))
+from scripts.config import (report, paths, subjects, data_types, analyses,
+                            chan_types)
 
 # Apply contrast on each type of epoch
 for data_type, analysis in product(data_types, analyses):
@@ -49,7 +27,7 @@ for data_type, analysis in product(data_types, analyses):
         data.append(evoked.data)
 
     epochs = EpochsArray(np.array(data), evoked.info,
-                         events=np.zeros((len(data), 3)),
+                         events=np.zeros((len(data), 3), dtype=int),
                          tmin=evoked.times[0])
 
     # TODO warning if subjects has missing condition
@@ -58,9 +36,11 @@ for data_type, analysis in product(data_types, analyses):
         # FIXME: clean this up by cleaning ch_types definition
         if chan_type['name'] == 'grad':
             # XXX JRK: With neuromag, should use virtual sensors.
-            # For now, only apply stats to mag and grad.
+            # For now, only apply stats to mag.
             continue
         elif chan_type['name'] == 'mag':
+            chan_type_ = dict(meg='mag')
+        elif chan_type['name'] == 'meg':
             chan_type_ = dict(meg='mag')
         else:
             chan_type_ = dict(meg=chan_type['name'] == 'meg',
@@ -78,7 +58,8 @@ for data_type, analysis in product(data_types, analyses):
         _, clusters, p_values, _ = stats(
             X, out_type='mask', n_permutations=2 ** 11,
             connectivity=chan_type['connectivity'],
-            threshold=dict(start=0, step=.1), n_jobs=1)
+            threshold=dict(start=0, step=.1),
+            n_jobs=-1)
         p_values = np.sum(clusters *
                           tile_memory_free(p_values, clusters[0].shape),
                           axis=0).T
@@ -146,6 +127,4 @@ for data_type, analysis in product(data_types, analyses):
                       log=True)
     with open(pkl_fname, 'wb') as f:
         pickle.dump([p_values_chans, evoked, analysis], f)
-
-report.save(open_browser=open_browser)
-upload_report(report)
+report.save()
