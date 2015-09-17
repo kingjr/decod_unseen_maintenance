@@ -1,5 +1,7 @@
 import numpy as np
 from jr.utils import tile_memory_free, pairwise
+from jr.stats import repeated_spearman, repeated_corr
+from jr.gat.scorers import scorer_auc, scorer_spearman
 
 # ANALYSES ####################################################################
 
@@ -192,6 +194,7 @@ def scorer_angle_tuning(truth, prediction, n_bins=19):
 #         h[T, t, :], _ = np.histogram(error[T, t, :], bins)
 #         h[T, t, :] /= sum(h[T, t, :])
 #     return h
+
 
 def scorer_angle_discrete(truth, prediction):
     """WIP Scoring function dedicated to SVC_angle"""
