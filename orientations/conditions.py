@@ -7,7 +7,7 @@ from utils import clf_2class_proba, SVR_angle
 from base import (scorer_angle, scorer_auc, scorer_spearman, scorer_circLinear)
 
 
-def analysis(name, typ, condition=None, query=None):
+def analysis(name, typ, condition=None, query=None, title=None):
     single_trial = False
     erf_function = None
     if typ == 'categorize':
@@ -30,27 +30,28 @@ def analysis(name, typ, condition=None, query=None):
         condition = name
     return dict(name=name, condition=condition, query=query, clf=clf,
                 scorer=scorer, chance=chance, erf_function=erf_function,
-                single_trial=single_trial, cv=8)
+                single_trial=single_trial, cv=8, typ=typ, title=title)
 
 analyses = (
-    analysis('target_present',      'categorize'),
-    analysis('target_contrast',     'regress'),
+    analysis('target_present',      'categorize', title='Target Present'),
+    # analysis('target_contrast',     'regress'),
     analysis('target_contrast_pst', 'regress', condition='target_contrast',
-             query='target_present == True'),
-    analysis('target_spatialFreq',  'categorize'),
-    analysis('target_circAngle',    'circ_regress'),
-    analysis('probe_circAngle',     'circ_regress'),
-    analysis('probe_tilt',          'categorize'),
-    analysis('discrim_button',      'categorize'),
-    analysis('discrim_correct',     'categorize'),
-    analysis('detect_button',       'regress'),
+             query='target_present == True', title='Target Contrast'),
+    analysis('target_spatialFreq',  'categorize',
+             title='Target Spatial Frequency'),
+    analysis('target_circAngle',    'circ_regress', title='Target Angle'),
+    analysis('probe_circAngle',     'circ_regress', title='Probe Angle'),
+    analysis('probe_tilt',          'categorize', title='Target - Probe Tilt'),
+    # analysis('discrim_button',      'categorize'),
+    # analysis('discrim_correct',     'categorize'),
+    # analysis('detect_button',       'regress'),
     analysis('detect_button_pst',   'regress', condition='detect_button',
-             query='target_present == True'),
-    analysis('detect_seen',         'categorize'),
+             query='target_present == True', title='Visibility Response'),
+    # analysis('detect_seen',         'categorize'),
     analysis('detect_seen_pst',     'categorize', condition='detect_seen',
-             query='target_present == True')
+             query='target_present == True',
+             title='Tilt Discrimination Response')
 )
-
 
 # ###################### Define subscores #####################################
 
