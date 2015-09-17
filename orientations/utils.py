@@ -64,7 +64,8 @@ def load_FieldTrip_data(meg_fname):
     events = np.c_[np.cumsum(np.ones(n_trial)) * 5 * sfreq,
                    np.zeros(n_trial),
                    ft_data['trialinfo'].item()]
-    epochs = EpochsArray(bin_data, info, events=events, tmin=tmin)
+    epochs = EpochsArray(bin_data, info, events=np.array(events, int),
+                         tmin=tmin)
 
     return epochs
 
