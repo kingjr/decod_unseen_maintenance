@@ -4,8 +4,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import Pipeline
 from sklearn.svm import LinearSVR
 from utils import clf_2class_proba, SVR_angle
-from base import scorer_angle, scorer_circLinear
-from jr.gat import scorer_auc, scorer_spearman
+from base import scorer_angle, scorer_circLinear, scorer_auc, scorer_spearman
 
 
 def analysis(name, typ, condition=None, query=None, title=None):
@@ -43,15 +42,15 @@ analyses = (
     analysis('target_circAngle',    'circ_regress', title='Target Angle'),
     analysis('probe_circAngle',     'circ_regress', title='Probe Angle'),
     analysis('probe_tilt',          'categorize', title='Target - Probe Tilt'),
-    # analysis('discrim_button',      'categorize'),
+    analysis('discrim_button',      'categorize'),
     # analysis('discrim_correct',     'categorize'),
     # analysis('detect_button',       'regress'),
     analysis('detect_button_pst',   'regress', condition='detect_button',
              query='target_present == True', title='Visibility Response'),
     # analysis('detect_seen',         'categorize'),
-    analysis('detect_seen_pst',     'categorize', condition='detect_seen',
-             query='target_present == True',
-             title='Tilt Discrimination Response')
+    # analysis('detect_seen_pst',     'categorize', condition='detect_seen',
+    #          query='target_present == True',
+    #          title='Tilt Discrimination Response')
 )
 
 # ###################### Define subscores #####################################

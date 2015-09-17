@@ -1,7 +1,6 @@
 import pickle
 import numpy as np
 import matplotlib.pyplot as plt
-from itertools import product
 from jr.plot import share_clim
 from base import meg_to_gradmag, nested_analysis
 from orientations.utils import load_epochs_events
@@ -9,18 +8,15 @@ from orientations.utils import load_epochs_events
 from scripts.config import (
     paths,
     subjects,
-    data_types,
     analyses,
     chan_types,
     report,
 )
 
-analyses = [analyses[-1]]
+for subject in subjects:
+    print('load %s' % subject)
 
-for subject, data_type in product(subjects, data_types):
-    print('load %s %s' % (subject, data_type))
-
-    epochs, events = load_epochs_events(subject, paths, data_type=data_type)
+    epochs, events = load_epochs_events(subject, paths)
 
     # Apply each analysis
     for analysis in analyses:
@@ -36,8 +32,8 @@ for subject, data_type in product(subjects, data_types):
         evoked.data = coef
 
         # Save all_evokeds
-        fname = paths('evoked', subject=subject, data_type=data_type,
-                      analysis=analysis['name'], log=True)
+        fname = paths('evoked', subject=subject, analysis=analysis['name'],
+                      log=True)
         with open(fname, 'wb') as f:
             pickle.dump([evoked, sub, analysis], f)
 
@@ -48,8 +44,7 @@ for subject, data_type in product(subjects, data_types):
 
         # Plot coef
         fig1 = evoked.plot_image(show=False)
-        report.add_figs_to_section(fig1, ('%s (%s) %s: COEF' % (
-            subject, data_type, analysis['name'])), analysis['name'])
+        report.add_figs_to_section(fig1, '%s_coef' % subject, analysis['name'])
 
         # Plot subcondition
         fig2, ax2 = plt.subplots(len(meg_to_gradmag(chan_types)),
@@ -62,7 +57,6 @@ for subject, data_type in product(subjects, data_types):
                                           mag='mag (%.2s)' % y))
         for chan_type in range(len(meg_to_gradmag(chan_types))):
             share_clim(ax2[chan_type, :])
-        report.add_figs_to_section(fig2, ('%s (%s) %s: CONDITIONS' % (
-            subject, data_type, analysis['name'])), analysis['name'])
+        report.add_figs_to_section(fig2, '%s_cond' % subject, analysis['name'])
 
 report.save()

@@ -5,7 +5,6 @@ import mne
 from mne.epochs import EpochsArray
 from mne.stats import spatio_temporal_cluster_1samp_test as stats
 from mne.channels import read_ch_connectivity
-from base import tile_memory_free
 from orientations.utils import fix_wrong_channel_names
 from scripts.config import (paths, subjects, analyses)
 
