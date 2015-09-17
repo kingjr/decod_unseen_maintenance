@@ -2,31 +2,39 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pickle
 from scripts.config import paths
-from gat.graphs import plot_graph, animate_graph
+from jr.gat.graphs import plot_graph, animate_graph
 stats_fname = paths('score', subject='fsaverage', data_type='erf',
                     analysis=('stats_target_circAngle'))
 with open(stats_fname, 'rb') as f:
     out = pickle.load(f)
     scores = out['scores']
     p_values = out['p_values']
-    times = out['times']
-
+    times = out['times'] / 1e3  # FIXME
 
 connectivity = np.mean(scores, axis=0)
-fig, ax = plt.subplots(1, figsize=[10, 10])
+fig, ax = plt.subplots(1, figsize=[5, 5])
 connectivity *= p_values < .05
-G, nodes, = plot_graph(connectivity, prune=p_values>.10, negative_weights=True,
-                       weights_scale=50, ax=ax)
+clim = np.percentile(np.abs(connectivity), 90) * np.array([-1, 1])
+G, nodes, = plot_graph(connectivity, node_alpha=1.,
+                       negative_weights=True, weights_scale=50, ax=ax,
+                       edge_color=plt.get_cmap('coolwarm'), clim=clim,
+                       final_pos='horizontal')
+fig.set_facecolor(None)
+anim = animate_graph(np.mean(scores, axis=0), G, nodes, times=times * 1e3,
+                     clim=[-.08, .08], cmap='RdBu_r')
+anim.save('results/graphs/target_circAngle.gif', writer='imagemagick', dpi=75)
+anim = animate_graph(np.mean(scores, axis=0)[::2, :], G, nodes,
+                     times=times[::2] * 1e3, clim=[-.08, .08], cmap='RdBu_r')
+anim.save('results/graphs/target_circAngle_fast.gif', writer='imagemagick',
+          dpi=50)
 
-anim = animate_graph(connectivity, G, nodes, times=times, clim=[-.08, .08], cmap='RdBu_r')
-anim.save('target_circAngle.gif', writer='imagemagick', dpi=75)
-anim = animate_graph(connectivity[::2, :], G, nodes, times=times[::2], clim=[-.08, .08], cmap='RdBu_r')
-anim.save('target_circAngle_fast.gif', writer='imagemagick', dpi=50)
 
-def snapshot(time, title):
-    dynamics = connectivity
+def snapshot(time, title, clim=None):
+    dynamics = np.mean(scores, axis=0)
+    if clim is None:
+        cmax = np.percentile(np.abs(dynamics), 99)
+        clim = -cmax, cmax
     cmap = plt.get_cmap('RdBu_r')
-    clim = np.min(dynamics), np.max(dynamics)
     nframe = np.where(times > time)[0][0]
     dynamic = dynamics[nframe, :]
     colors = list()
@@ -36,15 +44,13 @@ def snapshot(time, title):
         color = color if color > 0. else 0.
         colors.append(cmap(color))
     nodes.set_facecolors(colors)
-    fig.canvas.draw()
-    fig.show()
-    ax.set_title('%s ms' % (int(times[nframe])),
+    ax.set_title('%s ms' % (int(times[nframe] * 100) * 10),
                  fontdict=dict(horizontalalignment='left'))
-    fig.savefig('target_circAngle_%s.png' % time, dpi=100)
+    fig.canvas.draw()
+    fig.tight_layout()
+    fig.savefig('results/graphs/target_circAngle_%i.png' % (time * 1e3),
+                dpi=100, transparent=True,)
 
-snapshot(.150, '150 ms')
-snapshot(.250, '250 ms')
-snapshot(.400, '400 ms')
-snapshot(.600, '600 ms')
-snapshot(.800, 'Probe onset: 800 ms')
-snapshot(1.000, 'Probe onset: +200 ms')
+tois = [150, 190, 310, 410, 610, 930, 990]
+for t in tois:
+    snapshot(t/1e3, '%i ms' % (1e3 * t))
