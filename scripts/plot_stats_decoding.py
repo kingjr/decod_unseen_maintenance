@@ -29,9 +29,11 @@ for analysis, ax, color in zip(analyses, axes_alldiag, colors):
                                     [len(times), 1, 1]).transpose(1, 0, 2)
 
     # GAT
+    clim = np.percentile(np.diag(np.mean(scores, axis=0)), 97)
+    clim = [chance-(clim-chance), clim]
     fig_gat, ax_gat = plt.subplots(1, figsize=[7, 5.5])
     pretty_gat(np.mean(scores, axis=0), times=times, sig=p_values < .05,
-               chance=chance, ax=ax_gat)
+               chance=chance, ax=ax_gat, clim=clim)
     report.add_figs_to_section(fig_gat, 'gat', analysis['name'])
 
     # Decod
@@ -68,4 +70,3 @@ for analysis, ax, color in zip(analyses, axes_alldiag, colors):
 fig_alldiag.tight_layout()
 report.add_figs_to_section(fig_alldiag, 'diagonal', 'all')
 report.save()
-# upload_report(report)
