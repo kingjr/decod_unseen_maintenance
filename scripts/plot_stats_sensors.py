@@ -1,7 +1,7 @@
 import pickle
 import numpy as np
 import matplotlib.pyplot as plt
-from jr.plot import plot_butterfly
+from jr.plot import plot_butterfly, plot_gfp
 from scripts.config import (report, paths, analyses)
 
 cmap = plt.get_cmap('gist_rainbow')
@@ -19,19 +19,21 @@ for analysis, color in zip(analyses, colors):
     sig_times = np.array(np.sum(sig, axis=0) > 0., dtype=int)
 
     # Plot topo
-    tois = np.linspace(0, 1.000, 11)
+    tois = np.linspace(0, .500, 6)
+    sig = sig[:, np.where((evoked.times > -.100) & (evoked.times <= .600))[0]]
+    evoked.crop(-.100, .600)
 
     def topomap_clim(data, factor=10, grad=False):
         if grad:
             # m = np.median(data)
             # s = np.median(np.abs(data - m))
             # vmin, vmax = m - factor * s, m + factor * s
-            vmin, vmax = np.percentile(data, [1, 99])
+            vmin, vmax = np.percentile(data, [factor, 100-factor])
             vmin = 0 if vmin < 0 else vmin
         else:
             # s = np.median(np.abs(data))
             # vmin, vmax = -factor * s, factor * s
-            vmin, vmax = np.percentile(data, [1, 99])
+            vmin, vmax = np.percentile(data, [factor, 100-factor])
             vmin, vmax = (-np.max([np.abs(vmin), vmax]),
                           np.max([np.abs(vmin), vmax]))
         smin, smax = '%.2f' % vmin, '%.2f' % vmax
@@ -41,7 +43,7 @@ for analysis, color in zip(analyses, colors):
         return vmin, vmax, smin, smax
 
     vmin, vmax, smin, smax = topomap_clim(evoked.data[::3, :], grad=True)
-    opts = dict(sensors=False, scale=1, time_format='', contours=False,
+    opts = dict(sensors=False, scale=1, contours=False,
                 times=tois, average=.025, colorbar=True, show=False)
     fig_grad = evoked.plot_topomap(cmap='afmhot_r', ch_type='grad',
                                    vmin=vmin, vmax=vmax, **opts)
@@ -57,13 +59,25 @@ for analysis, color in zip(analyses, colors):
     cax.set_yticks([vmin, vmax])
     cax.set_yticklabels([smin, '', smax])
     cax.set_title('')
+    fig_mag.tight_layout()
     report.add_figs_to_section(fig_mag, 'topo_mag', analysis['name'])
 
     # Plot butterfly
-    fig_butt, ax = plt.subplots(1, figsize=fig_grad.get_size_inches())
+    fig_butt_m, ax = plt.subplots(1, figsize=fig_grad.get_size_inches())
     plot_butterfly(evoked, ax=ax, sig=sig, color=color, ch_type='mag')
-    ax.set_xlim([-100, 1000])
-    ax.axvline(800, color='k')
-    report.add_figs_to_section(fig_butt, 'butterfly', analysis['name'])
+    # ax.axvline(800, color='k')
+    ax.set_xlim([-100, 600])
+    ax.set_xlabel('Times (ms)', labelpad=-15)
+    fig_butt_m.tight_layout()
+    report.add_figs_to_section(fig_butt_m, 'butterfly_mag', analysis['name'])
+
+    # plot GFP
+    fig_butt_gfp, ax = plt.subplots(1, figsize=fig_grad.get_size_inches())
+    plot_gfp(evoked, ax=ax, sig=sig, color=color)
+    # ax.axvline(800, color='k')
+    ax.set_xlim([-100, 600])
+    ax.set_xlabel('Times (ms)', labelpad=-15)
+    fig_butt_gfp.tight_layout()
+    report.add_figs_to_section(fig_butt_gfp, 'butterfly_gfp', analysis['name'])
 
 report.save()
