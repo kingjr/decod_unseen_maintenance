@@ -1,16 +1,7 @@
-import sys
-sys.path.insert(0, './')
-import matplotlib
-matplotlib.use('Agg')
-
 import pickle
 import numpy as np
 import matplotlib.pyplot as plt
 from itertools import product
-
-import mne
-from meeg_preprocessing.utils import setup_provenance
-
 from base import meg_to_gradmag, nested_analysis, share_clim
 from orientations.utils import load_epochs_events
 
@@ -20,15 +11,10 @@ from scripts.config import (
     data_types,
     analyses,
     chan_types,
-    open_browser,
+    report,
 )
 
-from scripts.transfer_data import upload_report
-
-report, run_id, _, logger = setup_provenance(
-    script=__file__, results_dir=paths('report'))
-
-mne.set_log_level('INFO')
+analyses = [analyses[-1]]
 
 for subject, data_type in product(subjects, data_types):
     print('load %s %s' % (subject, data_type))
@@ -78,6 +64,4 @@ for subject, data_type in product(subjects, data_types):
         report.add_figs_to_section(fig2, ('%s (%s) %s: CONDITIONS' % (
             subject, data_type, analysis['name'])), analysis['name'])
 
-
-report.save(open_browser=open_browser)
-upload_report(report)
+report.save()
