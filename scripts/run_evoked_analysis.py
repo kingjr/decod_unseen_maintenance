@@ -2,7 +2,8 @@ import pickle
 import numpy as np
 import matplotlib.pyplot as plt
 from itertools import product
-from base import meg_to_gradmag, nested_analysis, share_clim
+from jr.plot import share_clim
+from base import meg_to_gradmag, nested_analysis
 from orientations.utils import load_epochs_events
 
 from scripts.config import (
