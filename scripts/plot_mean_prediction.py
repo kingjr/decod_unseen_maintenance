@@ -1,160 +1,219 @@
 import pickle
-import os.path as op
 import numpy as np
 import matplotlib.pyplot as plt
-from scripts.config import paths, subjects, analyses, subscores, report
-from jr.plot import pretty_plot, plot_tuning
+from jr.plot import plot_tuning, plot_sem, bar_sem, pretty_decod
+from jr.stats import circ_tuning, circ_mean, repeated_spearman
+from mne.stats import spatio_temporal_cluster_1samp_test as stats
+from scripts.config import paths, subjects, subscores, report, analyses
+analyses = [analysis for analysis in analyses if analysis['name'] in
+            ['target_circAngle', 'probe_circAngle']]
+
+tois = [(-.100, 0.050), (.100, .250), (.250, .800), (.900, 1.050)]
 
 
-def get_tuning(y_pred):
-    h, _ = np.histogram((y_pred + np.pi) % (2 * np.pi), bins)
-    error = 1. * h / np.sum(h)
-    return error
+def get_predict(gat, sel=None, toi=None, mean=True):
+    from jr.gat import get_diagonal_ypred
+    # select diagonal
+    y_pred = np.squeeze(get_diagonal_ypred(gat)).T % (2 * np.pi)
+    # Select trials
+    sel = range(len(y_pred)) if sel is None else sel
+    y_pred = y_pred[sel, :]
+    # select TOI
+    times = np.array(gat.train_times_['times'])
+    toi = times[[0, -1]] if toi is None else toi
+    toi_ = np.where((times >= toi[0]) & (times < toi[1]))[0]
+    y_pred = y_pred[:, toi_]
+    # mean across time point
+    if mean:
+        y_pred = circ_mean(y_pred, axis=1)[:, None]
+    return y_pred
 
-tois = [(.100, .250), (.250, .800), (.900, 1.050)]
-n_bins = 99
-bins = np.linspace(0, 2 * np.pi, n_bins + 1)
-cmap = plt.get_cmap('gist_rainbow')
-_colors = cmap(np.linspace(0, 1., len(analyses) + 1))
-analysis_colors = [_colors[3], _colors[4]]
 
-for analysis, analysis_color in zip(['target_circAngle', 'probe_circAngle'],
-                                    analysis_colors):
-    score_fname = paths('score', subject='fsaverage',
-                        analysis=analysis + '-tuning')
-    if not op.exists(score_fname):
-        tuning_error = np.zeros((len(subjects), n_bins, len(tois)))
-        tuning_predict = np.zeros((len(subjects), n_bins, 6, len(tois)))
-        tuning_error_diag = np.zeros((len(subjects), 154, n_bins))
-        tuning_subscores = dict()
+def get_predict_error(gat, sel=None, toi=None, mean=True):
+    y_pred = get_predict(gat, sel=sel, toi=toi, mean=mean)
+    # error is diff modulo pi centered on 0
+    y_true = np.tile(gat.y_true_, [np.shape(y_pred)[1], 1]).T
+    y_error = (y_pred - y_true + np.pi) % (2 * np.pi) - np.pi
+    return y_error
+
+# Gather data
+for analysis in ['target_circAngle', 'probe_circAngle']:
+    results = dict(diagonal=list(), angle_pred=list(), toi=list(),
+                   subscore=list())
+    for s, subject in enumerate(subjects):
+        print s
+        fname = paths('decod', subject=subject, analysis=analysis)
+        with open(fname, 'rb') as f:
+            gat, _, events_sel, events = pickle.load(f)
+        times = gat.train_times_['times']
+        n_bins = 24
+
+        def mean_acc(y_error, axis=None):
+            # range between -pi and pi just in case not done already
+            y_error = y_error % (2 * np.pi)
+            y_error = (y_error + np.pi) % (2 * np.pi) - np.pi
+            # random error = np.pi/2, thus:
+            return np.pi / 2 - np.mean(np.abs(y_error), axis=axis)
+
+        # Mean error across trial on the diagonal
+        y_error = mean_acc(get_predict_error(gat, mean=False), axis=0)
+        results['diagonal'].append(y_error)
+
+        # Mean prediction for each angle
+        results_ = list()
+        for angle in np.unique(gat.y_true_):
+            y_pred = get_predict(gat, sel=np.where(gat.y_true_ == angle)[0])
+            probas, bins = circ_tuning(y_pred, n=n_bins)
+            results_.append(probas)
+        results['angle_pred'].append(results_)
+
+        # Mean tuning error per toi
+        results_ = list()
+        for toi in tois:
+            probas, bins = circ_tuning(get_predict_error(gat, toi=toi),
+                                       n=n_bins)
+            results_.append(probas)
+        results['toi'].append(results_)
+
+        # Mean y_error per toi per vis
+        results_ = dict()
+        y_error = get_predict_error(gat, mean=False)
         for subanalysis in subscores:
-            tuning_subscores[subanalysis[0]] = dict()
-            tuning_subscores[subanalysis[0]]['diag'] = np.zeros_like(
-                tuning_error_diag)
-            tuning_subscores[subanalysis[0]]['toi'] = np.zeros_like(
-                tuning_error)
-        for s, subject in enumerate(subjects):
-            print subject
-            # define path to file to be loaded
-            fname = paths('decod', subject=subject, analysis=analysis)
-            with open(fname, 'rb') as f:
-                gat, _, sel, events = pickle.load(f)
-            times = gat.train_times_['times']
+            results_[subanalysis[0] + '_toi'] = list()
+            # subselect events (e.g. seen vs unseen)
+            subevents = events.iloc[events_sel].reset_index()
+            subsel = subevents.query(subanalysis[1]).index
+            # add nan if no trial matches subconditions
+            if len(subsel) == 0:
+                results_[subanalysis[0]] = np.nan * np.zeros(y_error.shape[1])
+                for toi in tois:
+                    results_[subanalysis[0] + '_toi'].append(np.nan)
+                continue
+            # dynamics of mean error
+            results_[subanalysis[0]] = mean_acc(y_error[subsel, :], axis=0)
+            # mean error per toi
+            for toi in tois:
+                # mean error across time
+                toi_ = np.where((times >= toi[0]) & (times < toi[1]))[0]
+                y_error_toi = circ_mean(y_error[:, toi_], axis=1)
+                y_error_toi = mean_acc(y_error_toi[subsel])
+                results_[subanalysis[0] + '_toi'].append(y_error_toi)
+        results['subscore'].append(results_)
+    results['times'] = times
+    results['bins'] = bins
+    fname = paths('score', subject='fsaverage', analysis=analysis + '-tuning')
+    with open(fname, 'wb') as f:
+        pickle.dump(results, f)
 
-            # get diagonal
-            y_train = gat.y_train_
-            y_pred_diag = np.zeros((len(gat.y_pred_[0][0]), len(times)))
-            for t in range(len(times)):
-                y_pred_diag[:, t] = gat.y_pred_[t][t][:, 0]
 
-            # tuning curve for prediction, and prediction errors
-            def tunings(y_pred, y_train):
-                tuning_error = np.zeros((n_bins, len(tois)))
-                tuning_predict = np.zeros((n_bins, 6, len(tois)))
-                tuning_error_diag = np.zeros((len(times), n_bins))
-
-                # diagonal
-                for t in range(len(times)):
-                    tuning_error_diag[t, :] = get_tuning(y_pred[:, t] -
-                                                         y_train)
-                # aggregated times of interest
-                for t, toi in enumerate(tois):
-                    # large window
-                    toi_ = np.where((times >= toi[0]) & (times <= toi[1]))[0]
-                    y_pred_toi = y_pred[:, toi_]
-                    # merge time sample
-                    y_train_toi = np.tile(y_train, len(toi_))
-                    tuning_error[:, t] = get_tuning(y_pred_toi.T.flatten() -
-                                                    y_train_toi)
-                    # store prediction for each angle separately
-                    for a, angle in enumerate(np.unique(y_train)):
-                        sel = np.where(y_train == angle)[0]
-                        predict = get_tuning(y_pred_toi[sel, :] - angle)
-                        align = (range(a * (n_bins / 6), n_bins) +
-                                 range(0, a * (n_bins / 6)))
-                        tuning_predict[align, a, t] = predict
-                return tuning_error_diag, tuning_error, tuning_predict
-            # across all trials
-            (tuning_error_diag[s, ...], tuning_error[s, ...],
-             tuning_predict[s, ...]) = tunings(y_pred_diag, y_train)
-            # on subset of of trials
-            for subanalysis in subscores:
-                # subselect events
-                subevents = events.iloc[sel].reset_index()
-                subsel = subevents.query(subanalysis[1]).index
-                # subscore
-                error_diag, error, _ = tunings(y_pred_diag[subsel, :],
-                                               y_train[subsel])
-                tuning_subscores[subanalysis[0]]['diag'][s, ...] = error_diag
-                tuning_subscores[subanalysis[0]]['toi'][s, ...] = error
-
-        with open(score_fname, 'wb') as f:
-            pickle.dump(dict(tuning_error=tuning_error, tois=tois, times=times,
-                             bins=bins, tuning_predict=tuning_predict,
-                             tuning_error_diag=tuning_error_diag,
-                             tuning_subscores=tuning_subscores), f)
-        tuning_predict_toi = tuning_predict
-        tuning_error_toi = tuning_error
+# Plot
+def plot_tuning_(data, ax, color, polar=True):
+    shift = None if polar is True else np.pi
+    plot_tuning(data, ax=ax, color=color, polar=polar, half=polar, shift=shift)
+    plot_tuning(data, ax=ax, color='k', polar=polar, half=polar, alpha=0,
+                shift=shift)
+    if polar:
+        ax.set_xticks([0, np.pi])
+        ax.set_xticklabels([0, '$\pi$'])
     else:
-        with open(score_fname, 'rb') as f:
-            out = pickle.load(f)
-            tuning_error_toi = out['tuning_error']
-            tois = out['tois']
-            bins = out['bins']
-            tuning_predict_toi = out['tuning_predict']
-            times = out['times']
-            tuning_error_diag = out['tuning_error_diag']
-            tuning_subscores = out['tuning_subscores']
+        ax.set_xticks([-np.pi, np.pi])
+        ax.set_xticklabels(['$-\pi/2$', '$\pi/2$'])
 
-    def plot_tuning_(data, ax, color, polar=True):
-        plot_tuning(data, ax=ax, color=color, polar=polar, half=polar)
-        plot_tuning(data, ax=ax, color='k', polar=polar, half=polar, alpha=0)
 
-    # plot each prediction at probe response
-    t = -1 if analysis == 'probe_circAngle' else 0
+for analysis in analyses:
+    fname = paths('score', subject='fsaverage',
+                  analysis=analysis['name'] + '-tuning')
+    with open(fname, 'rb') as f:
+        results = pickle.load(f)
+    times = results['times']
+
+    # Plot the prediction per angle
+    t = -1 if analysis['name'] == 'probe_circAngle' else 0
     fig, axes = plt.subplots(1, 6, subplot_kw=dict(polar=True),
                              figsize=[16, 2.5])
     cmap = plt.get_cmap('hsv')
     colors = cmap(np.linspace(0, 1., 6 + 1))
-    ylim = [func(np.mean(tuning_predict_toi[:, :, :, t], axis=0))
-            for func in [np.min, np.max]]
-
+    data = np.array(results['angle_pred'])
+    ylim = [func(np.mean(data, axis=0)) for func in [np.min, np.max]]
     for angle, ax, color in zip(range(6), axes, colors):
-        plot_tuning_(tuning_predict_toi[:, :, angle, t], ax, color)
-        # FIXME: this is likely to be incorrect: you have to recompute
-        # prediction properly
+        plot_tuning_(data[:, angle, :], ax, color)
         ax.set_ylim(ylim)
-    # report.add_figs_to_section(fig, 'predictions', analysis)
+    report.add_figs_to_section(fig, 'predictions', analysis['name'])
 
     # plot tuning error at each TOI
     fig, axes = plt.subplots(1, len(tois),
                              figsize=[5 * len(tois), 3], sharey=True)
+    ylim = np.mean(np.array(results['toi']), axis=0)
+    ylim = np.min(ylim), np.max(ylim)
+
     for t, (toi, ax) in enumerate(zip(tois, axes)):
         # Across all trials
-        plot_tuning_(tuning_error_toi[:, :, t], ax, color, False)
+        data = np.array(results['toi'])[:, t, :]
+        plot_tuning_(data, ax, analysis['color'], False)
         ax.set_title('%i - %i ms.' % (toi[0] * 1000, toi[1] * 1000))
-    report.add_figs_to_section(fig, 'error TOI', analysis)
+        ax.set_ylim(ylim)
+    report.add_figs_to_section(fig, 'toi', analysis['name'])
 
-    # contrasts x visibility XXX TODO
+    # seen versus unseen
 
-    # plot diagonal
-    fig_diag, ax = plt.subplots(1, figsize=[10, 3])
-    ymin, ymax = np.percentile(tuning_error_diag.mean(0), [2, 98])
-    im = ax.matshow(tuning_error_diag.mean(0).T, aspect='auto', cmap='RdBu_r',
-                    vmin=ymin, vmax=ymax,
-                    extent=[min(times), max(times), -np.pi/2, np.pi/2])
-    cb = plt.colorbar(im, ax=ax, ticks=[ymin, 1. / n_bins, ymax])
-    cb.ax.set_yticklabels(['%i' % ymin, 'Chance', '%i' % ymax],
-                          color='dimgray')
-    cb.ax.xaxis.label.set_color('dimgray')
-    cb.ax.yaxis.label.set_color('dimgray')
-    cb.ax.spines['left'].set_color('dimgray')
-    cb.ax.spines['right'].set_color('dimgray')
-    ax.set_xlabel('Times (ms.)')
-    ax.set_ylabel('Angle Error')
-    ax.set_yticks([-np.pi / 2, 0, np.pi / 2])
-    ax.set_yticklabels(['-$\pi$ / 2', '0',  '$\pi$ / 2'])
-    pretty_plot(ax)
-    report.add_figs_to_section(fig_diag, 'diagonal', analysis)
+    def get_sub(key):
+        return np.array([subject[key] for subject in results['subscore']])
+
+    fig, ax = plt.subplots(1)
+    plot_sem(times[1:], get_sub('seen'), color='r', ax=ax)
+    plot_sem(times[1:], get_sub('unseen'), color='b', ax=ax)
+    report.add_figs_to_section(fig, 'seen_unseen', analysis['name'])
+
+    seen_toi = get_sub('seen_toi').T
+    unseen_toi = get_sub('unseen_toi').T
+    fig, axes = plt.subplots(1, len(tois), sharey=True, figsize=[13, 2])
+    for ax, unseen, seen, toi in zip(axes, unseen_toi, seen_toi, tois):
+        bar_sem(range(3), np.vstack((unseen, seen, seen - unseen)).T, ax=ax,
+                color=['b', 'r', 'k'])
+        ax.set_xticks([])
+        ax.set_title('%i - %i ms.' % (toi[0] * 1000, toi[1] * 1000))
+    ax.set_ylim(-np.pi/8, np.pi/8)
+    fig.tight_layout()
+    report.add_figs_to_section(fig, 'seen_unseen_toi', analysis['name'])
+
+    # contrasts
+    cmap = plt.get_cmap('gray_r')
+    fig, ax = plt.subplots(1)
+    for contrast in [1., .75, .5]:
+        data = np.array([subject['contrast' + str(contrast) + '']
+                         for subject in results['subscore']])
+        plot_sem(times[1:], data, color=cmap(contrast), ax=ax)
+    report.add_figs_to_section(fig, 'contrast', analysis['name'])
+    data_contrast = list()
+    for contrast in [.5, .75, 1.]:
+        data_contrast.append(get_sub('contrast' + str(contrast) + '_toi'))
+    data_contrast = np.transpose(data_contrast, [2, 1, 0])
+    fig, axes = plt.subplots(1, len(tois), sharey=True, figsize=[13, 2])
+    cmap = plt.get_cmap('gray_r')
+    for ax, data, toi in zip(axes, data_contrast, tois):
+        bar_sem(range(3), data, ax=ax, color=cmap([.5, .75, 1.]))
+        ax.set_xticks([])
+        ax.set_title('%i - %i ms.' % (toi[0] * 1000, toi[1] * 1000))
+    fig.tight_layout()
+    report.add_figs_to_section(fig, 'contrast_toi', analysis['name'])
+
+    # XXX WIP ANOVA
+    # main effect of pas
+    data = list()
+    for pas in range(4):
+        data_ = list()
+        for contrast in [.5, .75, 1.]:
+            data_.append(get_sub('pas%s-contrast%s' % (pas, contrast)))
+        data.append(np.nanmean(data_, axis=0))
+    data = np.array(data)
+    R = list()
+    for subject in np.transpose(data, [1, 0, 2]):
+        r, _ = repeated_spearman(subject)
+        R.append(r)
+    T_obs, h, pval, clusters = stats(R)
+    pretty_decod(R, times=times, sig=pval < .05)
+
+    # main effect of contrast
+    # TODO absent trials control reactivation
 
 report.save()
