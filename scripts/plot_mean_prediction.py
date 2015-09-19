@@ -59,10 +59,12 @@ for analysis in ['target_circAngle', 'probe_circAngle']:
         y_error = mean_acc(get_predict_error(gat, mean=False), axis=0)
         results['diagonal'].append(y_error)
 
-        # Mean prediction for each angle
+        # Mean prediction for each angle at peak time
+        toi = [.100, .250] if analysis == 'target_circAngle' else [.900, 1.150]
         results_ = list()
         for angle in np.unique(gat.y_true_):
-            y_pred = get_predict(gat, sel=np.where(gat.y_true_ == angle)[0])
+            y_pred = get_predict(gat, sel=np.where(gat.y_true_ == angle)[0],
+                                 toi=toi)
             probas, bins = circ_tuning(y_pred, n=n_bins)
             results_.append(probas)
         results['angle_pred'].append(results_)
@@ -109,9 +111,10 @@ for analysis in ['target_circAngle', 'probe_circAngle']:
 # Plot
 def plot_tuning_(data, ax, color, polar=True):
     shift = None if polar is True else np.pi
-    plot_tuning(data, ax=ax, color=color, polar=polar, half=polar, shift=shift)
-    plot_tuning(data, ax=ax, color='k', polar=polar, half=polar, alpha=0,
-                shift=shift)
+    plot_tuning(np.mean(data, axis=0), ax=ax, color=color, polar=polar,
+                half=polar, shift=shift)
+    plot_tuning(data, ax=ax, color='k', polar=polar, half=polar, shift=shift,
+                chance=None)
     if polar:
         ax.set_xticks([0, np.pi])
         ax.set_xticklabels([0, '$\pi$'])
@@ -127,6 +130,14 @@ for analysis in analyses:
         results = pickle.load(f)
     times = results['times']
 
+    def get_ylim(data):
+        m = np.mean(np.array(data), axis=0)
+        s = np.std(np.array(data), axis=0) / np.sqrt(len(data))
+        return np.min(m-s*1.1), np.max(m+s*1.1)
+
+    def get_sub(key):
+        return np.array([subject[key] for subject in results['subscore']])
+
     # Plot the prediction per angle
     t = -1 if analysis['name'] == 'probe_circAngle' else 0
     fig, axes = plt.subplots(1, 6, subplot_kw=dict(polar=True),
@@ -134,45 +145,50 @@ for analysis in analyses:
     cmap = plt.get_cmap('hsv')
     colors = cmap(np.linspace(0, 1., 6 + 1))
     data = np.array(results['angle_pred'])
-    ylim = [func(np.mean(data, axis=0)) for func in [np.min, np.max]]
     for angle, ax, color in zip(range(6), axes, colors):
         plot_tuning_(data[:, angle, :], ax, color)
-        ax.set_ylim(ylim)
+        ax.set_ylim(get_ylim(data))
     report.add_figs_to_section(fig, 'predictions', analysis['name'])
 
     # plot tuning error at each TOI
     fig, axes = plt.subplots(1, len(tois),
                              figsize=[5 * len(tois), 3], sharey=True)
-    ylim = np.mean(np.array(results['toi']), axis=0)
-    ylim = np.min(ylim), np.max(ylim)
-
     for t, (toi, ax) in enumerate(zip(tois, axes)):
         # Across all trials
         data = np.array(results['toi'])[:, t, :]
         plot_tuning_(data, ax, analysis['color'], False)
         ax.set_title('%i - %i ms.' % (toi[0] * 1000, toi[1] * 1000))
+        ylim = get_ylim(results['toi'])
         ax.set_ylim(ylim)
+        ax.set_yticks(ylim)
+        ax.set_yticklabels(['', ''])
+        if ax == axes[0]:
+            ax.set_yticklabels(ylim)
     report.add_figs_to_section(fig, 'toi', analysis['name'])
 
     # seen versus unseen
-
-    def get_sub(key):
-        return np.array([subject[key] for subject in results['subscore']])
-
     fig, ax = plt.subplots(1)
-    plot_sem(times[1:], get_sub('seen'), color='r', ax=ax)
-    plot_sem(times[1:], get_sub('unseen'), color='b', ax=ax)
+    pretty_decod(get_sub('seen'), times=times[1:], color='r', ax=ax, chance=0.)
+    pretty_decod(get_sub('unseen'), times=times[1:], color='b', ax=ax,
+                 chance=0.)
+    ax.axvline(.800, color='k')
+    fig.tight_layout()
     report.add_figs_to_section(fig, 'seen_unseen', analysis['name'])
 
     seen_toi = get_sub('seen_toi').T
     unseen_toi = get_sub('unseen_toi').T
-    fig, axes = plt.subplots(1, len(tois), sharey=True, figsize=[13, 2])
+    fig, axes = plt.subplots(1, len(tois), sharey=True, figsize=[5, 2])
     for ax, unseen, seen, toi in zip(axes, unseen_toi, seen_toi, tois):
         bar_sem(range(3), np.vstack((unseen, seen, seen - unseen)).T, ax=ax,
                 color=['b', 'r', 'k'])
         ax.set_xticks([])
         ax.set_title('%i - %i ms.' % (toi[0] * 1000, toi[1] * 1000))
-    ax.set_ylim(-np.pi/8, np.pi/8)
+        ylim = get_ylim(np.hstack((seen_toi, unseen_toi)))
+        ax.set_ylim(ylim)
+        ax.set_yticks(ylim)
+        ax.set_yticklabels(['', ''])
+        if ax == axes[0]:
+            ax.set_yticklabels(ylim)
     fig.tight_layout()
     report.add_figs_to_section(fig, 'seen_unseen_toi', analysis['name'])
 
@@ -182,38 +198,31 @@ for analysis in analyses:
     for contrast in [1., .75, .5]:
         data = np.array([subject['contrast' + str(contrast) + '']
                          for subject in results['subscore']])
-        plot_sem(times[1:], data, color=cmap(contrast), ax=ax)
+        pretty_decod(data, times=times[1:], color=cmap(contrast), ax=ax,
+                     chance=0.)
+    ax.axvline(.800, color='k')
+    fig.tight_layout()
     report.add_figs_to_section(fig, 'contrast', analysis['name'])
+
     data_contrast = list()
     for contrast in [.5, .75, 1.]:
         data_contrast.append(get_sub('contrast' + str(contrast) + '_toi'))
     data_contrast = np.transpose(data_contrast, [2, 1, 0])
-    fig, axes = plt.subplots(1, len(tois), sharey=True, figsize=[13, 2])
+    fig, axes = plt.subplots(1, len(tois), sharey=True, figsize=[5, 2])
     cmap = plt.get_cmap('gray_r')
     for ax, data, toi in zip(axes, data_contrast, tois):
         bar_sem(range(3), data, ax=ax, color=cmap([.5, .75, 1.]))
         ax.set_xticks([])
         ax.set_title('%i - %i ms.' % (toi[0] * 1000, toi[1] * 1000))
+        ylim = get_ylim(data_contrast)
+        ax.set_ylim(ylim)
+        ax.set_yticks(ylim)
+        ax.set_yticklabels(['', ''])
+        if ax == axes[0]:
+            ax.set_yticklabels(ylim)
     fig.tight_layout()
     report.add_figs_to_section(fig, 'contrast_toi', analysis['name'])
 
-    # XXX WIP ANOVA
-    # main effect of pas
-    data = list()
-    for pas in range(4):
-        data_ = list()
-        for contrast in [.5, .75, 1.]:
-            data_.append(get_sub('pas%s-contrast%s' % (pas, contrast)))
-        data.append(np.nanmean(data_, axis=0))
-    data = np.array(data)
-    R = list()
-    for subject in np.transpose(data, [1, 0, 2]):
-        r, _ = repeated_spearman(subject)
-        R.append(r)
-    T_obs, h, pval, clusters = stats(R)
-    pretty_decod(R, times=times, sig=pval < .05)
-
-    # main effect of contrast
     # TODO absent trials control reactivation
 
 report.save()
