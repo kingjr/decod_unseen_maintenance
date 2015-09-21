@@ -53,7 +53,7 @@ for s, subject in enumerate(subjects):
 
     # vis
     r = list()
-    for ii, pas in enumerate(contrast_list):
+    for ii, contrast in enumerate(contrast_list):
         key = 'target_contrast == %s' % contrast
         subsel = subevents.query(key).index
         if len(subsel) > 0:
