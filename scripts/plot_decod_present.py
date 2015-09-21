@@ -3,10 +3,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 from scripts.config import paths, subjects, report
+from base import stats
 from jr.gat import get_diagonal_ypred, subscore
 from jr.stats import repeated_spearman
 from jr.plot import pretty_decod
-from mne.stats import spatio_temporal_cluster_1samp_test
 import scipy.io as sio
 from scripts.config import analyses
 
@@ -84,23 +84,6 @@ sio.savemat('test.mat', dict(data=data))
 fname = paths('score', analysis='present_anova')
 with open(fname, 'wb') as f:
     pickle.dump([data, R_vis, R_contrast, AUC_pas], f)
-
-
-def stat_fun(x, sigma=0, method='relative'):
-    from mne.stats import ttest_1samp_no_p
-    t_values = ttest_1samp_no_p(x, sigma=sigma, method=method)
-    t_values[np.isnan(t_values)] = 0
-    return t_values
-
-
-def stats(X):
-    T_obs_, clusters, p_values, _ = spatio_temporal_cluster_1samp_test(
-        X, out_type='mask', stat_fun=stat_fun, n_permutations=2**11,
-        n_jobs=-1)
-    p_values_ = np.ones_like(X[0]).T
-    for cluster, pval in zip(clusters, p_values):
-        p_values_[cluster.T] = pval
-    return np.squeeze(p_values_)
 
 p_vis = stats(R_vis[:, :, None])
 p_contrast = stats(R_contrast[:, :, None])
