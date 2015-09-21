@@ -2,6 +2,26 @@ import numpy as np
 from jr.utils import tile_memory_free, pairwise
 from jr.stats import repeated_spearman, repeated_corr
 from jr.gat.scorers import scorer_auc, scorer_spearman
+from mne.stats import spatio_temporal_cluster_1samp_test
+
+
+def stat_fun(x, sigma=0, method='relative'):
+    from mne.stats import ttest_1samp_no_p
+    t_values = ttest_1samp_no_p(x, sigma=sigma, method=method)
+    t_values[np.isnan(t_values)] = 0
+    return t_values
+
+
+def stats(X):
+    X = np.array(X)
+    X = X[:, :, None] if X.ndim == 2 else X
+    T_obs_, clusters, p_values, _ = spatio_temporal_cluster_1samp_test(
+        X, out_type='mask', stat_fun=stat_fun, n_permutations=2**11,
+        n_jobs=-1)
+    p_values_ = np.ones_like(X[0]).T
+    for cluster, pval in zip(clusters, p_values):
+        p_values_[cluster.T] = pval
+    return np.squeeze(p_values_)
 
 # ANALYSES ####################################################################
 
