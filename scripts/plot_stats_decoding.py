@@ -68,7 +68,6 @@ for analysis, ax, color in zip(analyses, axes_alldiag, colors):
     fig_gat_small.tight_layout()
     report.add_figs_to_section(fig_gat_small, 'gat_small', analysis['name'])
 
-
     # Decod
     pretty_decod(scores_diag, times=times, sig=p_values_diag < .05,
                  chance=chance, color=color, fill=True, ax=ax)
