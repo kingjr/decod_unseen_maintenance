@@ -4,6 +4,7 @@ from scipy.stats import wilcoxon
 import matplotlib.pyplot as plt
 from jr.plot import plot_tuning, bar_sem, pretty_decod
 from jr.stats import circ_tuning, circ_mean
+from jr.utils import align_on_diag
 from scripts.config import paths, subjects, subscores, report, analyses
 from base import stats
 analyses = [analysis for analysis in analyses if analysis['name'] in
@@ -11,31 +12,50 @@ analyses = [analysis for analysis in analyses if analysis['name'] in
 
 tois = [(-.100, 0.050), (.100, .250), (.250, .800), (.900, 1.050)]
 
+# FIXME time 153 instead of 154?
 
-def get_predict(gat, sel=None, toi=None, mean=True):
+
+def get_predict(gat, sel=None, toi=None, mean=True, typ='diagonal'):
     from jr.gat import get_diagonal_ypred
-    # select diagonal
-    y_pred = np.squeeze(get_diagonal_ypred(gat)).T % (2 * np.pi)
+    # select data in the gat matrix
+    if typ == 'diagonal':
+        y_pred = np.squeeze(get_diagonal_ypred(gat)).T
+    elif typ == 'align_on_diag':
+        y_pred = np.squeeze(align_on_diag(gat.y_pred_)).transpose([2, 0, 1])
+    elif typ == 'gat':
+        raise NotImplementedError('gat')
+    elif typ == 'slice':
+        raise NotImplementedError('slice')
+    y_pred = y_pred % (2 * np.pi)  # make sure data is in on circle
     # Select trials
     sel = range(len(y_pred)) if sel is None else sel
-    y_pred = y_pred[sel, :]
+    y_pred = y_pred[sel, ...]
     # select TOI
     times = np.array(gat.train_times_['times'])
     toi = times[[0, -1]] if toi is None else toi
     toi_ = np.where((times >= toi[0]) & (times < toi[1]))[0]
-    y_pred = y_pred[:, toi_]
+    y_pred = y_pred[:, toi_, ...]
     # mean across time point
     if mean:
-        y_pred = circ_mean(y_pred, axis=1)[:, None]
-    return y_pred
+        y_pred = circ_mean(y_pred, axis=1)
+    return y_pred[:, None] if y_pred.ndim == 1 else y_pred
 
 
-def get_predict_error(gat, sel=None, toi=None, mean=True):
-    y_pred = get_predict(gat, sel=sel, toi=toi, mean=mean)
+def get_predict_error(gat, sel=None, toi=None, mean=True, typ='diagonal'):
+    y_pred = get_predict(gat, sel=sel, toi=toi, mean=mean, typ=typ)
     # error is diff modulo pi centered on 0
-    y_true = np.tile(gat.y_true_, [np.shape(y_pred)[1], 1]).T
+    y_true = np.tile(gat.y_true_, np.hstack((np.shape(y_pred)[1:], 1)))
+    y_true = np.transpose(y_true, [y_true.ndim - 1] + range(y_true.ndim - 1))
     y_error = (y_pred - y_true + np.pi) % (2 * np.pi) - np.pi
     return y_error
+
+
+def mean_acc(y_error, axis=None):
+    # range between -pi and pi just in case not done already
+    y_error = y_error % (2 * np.pi)
+    y_error = (y_error + np.pi) % (2 * np.pi) - np.pi
+    # random error = np.pi/2, thus:
+    return np.pi / 2 - np.mean(np.abs(y_error), axis=axis)
 
 
 def resample1D(x):
@@ -51,7 +71,7 @@ def resample1D(x):
 for analysis in ['target_circAngle', 'probe_circAngle']:
     results = dict(diagonal=list(), angle_pred=list(), toi=list(),
                    subscore=list(), corr_contrast=list(), corr_pas=list(),
-                   R_contrast=list(), R_vis=list())
+                   R_contrast=list(), R_vis=list(), align_on_diag=list())
     for s, subject in enumerate(subjects):
         print s
         fname = paths('decod', subject=subject, analysis=analysis)
@@ -60,13 +80,6 @@ for analysis in ['target_circAngle', 'probe_circAngle']:
         times = gat.train_times_['times']
         subevents = events.iloc[events_sel].reset_index()
         n_bins = 24
-
-        def mean_acc(y_error, axis=None):
-            # range between -pi and pi just in case not done already
-            y_error = y_error % (2 * np.pi)
-            y_error = (y_error + np.pi) % (2 * np.pi) - np.pi
-            # random error = np.pi/2, thus:
-            return np.pi / 2 - np.mean(np.abs(y_error), axis=axis)
 
         # Mean error across trial on the diagonal
         y_error = mean_acc(get_predict_error(gat, mean=False), axis=0)
@@ -113,6 +126,30 @@ for analysis in ['target_circAngle', 'probe_circAngle']:
                 y_error_toi = mean_acc(y_error_toi[subsel])
                 results_[subanalysis[0] + '_toi'].append(y_error_toi)
         results['subscore'].append(results_)
+
+        # Duration
+        results_ = list()
+        for toi in tois:
+            # for each toi: 1. realign pred on diag, 2. compute error
+            y_error = get_predict_error(gat, toi=toi, typ='align_on_diag',
+                                        mean=False)
+            results_pas = list()
+            for pas in range(4):
+                # select condition
+                pas_cond = 'detect_button == %i' % pas
+                present_cond = ' and target_present == True'
+                sel = subevents.query(pas_cond + present_cond).index
+                # if no trial matches seleted conditions, add NaNs
+                if len(sel) == 0:
+                    results_pas.append(np.nan * np.zeros(y_error.shape[2]))
+                    continue
+                # 3. mean error across trials
+                y_error_ = mean_acc(y_error[sel, ...], axis=0)
+                # 4. mean across classifier (toi)
+                y_error_ = y_error_.mean(0)
+                results_pas.append(y_error_)
+            results_.append(results_pas)
+        results['align_on_diag'].append(results_)
 
     results['times'] = times
     results['bins'] = bins
@@ -259,6 +296,33 @@ for analysis in analyses:
     ax.text(.200, .18, 'Seen', color='r', weight='bold', ha='center')
     report.add_figs_to_section(fig, 'seen_unseen', analysis['name'])
 
+    # Duration early late
+    data = np.array(results['align_on_diag'])
+    data = [data[:, 1, :, :], data[:, 2, :, :]]
+    freq = np.ptp(times) / len(times)
+    times_align = times - np.min(times) - np.ptp(times) / 2
+    toi_align = np.where((times_align > -.210) & (times_align < .210))[0]
+    fig, axes = plt.subplots(4, len(data), figsize=[5, 5])
+    cmap = plt.get_cmap('coolwarm_r')
+    for ii, (col, axs) in enumerate(zip(cmap(np.linspace(1, 0, 4.)), axes)):
+        for jj, (ax, result) in enumerate(zip(axs, data)):
+            pretty_decod(result[:, ii, toi_align], color=col, ax=ax,
+                         times=times_align[toi_align], fill=True, alpha=.5,
+                         sig=stats(result[:, ii, toi_align]) < .05, chance=0.)
+            ax.set_yticks([-.05, .13])
+            ax.set_yticklabels([-.05, .13])
+            if ax != axs[0]:
+                ax.set_ylabel('')
+                ax.set_yticklabels([])
+            ax.set_ylim([-.05, .13])
+            if ii == 0:
+                ax.set_title('%i $-$ %i ms' % (tois[jj+1][0] * 1000,
+                                               tois[jj+1][1] * 1000))
+            else:
+                ax.set_xlabel([])
+                ax.set_xticks([])
+    fig.tight_layout()
+    report.add_figs_to_section(fig, 'duration', analysis['name'])
     # TODO absent trials control reactivation
 
 report.save()
