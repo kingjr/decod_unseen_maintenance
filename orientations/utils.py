@@ -104,7 +104,9 @@ def get_events(bhv_fname):
         # Response 2: detection/visibility
         event['detect_button'] = \
             detect_pressed(trial['response_visibilityCode'] - 1)
-        event['detect_seen'] = event['detect_button'] in range(1, 4)
+        event['detect_seen'] = event['detect_button'] > 0
+        if np.isnan(event['detect_button']):
+            event['detect_seen'] = np.nan
         return event
 
     events = list()
