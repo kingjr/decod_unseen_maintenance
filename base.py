@@ -1,6 +1,7 @@
 import numpy as np
 from jr.utils import tile_memory_free, pairwise
 from jr.stats import repeated_spearman, repeated_corr
+from jr.stats import corr_linear_circular
 from jr.gat.scorers import scorer_auc, scorer_spearman
 from mne.stats import spatio_temporal_cluster_1samp_test
 
@@ -125,14 +126,23 @@ def _default_analysis(X, y):
     if len(unique_y) == 2:
         y = np.where(y == unique_y[0], 1, -1)
         # Tile Y to across X dimension without allocating memory
-        Y = tile_memory_free(y, X.shape[1:])
-        return np.mean(X * Y, axis=0)
+        # Y = tile_memory_free(y, X.shape[1:])
+        # return np.mean(X * Y, axis=0)
+        return pairwise(X, y, func=_auc)
 
     # Linear regression:
     elif len(unique_y) > 2:
         return repeated_spearman(X, y)
     else:
         raise RuntimeError('Please specify a function for this kind of data')
+
+
+def _auc(X, y):
+    from sklearn.metrics import roc_auc_score
+    score = np.zeros_like(X[0])
+    for ii, x in enumerate(X.T):
+        score[ii] = roc_auc_score(y, x)
+    return score
 
 
 # MNE #########################################################################
@@ -238,5 +248,5 @@ def scorer_angle(truth, prediction):
 
 
 def scorer_circLinear(y_line, y_circ):
-    R, R2, pval = circular_linear_correlation(y_line, y_circ)
+    R, R2, pval = corr_linear_circular(y_line, y_circ)
     return R
