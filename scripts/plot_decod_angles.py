@@ -33,7 +33,7 @@ def get_predict(gat, sel=None, toi=None, mean=True, typ='diagonal'):
     # select TOI
     times = np.array(gat.train_times_['times'])
     toi = times[[0, -1]] if toi is None else toi
-    toi_ = np.where((times >= toi[0]) & (times < toi[1]))[0]
+    toi_ = np.where((times >= toi[0]) & (times <= toi[1]))[0]
     y_pred = y_pred[:, toi_, ...]
     # mean across time point
     if mean:
