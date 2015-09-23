@@ -1,29 +1,31 @@
 import pickle
 import numpy as np
 import matplotlib.pyplot as plt
-from jr.plot import plot_butterfly, plot_gfp
+from jr.plot import plot_butterfly, plot_gfp, pretty_colorbar
 from scripts.config import (report, paths, analyses)
 
 cmap = plt.get_cmap('gist_rainbow')
 colors = cmap(np.linspace(0, 1., len(analyses) + 1))
+tois = [(-.100, 0.050), (.100, .250), (.300, .800), (.900, 1.050)]
 
 # Apply contrast on each type of epoch
 for analysis, color in zip(analyses, colors):
-
     # load stats
     pkl_fname = paths('evoked', analysis=('stats_' + analysis['name']))
     with open(pkl_fname, 'rb') as f:
         evoked, data, p_values, sig, analysis = pickle.load(f)
+    evoked_full = evoked.copy()
+
     sig = np.zeros_like(evoked.data)
     sig[::3, :] = sig[1::3, :] = sig[2::3, :] = p_values < .05
     sig_times = np.array(np.sum(sig, axis=0) > 0., dtype=int)
 
     # Plot topo
-    tois = np.linspace(0, .500, 6)
+    continuous_tois = np.linspace(0, .500, 6)
     sig = sig[:, np.where((evoked.times > -.100) & (evoked.times <= .600))[0]]
     evoked.crop(-.100, .600)
 
-    def topomap_clim(data, factor=10, grad=False):
+    def topomap_clim(data, factor=10, grad=False, baseline=0.):
         if grad:
             # m = np.median(data)
             # s = np.median(np.abs(data - m))
@@ -36,6 +38,16 @@ for analysis, color in zip(analyses, colors):
             vmin, vmax = np.percentile(data, [factor, 100-factor])
             vmin, vmax = (-np.max([np.abs(vmin), vmax]),
                           np.max([np.abs(vmin), vmax]))
+        # make sure that baseline is around 0, to avoid plotting noise when
+        # nothing is sig.
+        if baseline is not None:
+            baseline = np.where(evoked.times <= baseline)[0][-1]
+            bsl_mM = np.percentile(np.abs(data[:, :baseline]), [10, 90])
+            while np.ptp(bsl_mM) > (np.ptp([vmin, vmax]) / 2.):
+                bsl_mM = np.percentile(np.abs(data[:, :baseline]), [10, 90])
+                vmax *= 1.1
+                vmin = vmin if grad else vmin * 1.1
+
         smin, smax = '%.2f' % vmin, '%.2f' % vmax
         if vmax < 5e-3:
             smin = '0' if vmin == 0 else '%.0e' % vmin
@@ -44,7 +56,7 @@ for analysis, color in zip(analyses, colors):
 
     vmin, vmax, smin, smax = topomap_clim(evoked.data[::3, :], grad=True)
     opts = dict(sensors=False, scale=1, contours=False,
-                times=tois, average=.025, colorbar=True, show=False)
+                times=continuous_tois, average=.025, colorbar=True, show=False)
     fig_grad = evoked.plot_topomap(cmap='afmhot_r', ch_type='grad',
                                    vmin=vmin, vmax=vmax, **opts)
     cax = fig_grad.get_children()[-1]
@@ -80,4 +92,18 @@ for analysis, color in zip(analyses, colors):
     fig_butt_gfp.tight_layout()
     report.add_figs_to_section(fig_butt_gfp, 'butterfly_gfp', analysis['name'])
 
+    # Plot topo of mean |effect| on TOI
+    evoked_full.data = np.abs(evoked_full.data)
+    fig, axes = plt.subplots(1, len(tois), figsize=[9, 2.5])
+    fig.subplots_adjust(wspace=0.01, left=0.)
+    vmin, vmax, smin, smax = topomap_clim(evoked_full.data[::3, :], grad=True)
+    for ax, toi in zip(axes, tois):
+        evoked_full.plot_topomap(times=[np.mean(toi)], average=np.ptp(toi),
+                                 cmap='afmhot_r', ch_type='grad', show=False,
+                                 vmin=vmin, vmax=vmax, contours=False, scale=1,
+                                 colorbar=False, sensors=False, axes=ax)
+    pretty_colorbar(cax=fig.add_axes([.91, 0.15, .03, .6]),
+                    im=axes[-2].get_children()[7],
+                    ticklabels=[smin, '', smax])
+    report.add_figs_to_section(fig, 'topo_mean', analysis['name'])
 report.save()
