@@ -121,29 +121,29 @@ def nested_analysis(X, df, condition, function=None, query=None,
 
 
 def _default_analysis(X, y):
+    # from sklearn.metrics import roc_auc_score
+    from jr.stats import fast_mannwhitneyu
     # Binary contrast
     unique_y = np.unique(y)
-    if len(unique_y) == 2:
+    # if two condition, can only return contrast
+    if len(y) == 2:
         y = np.where(y == unique_y[0], 1, -1)
         # Tile Y to across X dimension without allocating memory
-        # Y = tile_memory_free(y, X.shape[1:])
-        # return np.mean(X * Y, axis=0)
-        return pairwise(X, y, func=_auc)
-
+        Y = tile_memory_free(y, X.shape[1:])
+        return np.mean(X * Y, axis=0)
+    elif len(unique_y) == 2:
+        # if two conditions but multiple trials, can return AUC
+        # auc = np.zeros_like(X[0])
+        _, _, auc = fast_mannwhitneyu(X[y == unique_y[0], ...],
+                                      X[y == unique_y[1], ...], n_jobs=1)
+        # for ii, x in enumerate(X.T):
+        #     auc[ii] = roc_auc_score(y, np.copy(x))
+        return auc
     # Linear regression:
     elif len(unique_y) > 2:
         return repeated_spearman(X, y)
     else:
         raise RuntimeError('Please specify a function for this kind of data')
-
-
-def _auc(X, y):
-    from sklearn.metrics import roc_auc_score
-    score = np.zeros_like(X[0])
-    for ii, x in enumerate(X.T):
-        score[ii] = roc_auc_score(y, x)
-    return score
-
 
 # MNE #########################################################################
 
