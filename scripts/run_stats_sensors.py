@@ -28,8 +28,12 @@ for analysis in analyses:
     # combine grad at subject level
     data = np.array(data)
     grad = mne.pick_types(evoked.info, 'grad')
-    data[:, ::3, :] = np.sqrt(data[:, ::3, :] ** 2 + data[:, 1::3, :] ** 2)
-    data[:, 1::3, :] = 0
+    if analysis['typ'] == 'categorize':
+        data[:, grad, :] -= .5  # AUC center
+    data[:, grad[::2], :] = np.sqrt(data[:, grad[::2], :] ** 2 +
+                                    data[:, grad[1::2], :] ** 2)
+    data[:, grad[1::2], :] = 0
+
     # keep robust averaging for plotting
     epochs = EpochsArray(data, evoked.info,
                          events=np.zeros((len(data), 3), dtype=int),
