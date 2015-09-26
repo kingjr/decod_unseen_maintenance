@@ -171,13 +171,25 @@ for ii in range(2):
 
 # load absent target prediction
 results['target_absent'] = np.zeros((20, 154, 153))
+results['target_absent_bias_toi'] = np.zeros((20, len(tois)))
 for s, subject in enumerate(subjects):  # Loop across each subject
     print(subject)
     pkl_fname = paths('decod', subject=subject,
                       analysis='target_circAngle_absent')
     with open(pkl_fname, 'rb') as f:
-        gat, analysis, sel, events = pickle.load(f)
+        gat, analysis, events_sel, events = pickle.load(f)
     results['target_absent'][s, :, :] = gat.scores_
+    # compute virtual bias to compare to unseen trials
+    subevents = events.iloc[events_sel].reset_index()
+    # virtual tilt
+    y_tilt = (np.arange(len(events_sel)) % 2) * 2. - 1.
+    y_true = subevents['probe_circAngle']
+    for t, toi in enumerate(tois):
+        y_error_toi = get_predict_error(gat, y_true=y_true, toi=toi,
+                                        typ='diagonal')
+        # same but after averaging predicted angle across time
+        results['target_absent_bias_toi'][s, t] = mean_bias(
+            np.squeeze(y_error_toi), y_tilt)
 results['target_absent_pval'] = stats(results['target_absent'])
 
 # save
@@ -257,10 +269,11 @@ def quick_stats(x, ax=None):
 
 fig, axes = plt.subplots(1, len(tois), figsize=[8, 2])
 for t, (toi, ax) in enumerate(zip(tois, axes)):
+    absent = -results['target_absent_bias_toi'][:, t]
     seen = -results['bias_vis_toi'][:, 0, 1, 3, t]
     unseen = -results['bias_vis_toi'][:, 0, 1, 0, t]
-    bar_sem(np.vstack((unseen, seen)).T, color=['b', 'r'], ax=ax)
-    quick_stats(np.vstack((unseen, seen)).T, ax=ax)
+    bar_sem(np.vstack((absent, unseen, seen)).T, color=['k', 'b', 'r'], ax=ax)
+    quick_stats(np.vstack((absent, unseen, seen)).T, ax=ax)
     diff = seen - unseen
     print wilcoxon(diff[~np.isnan(diff)])
     ax.set_title('%i $-$ %i ms' % (toi[0] * 1e3, toi[1] * 1e3))
