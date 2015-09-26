@@ -27,60 +27,61 @@ results = dict(
 )
 
 # Gather data
-for s, subject in enumerate(subjects):
-    print s
-    fname = paths('decod', subject=subject, analysis='target_present')
-    with open(fname, 'rb') as f:
-        gat, _, events_sel, events = pickle.load(f)
-    times = gat.train_times_['times']
-    y_pred = np.transpose(np.squeeze(get_diagonal_ypred(gat)))
-    y_error = y_pred - np.tile(gat.y_true_, [n_times, 1]).T
-    subevents = events.iloc[events_sel].reset_index()
+if False:
+    for s, subject in enumerate(subjects):
+        print s
+        fname = paths('decod', subject=subject, analysis='target_present')
+        with open(fname, 'rb') as f:
+            gat, _, events_sel, events = pickle.load(f)
+        times = gat.train_times_['times']
+        y_pred = np.transpose(np.squeeze(get_diagonal_ypred(gat)))
+        y_error = y_pred - np.tile(gat.y_true_, [n_times, 1]).T
+        subevents = events.iloc[events_sel].reset_index()
 
-    # contrast effect
-    r = list()
-    for ii, pas in enumerate(pas_list):
-        key = 'detect_button == %s and target_present == True' % pas
-        subsel = subevents.query(key).index
-        if len(subsel) > 0:
-            r.append(repeated_spearman(y_error[subsel, :],
-                     np.array(subevents.target_contrast)[subsel]))
-    results['R_contrast'][s, :] = np.nanmean(r, axis=0)
+        # contrast effect
+        r = list()
+        for ii, pas in enumerate(pas_list):
+            key = 'detect_button == %s and target_present == True' % pas
+            subsel = subevents.query(key).index
+            if len(subsel) > 0:
+                r.append(repeated_spearman(y_error[subsel, :],
+                         np.array(subevents.target_contrast)[subsel]))
+        results['R_contrast'][s, :] = np.nanmean(r, axis=0)
 
-    # visibility effect
-    r = list()
-    for ii, contrast in enumerate(contrast_list):
-        key = 'target_contrast == %s' % contrast
-        subsel = subevents.query(key).index
-        if len(subsel) > 0:
-            r.append(repeated_spearman(y_error[subsel, :],
-                     np.array(subevents.detect_button)[subsel]))
-    results['R_vis'][s, :] = np.nanmean(r, axis=0)
+        # visibility effect
+        r = list()
+        for ii, contrast in enumerate(contrast_list):
+            key = 'target_contrast == %s' % contrast
+            subsel = subevents.query(key).index
+            if len(subsel) > 0:
+                r.append(repeated_spearman(y_error[subsel, :],
+                         np.array(subevents.detect_button)[subsel]))
+        results['R_vis'][s, :] = np.nanmean(r, axis=0)
 
-    # mean decoding seen unseen
-    for ii, pas in enumerate(pas_list):
-        key = 'detect_button == %s or target_present == False' % pas
-        subsel = subevents.query(key).index
-        if len(subsel) == 0:
-            continue
-        score = subscore(gat, subsel)
-        results['AUC_pas'][ii, s, :] = np.diagonal(score)
-        # duration effect
-        score_align = align_on_diag(score)
-        for jj, toi in enumerate(tois):
-            results_pas = list()
-            toi_ = np.where((times >= toi[0]) & (times <= toi[1]))[0]
-            results['AUC_pas_duration'][jj, ii, s, :] = np.mean(
-                score_align[toi_, :], axis=0)
+        # mean decoding seen unseen
+        for ii, pas in enumerate(pas_list):
+            key = 'detect_button == %s or target_present == False' % pas
+            subsel = subevents.query(key).index
+            if len(subsel) == 0:
+                continue
+            score = subscore(gat, subsel)
+            results['AUC_pas'][ii, s, :] = np.diagonal(score)
+            # duration effect
+            score_align = align_on_diag(score)
+            for jj, toi in enumerate(tois):
+                results_pas = list()
+                toi_ = np.where((times >= toi[0]) & (times <= toi[1]))[0]
+                results['AUC_pas_duration'][jj, ii, s, :] = np.mean(
+                    score_align[toi_, :], axis=0)
 
-results['times'] = times
-results['p_vis'] = stats(results['R_vis'][:, :, None])
-results['p_contrast'] = stats(results['R_contrast'][:, :, None])
+    results['times'] = times
+    results['p_vis'] = stats(results['R_vis'][:, :, None])
+    results['p_contrast'] = stats(results['R_contrast'][:, :, None])
 
+    fname = paths('score', analysis='present_anova')
+    with open(fname, 'wb') as f:
+        pickle.dump(results, f)
 
-fname = paths('score', analysis='present_anova')
-with open(fname, 'wb') as f:
-    pickle.dump(results, f)
 
 # Plot
 fname = paths('score', analysis='present_anova')
@@ -145,13 +146,12 @@ fig.tight_layout()
 report.add_figs_to_section(fig, 'visibility', 'AUC')
 
 # Duration for each visibility and TOI
-data = results['AUC_pas_duration'][1:, ...]
+data = results['AUC_pas_duration'][1:-1, ...]  # activation & maintenance TOI
 freq = np.ptp(times) / len(times)
 times_align = times - np.min(times) - np.ptp(times) / 2
-toi_align = np.where((times_align > -.210) & (times_align < .210))[0]
 toi_align = np.where((times_align > 0.) & (times_align < .304))[0]
 fig, axes = plt.subplots(1, len(data), figsize=[4, 4])
-cmap = plt.get_cmap('coolwarm_r')
+cmap = plt.get_cmap('bwr_r')
 for ax, result, toi in zip(axes, data, tois[1:]):
     for ii, col in enumerate(cmap(np.linspace(0, 1, 4.))):
         if ii in [1, 2]:
@@ -161,7 +161,7 @@ for ax, result, toi in zip(axes, data, tois[1:]):
                      sig=stats(result[3-ii, :, toi_align].T - .5) < .05)
         ax.set_yticks([.25, 1.])
         ax.set_yticklabels([.25, 1.])
-        ax.set_ylabel('AUC', labelpad=-10)
+        ax.set_ylabel('AUC', labelpad=-15)
         if ax != axes[0]:
             ax.set_yticklabels(['', ''])
             ax.set_ylabel('')

@@ -3,35 +3,9 @@ import os.path as op
 import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+from jr.plot import plot_sem, pretty_plot
+from scripts.config import paths, subjects, report
 
-plt.figure()
-# plt.show()
-
-from scripts.config import (
-    paths,
-    subjects
-)
-
-from base import plot_sem
-from meeg_preprocessing.utils import setup_provenance
-
-report, run_id, _, logger = setup_provenance(
-    script=__file__, results_dir=paths('report'))
-
-
-def pretty_plot(ax):
-    ax.tick_params(colors='dimgray')
-    ax.xaxis.label.set_color('dimgray')
-    ax.yaxis.label.set_color('dimgray')
-    ax.xaxis.set_ticks_position('bottom')
-    ax.yaxis.set_ticks_position('left')
-    ax.spines['left'].set_color('dimgray')
-    ax.spines['bottom'].set_color('dimgray')
-    ax.spines['right'].set_visible(False)
-    ax.spines['top'].set_visible(False)
-
-
-# #############################################################################
 # tuning curve as a function of visibility
 visibilities = ['unseen', 'pas1.0', 'pas2.0', 'pas3.0']
 contrasts = ['contrast0.5', 'contrast0.75', 'contrast1.0']
