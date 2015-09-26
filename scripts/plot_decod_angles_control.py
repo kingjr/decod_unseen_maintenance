@@ -2,11 +2,13 @@ import pickle
 import numpy as np
 import matplotlib.pyplot as plt
 from jr.utils import align_on_diag
-from jr.plot import pretty_gat, plot_tuning
+from jr.plot import (pretty_gat, plot_tuning, pretty_axes, pretty_decod,
+                     pretty_colorbar, bar_sem)
 from jr.stats import circ_tuning, circ_mean, corr_circular_linear
 
 from scripts.config import paths, subjects, report
 from base import stats
+from scipy.stats import wilcoxon
 
 tois = [(-.100, 0.050), (.100, .200), (.300, .800), (.900, 1.050)]
 
@@ -87,11 +89,11 @@ def mean_bias(y_error, y_tilt):
 n_bins = 24
 toi_probe = [.900, 1.050]
 # Gather data #################################################################
-results = dict(accuracy=np.zeros((20, 2, 2, 154, 154)),
-               bias=np.zeros((20, 2, 2, 154, 154)),
-               bias_vis=np.zeros((20, 2, 2, 4, 154, 154)),
-               bias_vis_toi=np.zeros((20, 2, 2, 4)),
-               tuning=np.zeros((20, 2, 2, n_bins, 3)))
+results = dict(accuracy=np.nan*np.zeros((20, 2, 2, 154, 154)),
+               bias=np.nan*np.zeros((20, 2, 2, 154, 154)),
+               bias_vis=np.nan*np.zeros((20, 2, 2, 4, 154, 154)),
+               bias_vis_toi=np.nan*np.zeros((20, 2, 2, 4, len(tois))),
+               tuning=np.nan*np.zeros((20, 2, 2, n_bins, 3)))
 for ii, train_analysis in enumerate(['target_circAngle', 'probe_circAngle']):
     for s, subject in enumerate(subjects):
         print s
@@ -130,12 +132,13 @@ for ii, train_analysis in enumerate(['target_circAngle', 'probe_circAngle']):
                 results['bias_vis'][s, ii, jj, pas, :, :] = mean_bias(
                     y_error[sel, :, :], y_tilt[sel])
 
-                y_error_toi = np.array([np.diag(y_) for y_ in y_error])
-                toi_ = (times >= .900) & (times <= 1.050)
-                y_error_toi = circ_mean(y_error_toi[:, toi_], axis=1)
-                # same but after averaging predicted angle across time
-                results['bias_vis_toi'][s, ii, jj, pas] = mean_bias(
-                    y_error_toi[sel], y_tilt[sel])
+                for t, toi in enumerate(tois):
+                    y_error_toi = get_predict_error(gat, y_true=y_true[sel],
+                                                    sel=sel, toi=toi,
+                                                    typ='diagonal')
+                    # same but after averaging predicted angle across time
+                    results['bias_vis_toi'][s, ii, jj, pas, t] = mean_bias(
+                        np.squeeze(y_error_toi), y_tilt[sel])
 
             # Tuning curve for probe 1 and probe 2
             tuning = list()
@@ -153,6 +156,11 @@ for ii, train_analysis in enumerate(['target_circAngle', 'probe_circAngle']):
                 tuning.append(probas)
             results['tuning'][s, ii, jj, :, :] = np.transpose(tuning)
 
+results['bias_pval'] = np.zeros_like((results['bias'][0]))
+for ii in range(2):
+    for jj in range(2):
+        scores = results['bias'][:, ii, jj, :, :]
+        results['bias_pval'][ii, jj, :, :] = stats(scores)
 
 # test significance of target versus probe train test
 results['target_probe_pval'] = np.zeros((154, 154, 2, 2))
@@ -175,6 +183,7 @@ results['target_absent_pval'] = stats(results['target_absent'])
 # save
 results['times'] = gat.train_times_['times']
 results['bins'] = bins
+results['tois'] = tois
 fname = paths('score', subject='fsaverage', analysis='target_probe')
 with open(fname, 'wb') as f:
     pickle.dump(results, f)
@@ -184,6 +193,8 @@ with open(fname, 'wb') as f:
 fname = paths('score', subject='fsaverage', analysis='target_probe')
 with open(fname, 'rb') as f:
     results = pickle.load(f)
+times = results['times']
+tois = results['tois']
 
 
 # Plot tuning probe time: train test target probe
@@ -199,34 +210,61 @@ for ii in range(2):
                         ax=axes[ii, jj], shift=np.pi, color=color)
             plot_tuning(results['tuning'][:, ii, jj, :, tilt],
                         ax=axes[ii, jj], shift=np.pi, color='k', alpha=0.)
-            if ii == 0:
-                axes[ii, jj].set_title(['Target', 'Probe'][jj])
-                axes[ii, jj].set_xlabel('')
-                axes[ii, jj].set_xticklabels([])
-            else:
-                axes[ii, jj].set_xticklabels(['$-\pi/2$', '', '$\pi/2$'])
-                axes[ii, jj].set_xlabel('Angle Error', labelpad=-10)
-            axes[ii, jj].set_yticks([0.014, 0.08])
-            axes[ii, jj].set_yticklabels([])
-            if jj == 0:
-                axes[ii, jj].set_yticklabels([1.4, 8.])
-                axes[ii, jj].set_ylabel('Probability', labelpad=-10)
             axes[ii, jj].axvline(-np.pi / 3, color='k')
             axes[ii, jj].axvline(np.pi / 3, color='k')
             axes[ii, jj].axvline(0, color='k')
+pretty_axes(axes, xticklabels=['$-\pi/2$', '', '$\pi/2$'],
+            xlabel='Angle Error',
+            yticks=[0.014, 1./len(results['bins']), 0.08],
+            yticklabels=[1.4, '', 8.], ylabel='Probability')
 fig.tight_layout()
 
 # Plot bias GAT
-fig, axes = plt.subplots(2, 2)
+fig, axes = plt.subplots(2, 2, figsize=[6.15, 6.])
 for ii in range(2):
     for jj in range(2):
-        score = np.mean(results['bias'][:, ii, jj, ...], axis=0)
-        pretty_gat(score, times=times, ax=axes[ii, jj])
+        scores = np.array(results['bias'][:, ii, jj, ...])
+        p_val = results['bias_pval'][ii, jj, :, :].T  # XXX ? why T
+        pretty_gat(scores.mean(0), times=times, ax=axes[ii, jj],
+                   colorbar=False, clim=[-.1, .1], sig=p_val < .05)
+        axes[ii, jj].axvline(.800, color='k')
+        axes[ii, jj].axhline(.800, color='k')
+pretty_axes(axes)
+pretty_colorbar(cax=fig.add_axes([.92, .2, .025, .55]), ax=axes[0, 0])
 
-# Plot bias unseen: doesn't work
-fig, axes = plt.subplots(2, 2)
-score = results['bias_vis'][:, 0, 1, 1, :, :]
-score = np.array([np.diagonal(s) for s in score])
-score = np.mean(score[:, (times > .900) & (times < 1.050)], axis=1)
+# plot bias diagonal
+fig, ax = plt.subplots(1, figsize=[7., 2.])
+scores = np.array([np.diag(s) for s in results['bias'][:, 0, 1, ...]])
+p_val = np.diag(results['bias_pval'][0, 1, :, :])
+color = cmap(1.)
+pretty_decod(-scores, ax=ax, times=times, color=color, sig=p_val < .05,
+             fill=True)
+ax.axvline(.800, color='k')
 
-# From here: test whether bias unseen works when focusing on a TOI
+# Test significant bias in each toi for unseen and seen
+
+
+def quick_stats(x, ax=None):
+    pvals = [wilcoxon(ii[~np.isnan(ii)])[1] for ii in x.T]
+    sig = [['', '*'][p < .05] for p in pvals]
+    m = np.nanmean(x, axis=0)
+    s = np.nanstd(x, axis=0)
+    print(m, s, pvals)
+    if ax is not None:
+        for x_, (y_, sig_) in enumerate(zip(m / 2., sig)):
+            ax.text(x_ + .5, y_, sig_, color='w', weight='bold', size=20,
+                    ha='center', va='center')
+
+fig, axes = plt.subplots(1, len(tois), figsize=[8, 2])
+for t, (toi, ax) in enumerate(zip(tois, axes)):
+    seen = -results['bias_vis_toi'][:, 0, 1, 3, t]
+    unseen = -results['bias_vis_toi'][:, 0, 1, 0, t]
+    bar_sem(np.vstack((unseen, seen)).T, color=['b', 'r'], ax=ax)
+    quick_stats(np.vstack((unseen, seen)).T, ax=ax)
+    diff = seen - unseen
+    print wilcoxon(diff[~np.isnan(diff)])
+    ax.set_title('%i $-$ %i ms' % (toi[0] * 1e3, toi[1] * 1e3))
+pretty_axes(axes, xticks=[], xticklabels='', ylim=[-.1, .25],
+            yticks=[-.1, 0, .25], yticklabels=[-.1, '', .25])
+fig.tight_layout()
+fig.subplots_adjust(wspace=.1)
