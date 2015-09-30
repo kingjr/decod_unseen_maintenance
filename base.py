@@ -1,7 +1,7 @@
 import numpy as np
 from jr.utils import tile_memory_free, pairwise
-from jr.stats import repeated_spearman, repeated_corr
-from jr.stats import corr_linear_circular
+from jr.stats import (repeated_spearman, repeated_corr, corr_linear_circular,
+                      circ_tuning, circ_mean, corr_circular_linear)
 from jr.gat.scorers import scorer_auc, scorer_spearman
 from mne.stats import spatio_temporal_cluster_1samp_test
 
@@ -249,4 +249,78 @@ def scorer_angle(truth, prediction):
 
 def scorer_circLinear(y_line, y_circ):
     R, R2, pval = corr_linear_circular(y_line, y_circ)
+    return R
+
+
+def get_predict(gat, sel=None, toi=None, mean=True, typ='diagonal'):
+    from jr.gat import get_diagonal_ypred
+    from jr.utils import align_on_diag
+    # select data in the gat matrix
+    if typ == 'diagonal':
+        y_pred = np.squeeze(get_diagonal_ypred(gat)).T
+    elif typ == 'align_on_diag':
+        y_pred = np.squeeze(align_on_diag(gat.y_pred_)).transpose([2, 0, 1])
+    elif typ == 'gat':
+        y_pred = np.squeeze(gat.y_pred_).transpose([2, 0, 1])
+    elif typ == 'slice':
+        raise NotImplementedError('slice')
+    y_pred = y_pred % (2 * np.pi)  # make sure data is in on circle
+    # Select trials
+    sel = range(len(y_pred)) if sel is None else sel
+    y_pred = y_pred[sel, ...]
+    # select TOI
+    times = np.array(gat.train_times_['times'])
+    toi = times[[0, -1]] if toi is None else toi
+    toi_ = np.where((times >= toi[0]) & (times <= toi[1]))[0]
+    y_pred = y_pred[:, toi_, ...]
+    # mean across time point
+    if mean:
+        y_pred = circ_mean(y_pred, axis=1)
+    return y_pred[:, None] if y_pred.ndim == 1 else y_pred
+
+
+def get_predict_error(gat, sel=None, toi=None, mean=True, typ='diagonal',
+                      y_true=None):
+    y_pred = get_predict(gat, sel=sel, toi=toi, mean=mean, typ=typ)
+    # error is diff modulo pi centered on 0
+    sel = range(len(y_pred)) if sel is None else sel
+    if y_true is None:
+        y_true = gat.y_true_[sel]
+    y_true = np.tile(y_true, np.hstack((np.shape(y_pred)[1:], 1)))
+    y_true = np.transpose(y_true, [y_true.ndim - 1] + range(y_true.ndim - 1))
+    y_error = (y_pred - y_true + np.pi) % (2 * np.pi) - np.pi
+    return y_error
+
+
+def mean_acc(y_error, axis=None):
+    # range between -pi and pi just in case not done already
+    y_error = y_error % (2 * np.pi)
+    y_error = (y_error + np.pi) % (2 * np.pi) - np.pi
+    # random error = np.pi/2, thus:
+    return np.pi / 2 - np.mean(np.abs(y_error), axis=axis)
+
+
+def mean_bias(y_error, y_tilt):
+    # This is an ad hoc function to compute the systematic bias across angles
+    # It consists in whether the angles are correlated with the tilt [-1, 1]
+    # and multiplying the root square resulting R² value by the sign of the
+    # mean angle.
+    # In this way, if there is a correlations, we can get a positive or
+    # negative R value depending on the direction of the bias, and get 0 if
+    # there's no correlation.
+    n_train, n_test = 1, 1
+    y_tilt_ = y_tilt
+    if y_error.ndim == 3:
+        n_train, n_test = np.shape(y_error)[1:]
+        y_tilt_ = np.tile(y_tilt, [n_train, n_test, 1]).transpose([2, 0, 1])
+
+    # compute mean angle
+    alpha = circ_mean(y_error * y_tilt_, axis=0)
+    alpha = ((alpha + np.pi) % (2 * np.pi)) - np.pi
+    # compute correlation
+    _, R2, _ = corr_circular_linear(y_error.reshape([len(y_error), -1]),
+                                    y_tilt)
+    R2 = R2.reshape([n_train, n_test])
+    # set direction of the bias
+    R = np.sqrt(R2) * np.sign(alpha)
     return R
