@@ -6,56 +6,11 @@ from jr.plot import plot_tuning, bar_sem, pretty_decod
 from jr.stats import circ_tuning, circ_mean, robust_mean
 from jr.utils import align_on_diag
 from scripts.config import paths, subjects, subscores, report, analyses
-from base import stats
+from base import stats, get_predict, get_predict_error, angle_acc
 analyses = [analysis for analysis in analyses if analysis['name'] in
             ['target_circAngle', 'probe_circAngle']]
 
 tois = [(-.100, 0.050), (.100, .250), (.300, .800), (.900, 1.050)]
-
-
-def get_predict(gat, sel=None, toi=None, mean=True, typ='diagonal'):
-    from jr.gat import get_diagonal_ypred
-    # select data in the gat matrix
-    if typ == 'diagonal':
-        y_pred = np.squeeze(get_diagonal_ypred(gat)).T
-    elif typ == 'align_on_diag':
-        y_pred = np.squeeze(align_on_diag(gat.y_pred_)).transpose([2, 0, 1])
-    elif typ == 'gat':
-        y_pred = np.squeeze(gat.y_pred_).transpose([2, 0, 1])
-    y_pred = y_pred % (2 * np.pi)  # make sure data is in on circle
-    # Select trials
-    sel = range(len(y_pred)) if sel is None else sel
-    y_pred = y_pred[sel, ...]
-    # select TOI
-    times = np.array(gat.train_times_['times'])
-    toi = times[[0, -1]] if toi is None else toi
-    toi_ = np.where((times >= toi[0]) & (times <= toi[1]))[0]
-    y_pred = y_pred[:, toi_, ...]
-    # mean across time point
-    if mean:
-        y_pred = circ_mean(y_pred, axis=1)
-    return y_pred[:, None] if y_pred.ndim == 1 else y_pred
-
-
-def get_predict_error(gat, sel=None, toi=None, mean=True, typ='diagonal',
-                      y_true=None):
-    y_pred = get_predict(gat, sel=sel, toi=toi, mean=mean, typ=typ)
-    # error is diff modulo pi centered on 0
-    sel = range(len(y_pred)) if sel is None else sel
-    if y_true is None:
-        y_true = gat.y_true_[sel]
-    y_true = np.tile(gat.y_true_, np.hstack((np.shape(y_pred)[1:], 1)))
-    y_true = np.transpose(y_true, [y_true.ndim - 1] + range(y_true.ndim - 1))
-    y_error = (y_pred - y_true + np.pi) % (2 * np.pi) - np.pi
-    return y_error
-
-
-def mean_acc(y_error, axis=None):
-    # range between -pi and pi just in case not done already
-    y_error = y_error % (2 * np.pi)
-    y_error = (y_error + np.pi) % (2 * np.pi) - np.pi
-    # random error = np.pi/2, thus:
-    return np.pi / 2 - np.mean(np.abs(y_error), axis=axis)
 
 
 def resample1D(x):
@@ -83,7 +38,7 @@ for analysis in ['target_circAngle', 'probe_circAngle']:
         n_bins = 24
 
         # Mean error across trial on the diagonal
-        y_error = mean_acc(get_predict_error(gat, mean=False), axis=0)
+        y_error = angle_acc(get_predict_error(gat, mean=False), axis=0)
         results['diagonal'].append(y_error)
 
         # Mean prediction for each angle at peak time
@@ -118,13 +73,13 @@ for analysis in ['target_circAngle', 'probe_circAngle']:
                     results_[subanalysis[0] + '_toi'].append(np.nan)
                 continue
             # dynamics of mean error
-            results_[subanalysis[0]] = mean_acc(y_error[subsel, :], axis=0)
+            results_[subanalysis[0]] = angle_acc(y_error[subsel, :], axis=0)
             # mean error per toi
             for toi in tois:
                 # mean error across time
                 toi_ = np.where((times >= toi[0]) & (times < toi[1]))[0]
                 y_error_toi = circ_mean(y_error[:, toi_], axis=1)
-                y_error_toi = mean_acc(y_error_toi[subsel])
+                y_error_toi = angle_acc(y_error_toi[subsel])
                 results_[subanalysis[0] + '_toi'].append(y_error_toi)
         results['subscore'].append(results_)
 
@@ -145,7 +100,7 @@ for analysis in ['target_circAngle', 'probe_circAngle']:
                     results_pas.append(np.nan * np.zeros(y_error.shape[2]))
                     continue
                 # 3. mean error across trials
-                y_error_ = mean_acc(y_error[sel, ...], axis=0)
+                y_error_ = angle_acc(y_error[sel, ...], axis=0)
                 # 4. mean across classifier (toi)
                 y_error_ = np.mean(y_error_, axis=0)
                 results_pas.append(y_error_)
@@ -156,7 +111,7 @@ for analysis in ['target_circAngle', 'probe_circAngle']:
         results_ = list()
         for toi in [[.100, .150], [.170, .220]]:
             y_error = get_predict_error(gat, toi=toi, typ='gat')
-            results_.append(mean_acc(y_error, axis=0))
+            results_.append(angle_acc(y_error, axis=0))
         results['early_maintain'].append(results_)
 
     results['times'] = times
