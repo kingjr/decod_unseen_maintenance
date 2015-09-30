@@ -292,7 +292,7 @@ def get_predict_error(gat, sel=None, toi=None, mean=True, typ='diagonal',
     return y_error
 
 
-def mean_acc(y_error, axis=None):
+def angle_acc(y_error, axis=None):
     # range between -pi and pi just in case not done already
     y_error = y_error % (2 * np.pi)
     y_error = (y_error + np.pi) % (2 * np.pi) - np.pi
@@ -300,11 +300,11 @@ def mean_acc(y_error, axis=None):
     return np.pi / 2 - np.mean(np.abs(y_error), axis=axis)
 
 
-def mean_bias(y_error, y_tilt):
+def angle_bias(y_error, y_tilt):
     # This is an ad hoc function to compute the systematic bias across angles
-    # It consists in whether the angles are correlated with the tilt [-1, 1]
-    # and multiplying the root square resulting R² value by the sign of the
-    # mean angle.
+    # It consists in testing whether the angles are correlated with the tilt
+    # [-1, 1] and multiplying the root square resulting R square value by the
+    #  sign of the mean angle.
     # In this way, if there is a correlations, we can get a positive or
     # negative R value depending on the direction of the bias, and get 0 if
     # there's no correlation.

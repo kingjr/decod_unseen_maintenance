@@ -15,7 +15,7 @@ tois = results['tois']
 # Plot tuning probe time: train test target probe
 cmap = plt.get_cmap('BrBG')
 colors = cmap(np.linspace(0.2, .8, 3))
-fig, axes = plt.subplots(2, 2)
+fig, axes = plt.subplots(2, 2, figsize=[5, 3.8])
 for ii in range(2):
     for jj in range(2):
         for tilt, color in enumerate(colors):
@@ -25,18 +25,20 @@ for ii in range(2):
                         ax=axes[ii, jj], shift=np.pi, color=color)
             plot_tuning(results['tuning'][:, ii, jj, :, tilt],
                         ax=axes[ii, jj], shift=np.pi, color='k', alpha=0.)
-            axes[ii, jj].axvline(-np.pi / 3, color='k')
-            axes[ii, jj].axvline(np.pi / 3, color='k')
-            axes[ii, jj].axvline(0, color='k')
+        axes[ii, jj].axvline((jj * 2 - 1) * np.pi / 3, color=colors[0])
+        axes[ii, jj].axvline(-(jj * 2 - 1) * np.pi / 3, color=colors[2])
+        # axes[ii, jj].axvline(0, color='k')
 pretty_axes(axes, xticklabels=['$-\pi/2$', '', '$\pi/2$'],
             xlabel='Angle Error',
-            yticks=[0.014, 1./len(results['bins']), 0.08],
+            ylim=[0.014, .08],
+            yticks=[0.014, 1./len(results['bins']), .08],
             yticklabels=[1.4, '', 8.], ylabel='Probability')
 fig.tight_layout()
-report.add_figs_to_sections(fig, 'target_probe', 'cross_generalization')
+report.add_figs_to_section(fig, 'target_probe', 'cross_generalization')
 
 # Plot bias GAT
-fig, axes = plt.subplots(2, 2, figsize=[6.15, 6.])
+fig, axes = plt.subplots(2, 2, figsize=[6.15, 5.6])
+fig.subplots_adjust(right=0.85, hspace=0.05, wspace=0.05)
 for ii in range(2):
     for jj in range(2):
         scores = np.array(results['bias'][:, ii, jj, ...])
@@ -45,9 +47,10 @@ for ii in range(2):
                    colorbar=False, clim=[-.1, .1], sig=p_val < .05)
         axes[ii, jj].axvline(.800, color='k')
         axes[ii, jj].axhline(.800, color='k')
-pretty_axes(axes)
-pretty_colorbar(cax=fig.add_axes([.92, .2, .025, .55]), ax=axes[0, 0])
-report.add_figs_to_sections(fig, 'gat', 'bias')
+pretty_axes(axes, ylabelpad=-15, xticks=np.linspace(-.100, 1.100, 13),
+            xticklabels=['', 0] + [''] * 9 + [1000, ''])
+pretty_colorbar(cax=fig.add_axes([.88, .25, .02, .55]), ax=axes[0, 0])
+report.add_figs_to_section(fig, 'gat', 'bias')
 
 # plot bias diagonal
 fig, ax = plt.subplots(1, figsize=[7., 2.])
@@ -57,7 +60,9 @@ color = cmap(1.)
 pretty_decod(-scores, ax=ax, times=times, color=color, sig=p_val < .05,
              fill=True)
 ax.axvline(.800, color='k')
-report.add_figs_to_sections(fig, 'diagonal', 'bias')
+ax.set_xlabel('Times', labelpad=-10)
+fig.tight_layout()
+report.add_figs_to_section(fig, 'diagonal', 'bias')
 
 # Test significant bias in each toi for unseen and seen
 
@@ -81,12 +86,12 @@ for t, (toi, ax) in enumerate(zip(tois, axes)):
     bar_sem(np.vstack((absent, unseen, seen)).T, color=['k', 'b', 'r'], ax=ax)
     quick_stats(np.vstack((absent, unseen, seen)).T, ax=ax)
     diff = seen - unseen
-    print wilcoxon(diff[~np.isnan(diff)])
+    print 'diff', wilcoxon(diff[~np.isnan(diff)])
     ax.set_title('%i $-$ %i ms' % (toi[0] * 1e3, toi[1] * 1e3))
 pretty_axes(axes, xticks=[], xticklabels='', ylim=[-.1, .25],
             yticks=[-.1, 0, .25], yticklabels=[-.1, '', .25])
 fig.tight_layout()
 fig.subplots_adjust(wspace=.1)
-report.add_figs_to_sections(fig, 'visibility', 'bias')
+report.add_figs_to_section(fig, 'visibility', 'bias')
 
 report.save()

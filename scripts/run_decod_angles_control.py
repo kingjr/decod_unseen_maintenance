@@ -2,7 +2,7 @@ import pickle
 import numpy as np
 from jr.stats import circ_tuning
 from scripts.config import paths, subjects
-from base import stats, get_predict_error, mean_acc, mean_bias
+from base import stats, get_predict_error, angle_acc, angle_bias
 
 # XXX => in config
 tois = [(-.100, 0.050), (.100, .200), (.300, .800), (.900, 1.050)]
@@ -36,12 +36,12 @@ for ii, train_analysis in enumerate(['target_circAngle', 'probe_circAngle']):
                                         y_true=y_true)
 
             # Accuracy train test target probe
-            accuracy = mean_acc(y_error[sel, :, :], axis=0)
+            accuracy = angle_acc(y_error[sel, :, :], axis=0)
             results['accuracy'][s, ii, jj, :, :] = accuracy
 
             # Bias train test target probe
             sel = np.where(~np.isnan(subevents['target_circAngle']))[0]
-            results['bias'][s, ii, jj, :, :] = mean_bias(
+            results['bias'][s, ii, jj, :, :] = angle_bias(
                 y_error[sel, :, :], y_tilt[sel])
 
             # Tuning bias seen / unseen
@@ -50,7 +50,7 @@ for ii, train_analysis in enumerate(['target_circAngle', 'probe_circAngle']):
                                (subevents.detect_button == pas))[0]
                 if len(sel) < 10:
                     continue
-                results['bias_vis'][s, ii, jj, pas, :, :] = mean_bias(
+                results['bias_vis'][s, ii, jj, pas, :, :] = angle_bias(
                     y_error[sel, :, :], y_tilt[sel])
 
                 for t, toi in enumerate(tois):
@@ -58,7 +58,7 @@ for ii, train_analysis in enumerate(['target_circAngle', 'probe_circAngle']):
                                                     sel=sel, toi=toi,
                                                     typ='diagonal')
                     # same but after averaging predicted angle across time
-                    results['bias_vis_toi'][s, ii, jj, pas, t] = mean_bias(
+                    results['bias_vis_toi'][s, ii, jj, pas, t] = angle_bias(
                         np.squeeze(y_error_toi), y_tilt[sel])
 
             # Tuning curve for probe 1 and probe 2
@@ -109,7 +109,7 @@ for s, subject in enumerate(subjects):  # Loop across each subject
         y_error_toi = get_predict_error(gat, y_true=y_true, toi=toi,
                                         typ='diagonal')
         # same but after averaging predicted angle across time
-        results['target_absent_bias_toi'][s, t] = mean_bias(
+        results['target_absent_bias_toi'][s, t] = angle_bias(
             np.squeeze(y_error_toi), y_tilt)
 results['target_absent_pval'] = stats(results['target_absent'])
 
