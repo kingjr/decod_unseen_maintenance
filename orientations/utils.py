@@ -73,37 +73,43 @@ def load_FieldTrip_data(meg_fname):
 def get_events(bhv_fname):
     # Load behavioral file
     trials = sio.loadmat(bhv_fname, squeeze_me=True,
-                         struct_as_record=True)["trials"]
+                         struct_as_record=False)["trials"]
 
     def trial2event(trial):
         event = dict()
         # Change meaningless values with NaNs
-        event['target_present'] = trial['present'] == 1
-        event['discrim_pressed'] = trial['response_responsed'] == 1
-        event['detect_pressed'] = trial['response_vis_responsed'] == 1
+        event['target_present'] = trial.present == 1
+        event['discrim_pressed'] = trial.response_responsed == 1
+        event['detect_pressed'] = trial.response_vis_responsed == 1
         nan_default = lambda check, value: value if check else np.nan
-        target_present = lambda v: nan_default(event['target_present'], v)
+        check_present = lambda v: nan_default(event['target_present'], v)
         # discrim_pressed = lambda v: nan_default(event['discrim_pressed'], v)
         discrim_buttons = lambda v: nan_default(
             v in ['left_green', 'left_yellow'], 1. * (v == 'left_green'))
         detect_pressed = lambda v: nan_default(event['detect_pressed'], v)
         # Target
-        event['target_contrast'] = [0, .5, .75, 1][trial['contrast'] - 1]
-        event['target_spatialFreq'] = target_present(trial['lambda'] == 1)
-        event['target_angle'] = target_present(trial['orientation'] * 30 - 15)
+        event['target_contrast'] = [0, .5, .75, 1][trial.contrast - 1]
+        event['target_spatialFreq'] = check_present(
+            trial.__getattribute__('lambda'))
+        event['target_angle'] = check_present(trial.orientation * 30 - 15)
         event['target_circAngle'] = angle2circle(event['target_angle'])
-        # Probe
-        event['probe_angle'] = (trial['orientation'] * 30 - 15 +
-                                trial['tilt'] * 30) % 180
-        event['probe_circAngle'] = angle2circle(event['probe_angle'])
-        event['probe_tilt'] = target_present(trial['tilt'])
-        # Response 1: forced choice discrimination
-        event['discrim_button'] = discrim_buttons(trial['response_keyPressed'])
+        event['target_phase'] = check_present(
+            trial.gabors.target.phase) * 2 * np.pi
 
-        event['discrim_correct'] = target_present(trial['correct'] == 1)
+        # Probe
+        event['probe_angle'] = (trial.orientation * 30 - 15 +
+                                trial.tilt * 30) % 180
+        event['probe_circAngle'] = angle2circle(event['probe_angle'])
+        event['probe_tilt'] = check_present(trial.tilt)
+        event['probe_spatialFreq'] = \
+            trial.gabors.probe.__getattribute__('lambda')
+        event['probe_phase'] = trial.gabors.probe.phase * 2 * np.pi
+        # Response 1: forced choice discrimination
+        event['discrim_button'] = discrim_buttons(trial.response_keyPressed)
+        event['discrim_correct'] = check_present(trial.correct == 1)
         # Response 2: detection/visibility
         event['detect_button'] = \
-            detect_pressed(trial['response_visibilityCode'] - 1)
+            detect_pressed(trial.response_visibilityCode - 1)
         event['detect_seen'] = event['detect_button'] > 0
         if np.isnan(event['detect_button']):
             event['detect_seen'] = np.nan
