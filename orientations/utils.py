@@ -87,14 +87,16 @@ def get_events(bhv_fname):
         discrim_buttons = lambda v: nan_default(
             v in ['left_green', 'left_yellow'], 1. * (v == 'left_green'))
         detect_pressed = lambda v: nan_default(event['detect_pressed'], v)
+        phasebin = lambda v: np.digitize(
+            [v], np.linspace(0, 1, 7))[0] * 2 * np.pi / 6.
         # Target
         event['target_contrast'] = [0, .5, .75, 1][trial.contrast - 1]
         event['target_spatialFreq'] = check_present(
             trial.__getattribute__('lambda'))
         event['target_angle'] = check_present(trial.orientation * 30 - 15)
         event['target_circAngle'] = angle2circle(event['target_angle'])
-        event['target_phase'] = check_present(
-            trial.gabors.target.phase) * 2 * np.pi
+        event['target_phase'] = check_present(phasebin(
+                                              trial.gabors.target.phase))
 
         # Probe
         event['probe_angle'] = (trial.orientation * 30 - 15 +
@@ -103,7 +105,7 @@ def get_events(bhv_fname):
         event['probe_tilt'] = check_present(trial.tilt)
         event['probe_spatialFreq'] = \
             trial.gabors.probe.__getattribute__('lambda')
-        event['probe_phase'] = trial.gabors.probe.phase * 2 * np.pi
+        event['probe_phase'] = phasebin(trial.gabors.probe.phase)
         # Response 1: forced choice discrimination
         event['discrim_button'] = discrim_buttons(trial.response_keyPressed)
         event['discrim_correct'] = check_present(trial.correct == 1)
