@@ -33,7 +33,7 @@ for analysis in analyses:
     diag_offdiag = scores - np.tile([np.diag(score) for score in scores],
                                     [len(times), 1, 1]).transpose(1, 0, 2)
     p_values_off = stats(diag_offdiag)
-    scores = out['scores']
+
     scores_diag = [np.diag(score) for score in scores]
     p_values_diag = stats(np.array(scores_diag)[:, :, None] - chance)
 

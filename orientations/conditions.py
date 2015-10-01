@@ -1,4 +1,5 @@
 # Decoding parameters
+import numpy as np
 import matplotlib.pyplot as plt
 from itertools import product
 from sklearn.preprocessing import StandardScaler
@@ -34,31 +35,31 @@ def analysis(name, typ, condition=None, query=None, title=None):
                 single_trial=True, cv=8, typ=typ, title=title)
 
 analyses = (
-    # analysis('target_present',      'categorize', title='Target Present'),
-    # # analysis('target_contrast',     'regress'),
-    # analysis('target_contrast_pst', 'regress', condition='target_contrast',
-    #          query='target_present == True', title='Target Contrast'),
-    # analysis('target_spatialFreq',  'categorize',
-    #          title='Target Spatial Frequency'),
-    # analysis('target_circAngle',    'circ_regress', title='Target Angle'),
-    analysis('target_phase',    'circ_regress', title='Target Phase'),
-    # analysis('probe_circAngle',     'circ_regress', title='Probe Angle'),
-    # analysis('probe_tilt',          'categorize', title='Target - Probe Tilt'),
+    analysis('target_present',      'categorize', title='Target Present'),
+    # analysis('target_contrast',     'regress'),
+    analysis('target_contrast_pst', 'regress', condition='target_contrast',
+             query='target_present == True', title='Target Contrast'),
+    analysis('target_spatialFreq',  'categorize',
+             title='Target Spatial Frequency'),
+    analysis('target_phase',        'circ_regress', title='Target Phase'),
+    analysis('target_circAngle',    'circ_regress', title='Target Angle'),
+    analysis('probe_circAngle',     'circ_regress', title='Probe Angle'),
+    analysis('probe_tilt',          'categorize', title='Target - Probe Tilt'),
     analysis('probe_phase',    'circ_regress', title='Probe Phase'),
-    # analysis('discrim_button',      'categorize',
-    #          title='Discrimination Response'),
-    # # analysis('discrim_correct',     'categorize'),
-    # # analysis('detect_button',       'regress'),
-    # analysis('detect_button_pst',   'regress', condition='detect_button',
-    #          query='target_present == True', title='Visibility Response'),
-    # # analysis('detect_seen',         'categorize'),
-    # # analysis('detect_seen_pst',     'categorize', condition='detect_seen',
-    # #          query='target_present == True')
+    analysis('discrim_button',      'categorize',
+             title='Discrimination Response'),
+    # analysis('discrim_correct',     'categorize'),
+    # analysis('detect_button',       'regress'),
+    analysis('detect_button_pst',   'regress', condition='detect_button',
+             query='target_present == True', title='Visibility Response'),
+    # analysis('detect_seen',         'categorize'),
+    # analysis('detect_seen_pst',     'categorize', condition='detect_seen',
+    #          query='target_present == True')
 )
 
 cmap = plt.get_cmap('gist_rainbow')
 for ii in range(len(analyses)):
-    analyses[ii]['color'] = cmap(float(ii) / len(analyses))
+    analyses[ii]['color'] = np.array(cmap(float(ii) / len(analyses)))
 
 # ###################### Define subscores #####################################
 

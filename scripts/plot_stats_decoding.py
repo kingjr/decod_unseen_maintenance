@@ -5,21 +5,22 @@ from jr.plot import pretty_gat, pretty_decod, pretty_slices
 from scripts.config import paths, analyses, report
 
 fig_alldiag, axes_alldiag = plt.subplots(len(analyses), 1, figsize=[6, 9])
-cmap = plt.get_cmap('gist_rainbow')
-colors = cmap(np.linspace(0, 1., len(analyses) + 1))
 
-for analysis, ax, color in zip(analyses, axes_alldiag, colors):
+for analysis, ax in zip(analyses, axes_alldiag):
     print analysis['name']
     # Load
     stats_fname = paths('score', subject='fsaverage', data_type='erf',
                         analysis=('stats_' + analysis['name']))
     with open(stats_fname, 'rb') as f:
         out = pickle.load(f)
-        scores = out['scores']
+        scores = np.array(out['scores'])
         p_values = out['p_values']
         p_values_off = out['p_values_off']
         p_values_diag = np.squeeze(out['p_values_diag'])
         times = out['times'] / 1e3  # FIXME
+
+    if 'Angle' in analysis['title']:
+        scores /= 2.  # from circle to half circle
 
     # Parameters
     chance = analysis['chance']
@@ -70,10 +71,10 @@ for analysis, ax, color in zip(analyses, axes_alldiag, colors):
 
     # Decod
     pretty_decod(scores_diag, times=times, sig=p_values_diag < .05,
-                 chance=chance, color=color, fill=True, ax=ax)
-    pretty_decod(scores_diag, times=times, sig=p_values_diag < .05,
-                 chance=chance, color='k', fill=False, ax=ax)
-    xlim, ylim = ax.get_xlim(), ax.get_ylim()
+                 chance=chance, color=analysis['color'], fill=True, ax=ax)
+    xlim, ylim = ax.get_xlim(), np.array(ax.get_ylim())
+    ylim[1] = np.ceil(ylim[1] * 10) / 10.
+    ax.set_ylim(ylim)
     ax.axvline(.800, color='k')
     if ax != axes_alldiag[-1]:
         ax.set_xlabel('')
@@ -83,15 +84,19 @@ for analysis, ax, color in zip(analyses, axes_alldiag, colors):
                 va='top')
         ax.text(.800, ylim[1], 'Probe', backgroundcolor='w', ha='center',
                 va='top')
+        ax.set_xticklabels([int(x) if x in [0., 800.] else ''
+                            for x in np.round(1e3 * ax.get_xticks())])
     ax.set_yticks([chance, ylim[1]])
-    ax.set_yticklabels(['', '%.2f' % ylim[1]])
-    if chance == .5:
+    ax.set_yticklabels(['', '%.1f' % ylim[1]])
+    if analysis['typ'] == 'regress':
+        ax.set_ylabel('R', labelpad=-15)
+    elif analysis['typ'] == 'categorize':
         ax.set_ylabel('AUC', labelpad=-15)
     else:
-        ax.set_ylabel('R', labelpad=-15)
+        ax.set_ylabel('rad.', labelpad=-15)
     txt = ax.text(xlim[0] + .5 * np.ptp(xlim), ylim[0] + .75 * np.ptp(ylim),
-                  analysis['title'], color=.75 * color, ha='center',
-                  weight='bold')
+                  analysis['title'], color=.75 * analysis['color'],
+                  ha='center', weight='bold')
 
     # ------ Plot times slices score
     fig_offdiag, axs = plt.subplots(len(tois), 1, figsize=[5, 6])
@@ -101,9 +106,12 @@ for analysis, ax, color in zip(analyses, axes_alldiag, colors):
                   fill_color=analysis['color'])
     for ax in axs:
         ax.axvline(.800, color='k')
-        ax.set_ylabel('R', labelpad=-15)
-        if chance == .5:
+        if analysis['typ'] == 'regress':
+            ax.set_ylabel('R', labelpad=-15)
+        elif analysis['typ'] == 'categorize':
             ax.set_ylabel('AUC', labelpad=-15)
+        else:
+            ax.set_ylabel('rad.', labelpad=-15)
         ax.set_yticklabels(['', '', '%.2f' % ax.get_yticks()[2]])
     ax.set_xlabel('Times', labelpad=-10)
     report.add_figs_to_section(fig_offdiag, 'slices', analysis['name'])

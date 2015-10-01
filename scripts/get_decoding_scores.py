@@ -1,12 +1,8 @@
-import sys
-sys.path.insert(0, './')
-
 import copy
 import pickle
 from itertools import product
 import numpy as np
-
-from gat.utils import mean_ypred, subscore
+from jr.gat import mean_ypred, subscore
 
 from scripts.config import (
     paths,
@@ -15,6 +11,9 @@ from scripts.config import (
     analyses,
     subscores,
 )
+
+# XXX This script needs to be simplified. There's no need to compute the
+# subscore here, as you compute it separately in run_decoding_*.py
 
 for data_type, analysis, subject in product(data_types, analyses, subjects):
     print analysis['name'], subject
