@@ -164,21 +164,26 @@ for analysis in analyses:
     report.add_figs_to_section(fig, 'seen_unseen', analysis['name'])
 
     # Duration early late
-    data = np.array(results['align_on_diag'])
+    data = results['align_on_diag']
     data = [data[:, 1, :, :], data[:, 2, :, :]]
     freq = np.ptp(times) / len(times)
-    times_align = times - np.min(times) - np.ptp(times) / 2
-    toi_align = np.where((times_align >= 0.) & (times_align < .204))[0]
-    fig, axes = plt.subplots(1, len(data), figsize=[4, 4])
+    times_align = times - times.min()
+    # fig, axes = plt.subplots(1, len(data), figsize=[2, 4])
+    fig = plt.figure(figsize=[7.8, 5.5])
+    axes = list()
+    for ii in range(4):
+        axes.append([plt.subplot2grid((4, 3), (ii, 0), colspan=1),
+                     plt.subplot2grid((4, 3), (ii, 1), colspan=2)])
     cmap = plt.get_cmap('bwr_r')
-    for ax, result, toi in zip(axes, data, tois[1:]):
+    for jj, result, toi, t in zip(range(2), data, tois[1:], [.300, .600]):
         for ii, col in enumerate(cmap(np.linspace(0, 1, 4.))):
-            if ii in [1, 2]:
-                continue
-            pretty_decod(result[:, 3-ii, toi_align], color=col, ax=ax,
-                         times=times_align[toi_align], alpha=1., fill=True,
-                         sig=stats(result[:, 3-ii, toi_align]) < .05,
-                         chance=0.)
+            ax = axes[ii][jj]
+            toi_align = np.where((times - times.min()) <= t)[0]
+            sig = stats(result[:, 3-ii, toi_align-len(toi_align)/2]) < .05
+            pretty_decod(result[:, 3-ii, toi_align-len(toi_align)/2],
+                         color=col, ax=ax, fill=True,
+                         times=times_align[toi_align] - t/2., alpha=1.,
+                         sig=sig, chance=0.)
             ax.set_yticks([-.07, .15])
             ax.set_yticklabels([-.07, .15])
             ax.set_ylabel('$\Delta angle$', labelpad=-15)
@@ -186,15 +191,21 @@ for analysis in analyses:
                 ax.set_yticklabels(['', ''])
                 ax.set_ylabel('')
             ax.set_ylim([-.07, .15])
-            ax.set_xticks(np.arange(0, .201, .100))
-            ax.set_title('%i $-$ %i ms' % (1e3 * toi[0], 1e3 * toi[1]))
-            ax.set_xticks([0, .200])
-            ax.set_xticklabels([0, 200])
-            ax.set_xlabel('Duration', labelpad=-10)
-    fig.tight_layout()
+            xticks = np.arange(-t/2., t/2.+.01, .100)
+            ax.set_xticks(xticks)
+            ax.set_xticklabels([''] * len(xticks))
+            ax.set_aspect('auto')
+            ax.set_xlim(-t/2., t/2.)
+            if ii == 0:
+                ax.set_title('%i $-$ %i ms' % (1e3 * toi[0], 1e3 * toi[1]))
+            if ii == 3:
+                ax.set_xlabel('Duration', labelpad=-10)
+                ax.set_xticklabels([int(x * 1e3) if x in [0., 1.] else ''
+                                    for x in xticks])
+    # fig.tight_layout()
     report.add_figs_to_section(fig, 'duration', analysis['name'])
 
-    # early maintain  # TODO elsewhere => GAT
+    # early maintain
     fig, ax = plt.subplots(1)
     for ii, col in enumerate(['r', 'b']):
         score = np.array(results['early_maintain'])[:, ii, :]
