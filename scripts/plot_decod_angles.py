@@ -164,7 +164,7 @@ for analysis in analyses:
     report.add_figs_to_section(fig, 'seen_unseen', analysis['name'])
 
     # Duration early late
-    data = results['align_on_diag']
+    data = np.array(results['align_on_diag'])
     data = [data[:, 1, :, :], data[:, 2, :, :]]
     freq = np.ptp(times) / len(times)
     times_align = times - times.min()
@@ -195,13 +195,13 @@ for analysis in analyses:
             ax.set_xticks(xticks)
             ax.set_xticklabels([''] * len(xticks))
             ax.set_aspect('auto')
-            ax.set_xlim(-t/2., t/2.)
+            ax.set_xlim(-t/2.-.01, t/2.+.01)
             if ii == 0:
                 ax.set_title('%i $-$ %i ms' % (1e3 * toi[0], 1e3 * toi[1]))
             if ii == 3:
                 ax.set_xlabel('Duration', labelpad=-10)
-                ax.set_xticklabels([int(x * 1e3) if x in [0., 1.] else ''
-                                    for x in xticks])
+                ax.set_xticklabels([x if np.round(x) in [-t/2 * 1e3, t/2 * 1e3]
+                                    else '' for x in np.round(1e3 * xticks)])
     # fig.tight_layout()
     report.add_figs_to_section(fig, 'duration', analysis['name'])
 
