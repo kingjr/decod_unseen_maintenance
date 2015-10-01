@@ -1,6 +1,6 @@
 import pickle
 import numpy as np
-from jr.stats import circ_tuning, circ_mean
+from jr.stats import circ_tuning, circ_mean, repeated_spearman
 from scripts.config import paths, subjects, subscores, analyses
 from base import get_predict, get_predict_error, angle_acc
 analyses = [analysis for analysis in analyses if analysis['name'] in
@@ -14,7 +14,7 @@ for analysis in ['target_circAngle', 'probe_circAngle']:
     results = dict(diagonal=list(), angle_pred=list(), toi=list(),
                    subscore=list(), corr_contrast=list(), corr_pas=list(),
                    R_contrast=list(), R_vis=list(), align_on_diag=list(),
-                   early_maintain=list())
+                   early_maintain=list(), R_vis_duration=list())
     for s, subject in enumerate(subjects):
         # load data
         print s
@@ -73,6 +73,7 @@ for analysis in ['target_circAngle', 'probe_circAngle']:
 
         # Duration
         results_ = list()
+        R_vis_duration = list()
         for toi in tois:
             # for each toi: 1. realign pred on diag, 2. compute error
             y_error = get_predict_error(gat, toi=toi, typ='align_on_diag',
@@ -93,7 +94,15 @@ for analysis in ['target_circAngle', 'probe_circAngle']:
                 y_error_ = np.mean(y_error_, axis=0)
                 results_pas.append(y_error_)
             results_.append(results_pas)
+            # Finally, test if duration if affected by visibility :
+            sel = subevents.query('target_present == True').index
+            # mean clf R in TOI
+            X = angle_acc(y_error[sel, :, :], axis=1)
+            R = repeated_spearman(X.reshape([len(sel), -1]),
+                                  np.array(subevents['detect_button'][sel]))
+            R_vis_duration.append(R.reshape(y_error.shape[2]))
         results['align_on_diag'].append(results_)
+        results['R_vis_duration'].append(R_vis_duration)
 
         # maintenance of early classifiers
         results_ = list()
