@@ -75,24 +75,55 @@ def fill_between_gradient(xx, yy, clim=None, cmap='RdBu_r', alpha=1., ax=None,
 
 # #############################################################################
 # 1. report of visibility as a function of contrast
-x = np.zeros((len(subjects), len(contrasts), len(visibilities)))
+x_vis = np.zeros((len(subjects), len(contrasts), len(visibilities)))
 for (s, subject), (c, contrast), (v, visibility) in product(
         enumerate(subjects), enumerate(contrasts), enumerate(visibilities)):
     query = 'subject=="%s" and target_contrast==%s and detect_button==%s' % (
         subject, contrast, visibility)
-    x[s, c, v] = len(data.query(query))
+    x_vis[s, c, v] = len(data.query(query))
 # normalize per subject per contrast
 for (s, subject), (c, contrast) in product(
         enumerate(subjects), enumerate(contrasts)):
-    x[s, c, :] /= np.sum(x[s, c, :])
+    x_vis[s, c, :] /= np.sum(x_vis[s, c, :])
+
+
+def print_stats(X):
+    X = np.array(X)
+    dims = np.shape(X)
+    dims = np.hstack((dims, 1)) if len(dims) == 1 else dims
+    X = np.reshape(X, [len(X), -1])
+    stats = np.empty(np.prod(dims[1:]), dtype=object)
+    for ii, x in enumerate(X.T):
+        m = np.nanmean(x)
+        sem = np.nanstd(x) / np.sqrt(sum(~np.isnan(x)))
+        stats[ii] = '%.2f +/- %.2f' % (m, sem)
+    stats = np.reshape(stats, dims[1:]) if len(dims) > 1 else stats
+    return stats
+
+print('unseen absent: %s' % print_stats(x_vis[:, 0, 0]))
+print('seen present: %s' % print_stats(np.mean(1. - x_vis[:, 1:, 0], axis=1)))
+
+# compute detection d'
+x_vis_dprime = np.nan * np.zeros(len(subjects))
+for s, subject in enumerate(subjects):
+    def get(pst, seen):
+        query = 'subject=="%s" and target_present==%s and detect_seen==%s' % (subject, pst, seen)
+        return len(data.query(query))
+    hit = get(True, True)
+    fa = get(False, True)
+    miss = get(True, False)
+    cr = get(False, False)
+    if 0 not in [hit + miss, fa + cr]:
+        x_vis_dprime[s] = dPrime(hit, miss, fa, cr)['d']
+print('detection dprime: %s' % print_stats(x_vis_dprime))
 
 fig = plt.figure(figsize=[6, 4])
 ax = fig.gca(projection='3d')
-ax = make_3d_plot(ax, np.linspace(0, 1., 4.), x, np.linspace(.25, 1., 4.),
+ax = make_3d_plot(ax, np.linspace(0, 1., 4.), x_vis, np.linspace(.25, 1., 4.),
                   [cmap(i) for i in contrasts])
-ax.text(1., .25, np.mean(x[:, -1, 0], axis=0) + .02, 'Absent', 'x',
+ax.text(1., .25, np.mean(x_vis[:, -1, 0], axis=0) + .02, 'Absent', 'x',
         color=cmap(0.), ha='right', va='bottom')
-ax.text(1., 1, np.mean(x[:, -1, -1], axis=0) + .05, 'Full contrast', 'x',
+ax.text(1., 1, np.mean(x_vis[:, -1, -1], axis=0) + .05, 'Full contrast', 'x',
         color=cmap(1.), ha='right', va='bottom')
 ax.set_xlabel('Visibility Rating')
 ax.set_ylabel('Contrast')
@@ -114,19 +145,19 @@ report.add_figs_to_section(fig, 'visibility 3d', 'visibility')
 
 # 2D
 fig, ax = plt.subplots(1, figsize=[6, 4])
-abs_m = x[:, 0, :].mean(0)
-abs_sem = abs_m + x[:, 0, :].mean(0).std(0) / x.shape[0]
-pst_m = x[:, 1:, :].mean(1).mean(0)
-pst_sem = pst_m + x[:, 1:, :].mean(1).std(0).mean(0) / x.shape[0]
+abs_m = x_vis[:, 0, :].mean(0)
+abs_sem = abs_m + x_vis[:, 0, :].mean(0).std(0) / x_vis.shape[0]
+pst_m = x_vis[:, 1:, :].mean(1).mean(0)
+pst_sem = pst_m + x_vis[:, 1:, :].mean(1).std(0).mean(0) / x_vis.shape[0]
 fill = lambda z, c: ax.fill_between(np.linspace(0, 1., 4.), z, alpha=.5,
                                     color=cmap(c),  edgecolor='none')
 fill(abs_sem, 0.)
 fill(pst_sem, 1.)
 fill(abs_m, 0.)
 fill(pst_m, 1.)
-ax.text(0.1, np.mean(x[:, 0, 0], axis=0) - .05, 'Absent', color=cmap(0.),
+ax.text(0.1, np.mean(x_vis[:, 0, 0], axis=0) - .05, 'Absent', color=cmap(0.),
         ha='left', va='bottom')
-ax.text(1., np.mean(x[:, -1, -1], axis=0) + .05, 'Present',
+ax.text(1., np.mean(x_vis[:, -1, -1], axis=0) + .05, 'Present',
         color=cmap(1.), ha='right', va='bottom')
 ax.set_xlabel('Visibility Rating')
 ax.set_ylabel('Response %')
@@ -137,7 +168,7 @@ ax = pretty_plot(ax)
 report.add_figs_to_section(fig, 'visibility 2d', 'visibility')
 # #############################################################################
 # 2. discrimination performance as a function of visibility and contrast
-x = dict()
+vis = dict()
 x['Accuracy'] = np.zeros((len(subjects), len(contrasts) - 1,
                           len(visibilities)))
 x['D prime'] = np.zeros_like(x['Accuracy'])
@@ -193,6 +224,14 @@ for metric, ylim, in zip(['Accuracy', 'D prime'], ((.5, 1.), (0., 3.))):
 # plt.show()
 # XXX /!\ Dprime is sig for unseen but this is only if nan are counted as 0,
 # and not removed.
+
+print('unseen absent %.2f +/- %.2f: ' % (
+    np.nanmean(x['Accuracy'][:, 0, 0]),
+    np.nanstd(x['Accuracy'][:, 0, 0])))
+print('seen present %.2f +/- %.2f: ' % (
+    np.nanmean(1 - x['Accuracy'][:, 1:, 0]),
+    np.nanstd(1 - x['Accuracy'][:, 1:, 0])))
+
 
 # #############################################################################
 # Effect of previous trial on current visibility
