@@ -4,23 +4,16 @@ from itertools import product
 import numpy as np
 from jr.gat import mean_ypred, subscore
 
-from scripts.config import (
-    paths,
-    subjects,
-    data_types,
-    analyses,
-    subscores,
-)
+from scripts.config import (paths, subjects, analyses, subscores)
 
 # XXX This script needs to be simplified. There's no need to compute the
 # subscore here, as you compute it separately in run_decoding_*.py
 
-for data_type, analysis, subject in product(data_types, analyses, subjects):
+for analysis, subject in product(analyses, subjects):
     print analysis['name'], subject
 
     # load
-    gat_fname = paths('decod', subject=subject, data_type=data_type,
-                      analysis=analysis['name'])
+    gat_fname = paths('decod', subject=subject, analysis=analysis['name'])
     gat_fname = gat_fname
     with open(gat_fname, 'rb') as f:
         gat, _, sel, events = pickle.load(f)
@@ -36,15 +29,14 @@ for data_type, analysis, subject in product(data_types, analyses, subjects):
     # Save main score
     gat_ = copy.deepcopy(gat)
     gat_.y_pred_ = mean_ypred(gat_)
-    score_fname = paths('score', subject=subject, data_type=data_type,
-                        analysis=analysis['name'])
+    score_fname = paths('score', subject=subject, analysis=analysis['name'])
     with open(score_fname, 'wb') as f:
         pickle.dump([gat_, analysis, sel, events], f)
 
     # Save subscores
     for subanalysis in subscores:
         # check if exists
-        score_fname = paths('score', subject=subject, data_type=data_type,
+        score_fname = paths('score', subject=subject,
                             analysis=analysis['name'] + '-' + subanalysis[0])
         # if op.exists(score_fname):
         #     continue
