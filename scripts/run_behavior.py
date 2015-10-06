@@ -7,7 +7,7 @@ import pandas
 from itertools import product
 from jr.plot import pretty_plot, plot_sem
 from scipy.stats import wilcoxon
-from jr.stats import dPrime
+from jr.stats import dPrime, repeated_spearman
 from orientations.utils import get_events
 from scripts.config import paths, report, subjects
 mpl.rcParams['legend.fontsize'] = 10
@@ -106,13 +106,13 @@ print('seen present: %s' % print_stats(np.mean(1. - x_vis[:, 1:, 0], axis=1)))
 # compute detection d'
 x_vis_dprime = np.nan * np.zeros(len(subjects))
 for s, subject in enumerate(subjects):
-    def get(pst, seen):
+    def count(pst, seen):
         query = 'subject=="%s" and target_present==%s and detect_seen==%s' % (subject, pst, seen)
         return len(data.query(query))
-    hit = get(True, True)
-    fa = get(False, True)
-    miss = get(True, False)
-    cr = get(False, False)
+    hit = count(True, True)
+    fa = count(False, True)
+    miss = count(True, False)
+    cr = count(False, False)
     if 0 not in [hit + miss, fa + cr]:
         x_vis_dprime[s] = dPrime(hit, miss, fa, cr)['d']
 print('detection dprime: %s' % print_stats(x_vis_dprime))
@@ -166,15 +166,59 @@ ax.set_yticks(np.linspace(0, .7, 2))
 ax.set_ylim(0, .75)
 ax = pretty_plot(ax)
 report.add_figs_to_section(fig, 'visibility 2d', 'visibility')
+
+
 # #############################################################################
-# 2. discrimination performance as a function of visibility and contrast
-vis = dict()
-x['Accuracy'] = np.zeros((len(subjects), len(contrasts) - 1,
-                          len(visibilities)))
-x['D prime'] = np.zeros_like(x['Accuracy'])
+# 2.0 Overall discrimination performance
+x = dict(Accuracy=list(), Dprime=list())
+for subject in subjects:
+    query = 'subject=="%s" and target_present==True' % subject
+    x['Accuracy'].append(np.nanmean(data.query(query)['discrim_correct']))
+
+    def count(tilt, acc):
+        query2 = ' and probe_tilt==%s and discrim_correct==%s' % (tilt, acc)
+        return len(data.query(query + query2))
+
+    hits = count(1, True)
+    misses = count(1, False)
+    fas = count(-1, False)
+    crs = count(-1, True)
+    d = np.nan
+    if (hits + misses) > 0 and (fas + crs) > 0:
+        d = dPrime(hits, misses, fas, crs)['d']
+    x['Dprime'].append(d)
+print('Overall discrimination acc: %s' % print_stats(x['Accuracy']))
+print('Overall discrimination dprime: %s' % print_stats(x['Dprime']))
+
+# 2.1 Discrimination performance as a function of visibility
+x = dict(Accuracy=np.zeros((len(subjects), 4)),
+         Dprime=np.zeros((len(subjects), 4)))
+for (s, subject), vis in product(enumerate(subjects), range(4)):
+    query = ('subject=="%s" and target_present==True' % subject +
+             ' and detect_button==%f' % vis)
+    x['Accuracy'][s, vis] = np.nanmean(data.query(query)['discrim_correct'])
+
+    def count(tilt, acc):
+        query2 = ' and probe_tilt==%s and discrim_correct==%s' % (tilt, acc)
+        return len(data.query(query + query2))
+
+    hits = count(1, True)
+    misses = count(1, False)
+    fas = count(-1, False)
+    crs = count(-1, True)
+    d = np.nan
+    if (hits + misses) > 0 and (fas + crs) > 0:
+        d = dPrime(hits, misses, fas, crs)['d']
+    x['Dprime'][s, vis] = d
+
+
+# 2.1 discrimination performance as a function of visibility and contrast
+x = dict(Accuracy=np.nan * np.zeros((len(subjects), 3, 4)),
+         Dprime=np.nan * np.zeros((len(subjects), 3, 4)))
 
 for (s, subject), (c, contrast), (v, visibility) in product(
-        enumerate(subjects), enumerate(contrasts[1:]), enumerate(visibilities)):
+        enumerate(subjects), enumerate(contrasts[1:]),
+        enumerate(visibilities)):
     query = ('subject=="%s" and target_contrast==%s and detect_button==%s'
              ' and target_present') % (subject, contrast, visibility)
     x['Accuracy'][s, c, v] = np.nanmean(data.query(query)['discrim_correct'])
@@ -185,18 +229,34 @@ for (s, subject), (c, contrast), (v, visibility) in product(
     fas = count(-1, False)
     crs = count(-1, True)
     if (hits + misses) > 0 and (fas + crs) > 0:
-        x['D prime'][s, c, v] = dPrime(hits, misses, fas, crs)['d']
+        x['Dprime'][s, c, v] = dPrime(hits, misses, fas, crs)['d']
     else:
-        x['D prime'][s, c, v] = np.nan
+        x['Dprime'][s, c, v] = np.nan
 
-for metric, ylim, in zip(['Accuracy', 'D prime'], ((.5, 1.), (0., 3.))):
+print('Overall discrimination acc: %s' % print_stats(x['Accuracy']))
+print('Overall discrimination dprime: %s' % print_stats(x['Dprime']))
+x['R_vis'] = repeated_spearman(np.nanmean(x['Accuracy'], axis=1).T,
+                               np.arange(4))
+print('discrimination varies as a function vis: %s, p=%.5f' % (
+    print_stats(x['R_vis']), wilcoxon(x['R_vis'])[1]))
+x['R_contrast'] = repeated_spearman(np.nanmean(x['Accuracy'], axis=2).T,
+                                    np.arange(3))
+print('discrimination varies as a function contrast: %s, p=%.5f' % (
+    print_stats(x['R_contrast']), wilcoxon(x['R_contrast'])[1]))
+
+
+for metric, ylim, in zip(['Accuracy', 'Dprime'], ((.5, 1.), (0., 3.))):
     fig, axes = plt.subplots(nrows=1, ncols=2, figsize=[5, 3])
     # Visibility
     accuracy = np.squeeze(np.nanmean(x[metric], axis=1))
     plot_sem(visibilities, accuracy, color='k', ax=axes[0])
     for vis, acc in zip(visibilities, accuracy.T):
+        if metric == 'Dprime':
+            p_val = wilcoxon(acc)[1]
+        else:
+            p_val = wilcoxon(acc - .5)[1]
         axes[0].text(vis, np.nanmean(acc, axis=0) + np.ptp(ylim) / 10,
-                     ' *'[wilcoxon(acc)[1] < .05], size=15, ha='center')
+                     ' *'[p_val < .05], size=15, ha='center')
     axes[0].set_xlabel('Visibility Rating')
     axes[0].set_ylabel(metric)
     axes[0].set_xlim(-.3, 3.3)
@@ -208,8 +268,12 @@ for metric, ylim, in zip(['Accuracy', 'D prime'], ((.5, 1.), (0., 3.))):
     accuracy = np.squeeze(np.nanmean(x[metric], axis=2))
     plot_sem(contrasts[1:], accuracy, color='k', ax=axes[1])
     for contrast, acc in zip(contrasts[1:], accuracy.T):
+        if metric == 'Dprime':
+            p_val = wilcoxon(acc)[1]
+        else:
+            p_val = wilcoxon(acc - .5)[1]
         axes[1].text(contrast, np.nanmean(acc, axis=0) + np.ptp(ylim) / 10,
-                     ' *'[wilcoxon(acc)[1] < .05], size=15, ha='center')
+                     ' *'[p_val < .05], size=15, ha='center')
     axes[1].set_xlabel('Contrast')
     axes[1].set_xticks(contrasts[1:])
     axes[1].set_xlim(.45, 1.05)
@@ -225,14 +289,32 @@ for metric, ylim, in zip(['Accuracy', 'D prime'], ((.5, 1.), (0., 3.))):
 # XXX /!\ Dprime is sig for unseen but this is only if nan are counted as 0,
 # and not removed.
 
-print('unseen absent %.2f +/- %.2f: ' % (
-    np.nanmean(x['Accuracy'][:, 0, 0]),
-    np.nanstd(x['Accuracy'][:, 0, 0])))
-print('seen present %.2f +/- %.2f: ' % (
-    np.nanmean(1 - x['Accuracy'][:, 1:, 0]),
-    np.nanstd(1 - x['Accuracy'][:, 1:, 0])))
+# 2.2 discrimination performance of unseen trials
+x = dict(Accuracy=list(), Dprime=list())
+for subject in subjects:
+    query = ('subject=="%s"' % subject + ' and target_present==True and '
+             'detect_button==0. and (discrim_button==-1 or discrim_button==1)')
+    x['Accuracy'].append(np.nanmean(data.query(query)['discrim_correct']))
 
+    def count(tilt, acc):
+        query2 = ' and probe_tilt==%s and discrim_correct==%s' % (tilt, acc)
+        return len(data.query(query + query2))
 
+    hits = count(1, True)
+    misses = count(1, False)
+    fas = count(-1, False)
+    crs = count(-1, True)
+    d = np.nan
+    if (hits + misses) > 0 and (fas + crs) > 0:
+        d = dPrime(hits, misses, fas, crs)['d']
+    x['Dprime'].append(d)
+print('Overall discrimination acc: %s' % print_stats(x['Accuracy']))
+print('Overall discrimination dprime: %s' % print_stats(x['Dprime']))
+print('discrimination of unseen trials (Acc): %s, p=%.5f' % (
+    print_stats(x['Accuracy']),
+    wilcoxon(np.array(x['Accuracy']) - .5)[1]))
+print('discrimination of unseen trials (Dprime): %s, p=%.5f' % (
+      print_stats(x['Dprime']), wilcoxon(x['Dprime'])[1]))
 # #############################################################################
 # Effect of previous trial on current visibility
 x = np.zeros((len(subjects), len(contrasts), len(visibilities), 2))
