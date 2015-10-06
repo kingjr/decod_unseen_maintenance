@@ -3,24 +3,15 @@ from mpl_toolkits.mplot3d import axes3d, Axes3D
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib.collections import PolyCollection
+import pandas
+from itertools import product
+from jr.plot import pretty_plot, plot_sem
+from scipy.stats import wilcoxon
+from jr.stats import dPrime
+from orientations.utils import get_events
+from scripts.config import paths, report, subjects
 mpl.rcParams['legend.fontsize'] = 10
 
-import pandas
-from orientations.utils import get_events
-from itertools import product
-from meeg_preprocessing.utils import setup_provenance
-from scripts.config import paths  # , subjects
-from base import plot_sem
-
-report, run_id, results_dir, logger = setup_provenance(
-    script=__file__, results_dir=paths('report'))
-
-
-subjects = [
-    'ak130184', 'el130086', 'ga130053', 'gm130176', 'hn120493',
-    'ia130315', 'jd110235', 'jm120476', 'ma130185', 'mc130295',
-    'mj130216', 'mr080072', 'oa130317', 'rg110386', 'sb120316',
-    'tc120199', 'ts130283', 'yp130276', 'av130322', 'ps120458']
 
 # Gather all beahvioral data
 subjects_events = list()
@@ -36,43 +27,7 @@ visibilities = [0., 1., 2., 3.]
 
 # ##############################################################################
 # Plotting functions
-
-# set color map
-# cmap = mcol.LinearSegmentedColormap('black_green',
-#     {'red':   ([0.] * 3, (1.0, 0.0, 0.0)),
-#      'green': ([0.] * 3, [1.] * 3),
-#      'blue':  ([0.] * 3, (1.0, 0.0, 0.0))}, 256)
 cmap = mpl.colors.LinearSegmentedColormap.from_list('RdPuBu', ['b', 'r'])
-# cmap = plt.get_cmap('coolwarm')
-
-
-def pretty_ax(ax=None):
-    if ax is None:
-        fig, ax = plt.subplots(1)
-    ax.tick_params(colors='dimgray')
-    ax.xaxis.label.set_color('dimgray')
-    ax.yaxis.label.set_color('dimgray')
-    try:
-        ax.zaxis.label.set_color('dimgray')
-    except AttributeError:
-        pass
-    try:
-        ax.xaxis.set_ticks_position('bottom')
-        ax.yaxis.set_ticks_position('left')
-    except ValueError:
-        pass
-    ax.spines['left'].set_color('dimgray')
-    ax.spines['bottom'].set_color('dimgray')
-    ax.spines['right'].set_visible(False)
-    ax.spines['top'].set_visible(False)
-    # shift = lambda z: np.ptp(z) * .525 * np.array([-1, 1]) + np.mean(z)
-    # ax.set_xlim(shift(ax.get_xlim()))
-    # ax.set_ylim(shift(ax.get_ylim()))
-    # try:
-    #     ax.set_zlim(shift(ax.get_zlim()))
-    # except AttributeError:
-    #     pass
-    return ax
 
 
 def make_3d_plot(ax, xs, y, zs, colors):
@@ -94,7 +49,7 @@ def make_3d_plot(ax, xs, y, zs, colors):
     poly = PolyCollection(verts_sem, facecolors=colors, edgecolor='none')
     poly.set_alpha(0.5)
     ax.add_collection3d(poly, zs=zs, zdir='y')
-    return pretty_ax(ax)
+    return pretty_plot(ax)
 
 
 def fill_between_gradient(xx, yy, clim=None, cmap='RdBu_r', alpha=1., ax=None,
@@ -154,7 +109,6 @@ ax.zaxis._PLANES = (tmp_planes[2], tmp_planes[3],
                     tmp_planes[0], tmp_planes[1],
                     tmp_planes[4], tmp_planes[5])
 # fig.show()
-fig.savefig(report.data_path + 'visibility3D.png', dpi=300)
 report.add_figs_to_section(fig, 'visibility 3d', 'visibility')
 
 
@@ -179,13 +133,10 @@ ax.set_ylabel('Response %')
 ax.set_xticks(np.linspace(0, 1, 2))
 ax.set_yticks(np.linspace(0, .7, 2))
 ax.set_ylim(0, .75)
-ax = pretty_ax(ax)
-fig.savefig(report.data_path + 'visibility2D.png', dpi=300)
+ax = pretty_plot(ax)
 report.add_figs_to_section(fig, 'visibility 2d', 'visibility')
 # #############################################################################
 # 2. discrimination performance as a function of visibility and contrast
-from scipy.stats import wilcoxon
-from base import dPrime
 x = dict()
 x['Accuracy'] = np.zeros((len(subjects), len(contrasts) - 1,
                           len(visibilities)))
@@ -235,10 +186,9 @@ for metric, ylim, in zip(['Accuracy', 'D prime'], ((.5, 1.), (0., 3.))):
     axes[1].set_yticklabels([])
 
     for ax in axes:
-        ax = pretty_ax(ax)
+        ax = pretty_plot(ax)
         ax.axhline(ylim[0], linestyle='--', color='k')
         ax.set_ylim(ylim[0] - np.ptp(ylim) / 20, ylim[1])
-    fig.savefig(report.data_path + '%s.png' % metric, dpi=300)
     report.add_figs_to_section(fig, metric, 'discrimination')
 # plt.show()
 # XXX /!\ Dprime is sig for unseen but this is only if nan are counted as 0,
@@ -266,7 +216,7 @@ plot_sem(np.linspace(0, 1, 4), x[:, :, :, 1].mean(1), color='r', ax=ax)
 plot_sem(np.linspace(0, 1, 4), x[:, :, :, 0].mean(1), color='b', ax=axes[0])
 ax.text(0.05, .35, 'Previously unseen', color='b')
 ax.text(0.05, .12, 'Previously seen', color='r')
-ax = pretty_ax(axes[0])
+ax = pretty_plot(axes[0])
 ax.set_ylabel('Response %')
 ax.set_ylim(.1, .4)
 ax.set_yticks([.1, .4])
@@ -279,7 +229,7 @@ plot_sem(np.linspace(0, 1, 4), contrast, color='k', ax=ax)
 fill_between_gradient(np.hstack((0, np.linspace(0, 1, 4), 1)),
                       np.hstack((0, contrast.mean(0), 0)),
                       ax=ax, cmap='seismic', clim=[-.5, 1.5])
-ax = pretty_ax(ax)
+ax = pretty_plot(ax)
 ax.set_xticks([0, 1])
 ylim = ax.get_ylim()
 ax.axhline(0., linestyle='--', color='k')
@@ -287,7 +237,8 @@ ax.set_yticks(ylim)
 ax.set_xlabel('Visibilities')
 ax.set_ylabel('P. Seen - P. Unseen')
 # plt.show()
-fig.savefig(report.data_path + 'visibility_prior.png', dpi=300)
 report.add_figs_to_section(fig, 'visibility prior', 'prior')
 # #############################################################################
 # Effect of previous trial on current orientation XXX for later
+
+report.save()
