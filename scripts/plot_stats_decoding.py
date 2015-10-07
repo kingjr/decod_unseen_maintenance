@@ -122,9 +122,9 @@ for ii, (analysis, ax_diag) in enumerate(zip(analyses, axes_alldiag)):
     for jj, toi in enumerate(tois):
         toi = np.where((times >= toi[0]) & (times < toi[1]))[0]
         score = np.nanmean(scores_diag[:, toi], axis=1)
-        table[ii, jj] = '[%.2f+/-%.2f, p=%.4f]' % (
+        table[ii, jj] = '[%.3f+/-%.3f, p=%.4f]' % (
             np.nanmean(score), np.nanstd(score) / np.sqrt(len(score)),
-            np.mean(p_values_diag[toi]))
+            np.median(p_values_diag[toi]))
 
 fig_alldiag.tight_layout()
 report.add_figs_to_section(fig_alldiag, 'diagonal', 'all')
