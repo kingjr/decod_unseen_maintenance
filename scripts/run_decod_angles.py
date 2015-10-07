@@ -1,12 +1,10 @@
 import pickle
 import numpy as np
 from jr.stats import circ_tuning, circ_mean, repeated_spearman
-from scripts.config import paths, subjects, subscores, analyses
+from scripts.config import paths, subjects, subscores, analyses, tois
 from base import get_predict, get_predict_error, angle_acc
 analyses = [analysis for analysis in analyses if analysis['name'] in
             ['target_circAngle', 'probe_circAngle']]
-
-tois = [(-.100, 0.050), (.100, .250), (.300, .800), (.900, 1.050)]
 
 
 # Gather data
@@ -14,7 +12,8 @@ for analysis in ['target_circAngle', 'probe_circAngle']:
     results = dict(diagonal=list(), angle_pred=list(), toi=list(),
                    subscore=list(), corr_contrast=list(), corr_pas=list(),
                    R_contrast=list(), R_vis=list(), align_on_diag=list(),
-                   early_maintain=list(), R_vis_duration=list())
+                   early_maintain=list(), R_vis_duration=list(),
+                   R_contrast_toi=list(), R_vis_toi=list())
     for s, subject in enumerate(subjects):
         # load data
         print s
@@ -70,6 +69,23 @@ for analysis in ['target_circAngle', 'probe_circAngle']:
                 y_error_toi = angle_acc(y_error_toi[subsel])
                 results_[subanalysis[0] + '_toi'].append(y_error_toi)
         results['subscore'].append(results_)
+
+        # Contrast and vis effect
+        R_contrast = list()
+        R_vis = list()
+        subsel = subevents.query('target_present==True and ' +
+                                 'detect_pressed==True').index
+        for ii, toi in enumerate(tois):
+            toi_ = np.where((times >= toi[0]) & (times < toi[1]))[0]
+            y_error_ = np.abs(circ_mean(y_error[subsel, :][:, toi_], axis=1))
+            R_vis_ = repeated_spearman(y_error_,
+                                       events['detect_button'][subsel])
+            R_contrast_ = repeated_spearman(y_error_,
+                                            events['target_contrast'][subsel])
+            R_vis.append(R_vis_)
+            R_contrast.append(R_contrast_)
+        results['R_vis_toi'].append(R_vis)
+        results['R_contrast_toi'].append(R_contrast)
 
         # Duration
         results_ = list()
