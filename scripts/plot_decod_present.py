@@ -5,15 +5,14 @@ import matplotlib as mpl
 from jr.gat import get_diagonal_ypred, subscore
 from jr.stats import repeated_spearman
 from jr.plot import pretty_decod
-from jr.utils import align_on_diag
-from scripts.config import paths, subjects, report, analyses
+from jr.utils import align_on_diag, table2html
+from scripts.config import paths, subjects, report, analyses, tois
 from base import stats
 
 # Test whether decoding of presence varies as a function of contrast and
 # visibility
 
 # Gather data
-tois = [(-.100, 0.050), (.100, .250), (.300, .800), (.900, 1.050)]
 n_times = 154  # XXX
 contrast_list = [.5, .75, 1.]
 pas_list = np.arange(4.)
@@ -174,4 +173,44 @@ for ax, result, toi in zip(axes, data, tois[1:]):
 fig.tight_layout()
 report.add_figs_to_section(fig, 'duration', 'duration')
 
+# Table report: AUC
+table = np.empty((4, len(tois)), dtype=object)
+for pas in range(4):
+    score = results['AUC_pas'][pas, :, :]
+    p_val = stats(score - .5)
+    for jj, toi in enumerate(tois):
+        toi_ = np.where((times >= toi[0]) & (times < toi[1]))[0]
+        score_ = np.mean(score[:, toi_], axis=1)
+        table[pas, jj] = '[%.3f+/-%.3f, p=%.4f]' % (
+            np.nanmean(score_), np.nanstd(score_) / np.sqrt(len(score_)),
+            np.min(p_val[toi_]))
+table = np.vstack(([str(t) for t in tois], table))
+table = np.hstack((np.array([''] +
+                   ['pas:%i' % pas for pas in range(4)])[:, None], table))
+report.add_htmls_to_section(table2html(table), 'AUC', 'table')
+
+# Table report: R
+table = np.empty((3, len(tois)), dtype=object)
+for ii, key in enumerate(['contrast', 'vis']):
+    R = results['R_%s' % key]
+    p_val = results['p_%s' % key]
+    for jj, toi in enumerate(tois):
+        toi_ = np.where((times >= toi[0]) & (times < toi[1]))[0]
+        R_ = np.mean(R[:, toi_], axis=1)
+        table[ii, jj] = '[%.3f+/-%.3f, p=%.4f]' % (
+            np.nanmean(R_), np.nanstd(R_) / np.sqrt(len(R_)),
+            np.min(p_val[toi_]))
+# add interaction
+R = results['R_contrast'] - results['R_vis']
+p_val = stats(R)
+for jj, toi in enumerate(tois):
+    toi_ = np.where((times >= toi[0]) & (times < toi[1]))[0]
+    R_ = np.mean(R[:, toi_], axis=1)
+    table[2, jj] = '[%.3f+/-%.3f, p=%.4f]' % (
+        np.nanmean(R_), np.nanstd(R_) / np.sqrt(len(R_)),
+        np.min(p_val[toi_]))
+table = np.vstack(([str(t) for t in tois], table))
+table = np.hstack((np.array([''] + ['R_contrast', 'R_vis', 'diff'])[:, None],
+                   table))
+report.add_htmls_to_section(table2html(table), 'R', 'table')
 report.save()
