@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from jr.plot import (pretty_gat, plot_tuning, pretty_axes, pretty_decod,
                      pretty_colorbar, bar_sem)
+from jr.utils import table2html
 from scripts.config import paths, report
 from scipy.stats import wilcoxon
 
@@ -78,20 +79,44 @@ def quick_stats(x, ax=None):
             ax.text(x_ + .5, y_, sig_, color='w', weight='bold', size=20,
                     ha='center', va='center')
 
-fig, axes = plt.subplots(1, len(tois), figsize=[8, 2])
-for t, (toi, ax) in enumerate(zip(tois, axes)):
-    absent = -results['target_absent_bias_toi'][:, t]
-    seen = -results['bias_vis_toi'][:, 0, 1, 3, t]
-    unseen = -results['bias_vis_toi'][:, 0, 1, 0, t]
-    bar_sem(np.vstack((absent, unseen, seen)).T, color=['k', 'b', 'r'], ax=ax)
-    quick_stats(np.vstack((absent, unseen, seen)).T, ax=ax)
-    diff = seen - unseen
-    print 'diff', wilcoxon(diff[~np.isnan(diff)])
-    ax.set_title('%i $-$ %i ms' % (toi[0] * 1e3, toi[1] * 1e3))
-pretty_axes(axes, xticks=[], xticklabels='', ylim=[-.1, .25],
-            yticks=[-.1, 0, .25], yticklabels=[-.1, '', .25])
-fig.tight_layout()
-fig.subplots_adjust(wspace=.1)
-report.add_figs_to_section(fig, 'visibility', 'bias')
+# Test whether angle error to probe varies with tilt
+# (first with clf_target, then with clf_probe)
+for TP, stimuli in enumerate(['target', 'probe']):
+    fig, axes = plt.subplots(1, len(tois), figsize=[8, 2])
+    table = np.empty((5, len(tois)), dtype=object)
+    for t, (toi, ax) in enumerate(zip(tois, axes)):
+        absent = -results['target_absent_bias_toi'][:, t]
+        present = -results['bias_toi'][:, TP, 1, t]
+        seen = -results['bias_vis_toi'][:, TP, 1, 3, t]
+        unseen = -results['bias_vis_toi'][:, TP, 1, 0, t]
+        bar_sem(np.vstack((absent, unseen, seen)).T, color=['k', 'b', 'r'],
+                ax=ax)
+        quick_stats(np.vstack((absent, unseen, seen)).T, ax=ax)
+        diff = seen - unseen
+        # print 'diff', wilcoxon(diff[~np.isnan(diff)])
+        for ii, score in enumerate([present, absent, seen, unseen, diff]):
+            p_val = wilcoxon(score)[1]
+            m = np.nanmean(score)
+            sem = np.nanstd(score) / np.sqrt(sum(~np.isnan(score)))
+            table[ii, t] = '[%.3f+/-%.3f, p=%.4f]' % (m, sem, p_val)
+        ax.set_title('%i $-$ %i ms' % (toi[0] * 1e3, toi[1] * 1e3))
+    pretty_axes(axes, xticks=[], xticklabels='', ylim=[-.1, .25],
+                yticks=[-.1, 0, .25], yticklabels=[-.1, '', .25])
+    fig.tight_layout()
+    fig.subplots_adjust(wspace=.1)
+    report.add_figs_to_section(fig, 'visibility_%s' % stimuli, 'bias')
+
+    table = np.vstack(([str(t) for t in tois], table))
+    table = np.hstack((
+        np.array(['', 'present', 'absent', 'seen', 'unseen', 'diff'])[:, None],
+        table))
+    report.add_htmls_to_section(table2html(table), stimuli, 'table')
+
+# report assymetry of target probe bias to prove independence
+diff = results['bias_toi'][:, 1, 1, 3] - results['bias_toi'][:, 0, 1, 3]
+p_val = wilcoxon(diff)[1]
+m = np.nanmean(diff)
+sem = np.nanstd(diff) / np.sqrt(sum(~np.isnan(diff)))
+print('[%.3f+/-%.3f, p=%.4f]' % (m, sem, p_val))
 
 report.save()

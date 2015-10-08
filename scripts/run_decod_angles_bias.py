@@ -11,6 +11,7 @@ toi_probe = [.900, 1.050]
 
 results = dict(accuracy=np.nan*np.zeros((20, 2, 2, 154, 154)),
                bias=np.nan*np.zeros((20, 2, 2, 154, 154)),
+               bias_toi=np.nan*np.zeros((20, 2, 2, len(tois))),
                bias_vis=np.nan*np.zeros((20, 2, 2, 4, 154, 154)),
                bias_vis_toi=np.nan*np.zeros((20, 2, 2, 4, len(tois))),
                tuning=np.nan*np.zeros((20, 2, 2, n_bins, 3)))
@@ -43,6 +44,16 @@ for ii, train_analysis in enumerate(['target_circAngle', 'probe_circAngle']):
             sel = np.where(~np.isnan(subevents['target_circAngle']))[0]
             results['bias'][s, ii, jj, :, :] = angle_bias(
                 y_error[sel, :, :], y_tilt[sel])
+
+            # Tuning bias toi
+            sel = np.where(~np.isnan(subevents['target_circAngle']))[0]
+            for t, toi in enumerate(tois):
+                y_error_toi = get_predict_error(gat, y_true=y_true[sel],
+                                                sel=sel, toi=toi,
+                                                typ='diagonal')
+                # same but after averaging predicted angle across time
+                results['bias_toi'][s, ii, jj, t] = angle_bias(
+                    np.squeeze(y_error_toi), y_tilt[sel])
 
             # Tuning bias seen / unseen
             for pas in range(4):
