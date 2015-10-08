@@ -146,30 +146,45 @@ report.add_figs_to_section(fig, 'visibility', 'AUC')
 
 # Duration for each visibility and TOI
 data = results['AUC_pas_duration'][1:-1, ...]  # activation & maintenance TOI
-freq = np.ptp(times) / len(times)
-times_align = times - np.min(times) - np.ptp(times) / 2
-toi_align = np.where((times_align > 0.) & (times_align < .304))[0]
-fig, axes = plt.subplots(1, len(data), figsize=[4, 4])
+times_align = times - times.min()
+fig = plt.figure(figsize=[7.8, 5.5])
+axes = list()
+for ii in range(4):
+    axes.append([plt.subplot2grid((4, 3), (ii, 0), colspan=1),
+                 plt.subplot2grid((4, 3), (ii, 1), colspan=2)])
 cmap = plt.get_cmap('bwr_r')
-for ax, result, toi in zip(axes, data, tois[1:]):
+for jj, result, toi, t in zip(range(2), data, tois[1:], [.300, .600]):
     for ii, col in enumerate(cmap(np.linspace(0, 1, 4.))):
-        if ii in [1, 2]:
-            continue
-        pretty_decod(result[3-ii, :, toi_align].T, color=col, ax=ax, chance=.5,
-                     times=times_align[toi_align], alpha=1., fill=True,
-                     sig=stats(result[3-ii, :, toi_align].T - .5) < .05)
+        ax = axes[ii][jj]
+        toi_align = np.where((times - times.min()) <= t)[0]
+        p_val = stats(result[3-ii, :, toi_align-len(toi_align)/2].T - .5)
+        pretty_decod(result[3, :, toi_align-len(toi_align)/2].T, ax=ax,
+                     times=times_align[toi_align] - t/2, color='r', chance=.5)
+        pretty_decod(result[3-ii, :, toi_align-len(toi_align)/2].T,
+                     color=col, ax=ax, chance=.5,
+                     times=times_align[toi_align] - t/2, alpha=1., fill=True,
+                     sig=p_val < .05)
         ax.set_yticks([.25, 1.])
         ax.set_yticklabels([.25, 1.])
         ax.set_ylabel('AUC', labelpad=-15)
-        if ax != axes[0]:
+        ax.set_ylim([.25, 1.])
+        xticks = np.arange(-t/2., t/2.+.01, .100)
+        ax.set_xticks(xticks)
+        ax.set_xlim(-t/2., t/2)
+        ax.set_xticklabels([''] * len(xticks))
+        if jj != 0:
             ax.set_yticklabels(['', ''])
             ax.set_ylabel('')
-        ax.set_ylim([.25, 1.])
-        ax.set_xticks(np.arange(0, .301, .100))
-        ax.set_title('%i $-$ %i ms' % (1e3 * toi[0], 1e3 * toi[1]))
-        ax.set_xticks([0, .300])
-        ax.set_xticklabels([0, 300])
-        ax.set_xlabel('Duration', labelpad=-10)
+        if ii == 0:
+            ax.set_title('%i $-$ %i ms' % (1e3 * toi[0], 1e3 * toi[1]))
+
+        ax.set_xlabel('', labelpad=-10)
+        ax.set_xticklabels([''])
+        if ii == 3:
+            ax.set_xlabel('Duration', labelpad=-10)
+            ax.set_xticklabels(
+                [int(x) if np.round(x) in [-t/2 * 1e3, t/2 * 1e3]
+                 else '' for x in np.round(1e3 * xticks)])
 fig.tight_layout()
 report.add_figs_to_section(fig, 'duration', 'duration')
 
