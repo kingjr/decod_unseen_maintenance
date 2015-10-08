@@ -3,11 +3,14 @@ import pickle
 import numpy as np
 from jr.plot import pretty_gat, pretty_decod, pretty_slices
 from jr.utils import table2html
+from scipy.stats import wilcoxon
 from scripts.config import paths, analyses, report, tois
 
 fig_alldiag, axes_alldiag = plt.subplots(len(analyses), 1, figsize=[6, 9])
 
-table = np.empty((len(analyses), len(tois)), dtype=object)
+table_toi = np.empty((len(analyses), len(tois)), dtype=object)
+table_reversal = np.empty((len(analyses), 2), dtype=object)
+figs = list()
 for ii, (analysis, ax_diag) in enumerate(zip(analyses, axes_alldiag)):
     print analysis['name']
     # Load
@@ -44,6 +47,13 @@ for ii, (analysis, ax_diag) in enumerate(zip(analyses, axes_alldiag)):
     ax_gat.set_xlabel('Test Times', labelpad=-10)
     ax_gat.set_ylabel('Train Times', labelpad=-15)
     report.add_figs_to_section(fig_gat, 'gat', analysis['name'])
+
+    fig_, ax = plt.subplots(1)
+    ax.matshow(np.mean(scores, axis=0), origin='lower',
+               extent=[np.min(times), np.max(times)] * 2)
+    ax.set_xticks(np.arange(0., 1.200, .01))
+    ax.set_yticks(np.arange(0., 1.200, .01))
+    figs.append(fig_)
 
     # Small GAT
     clim = np.percentile(np.diag(np.mean(scores, axis=0)), 97)
@@ -118,18 +128,42 @@ for ii, (analysis, ax_diag) in enumerate(zip(analyses, axes_alldiag)):
                        ylim[0] + .75 * np.ptp(ylim),
                        analysis['title'], color=.75 * analysis['color'],
                        ha='center', weight='bold')
-    # Add to table
+
+    # Add reversal score to table_toi
+    toi_reversal = np.array([.12, .180])
+    if 'Probe' in analysis['title']:
+        toi_reversal += .817
+    toi_ = [np.where(times >= toi_reversal[0])[0][0],
+            np.where(times >= toi_reversal[1])[0][0]]
+    # -- is there a reversal?
+    score = (scores[:, toi_[0], toi_[1]] + scores[:, toi_[1], toi_[0]]) / 2.
+    p_val = wilcoxon(score - analysis['chance'])[1]
+    table_reversal[ii, 0] = '[%.3f+/-%.3f, p=%.4f]' % (
+        np.nanmean(score), np.nanstd(score) / np.sqrt(len(score)), p_val)
+    # -- is the reversal complete?
+    score = (scores[:, toi_[0], toi_[1]] + scores[:, toi_[1], toi_[0]] -
+             scores[:, toi_[0], toi_[0]] - scores[:, toi_[1], toi_[1]])
+    p_val = wilcoxon(score - analysis['chance'])[1]
+    table_reversal[ii, 1] = '[%.3f+/-%.3f, p=%.4f]' % (
+        np.nanmean(score), np.nanstd(score) / np.sqrt(len(score)), p_val)
+
+    # Add TOI diag score to table_toi
     for jj, toi in enumerate(tois):
         toi = np.where((times >= toi[0]) & (times < toi[1]))[0]
         score = np.nanmean(scores_diag[:, toi], axis=1)
-        table[ii, jj] = '[%.3f+/-%.3f, p=%.4f]' % (
+        table_toi[ii, jj] = '[%.3f+/-%.3f, p=%.4f]' % (
             np.nanmean(score), np.nanstd(score) / np.sqrt(len(score)),
             np.median(p_values_diag[toi]))
 
 fig_alldiag.tight_layout()
 report.add_figs_to_section(fig_alldiag, 'diagonal', 'all')
-table = np.vstack(([str(t) for t in tois], table))
-table = np.hstack((np.array([''] + [a['title'] for a in analyses])[:, None],
-                   table))
-report.add_htmls_to_section(table2html(table), 'all', 'all')
+
+table_toi = table2html(table_toi, head_line=tois,
+                       head_column=[a['title'] for a in analyses])
+report.add_htmls_to_section(table_toi, 'table_toi', 'all')
+
+table_reversal = table2html(table_reversal, head_line=toi_reversal,
+                            head_column=[a['title'] for a in analyses])
+report.add_htmls_to_section(table_reversal, 'table_reversal', 'all')
+
 report.save()
