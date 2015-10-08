@@ -192,17 +192,20 @@ for analysis in analyses:
             ax = axes[ii][jj]
             toi_align = np.where((times - times.min()) <= t)[0]
             sig = stats(result[:, 3-ii, toi_align-len(toi_align)/2]) < .05
+            pretty_decod(result[:, 3, toi_align-len(toi_align)/2], ax=ax,
+                         times=times_align[toi_align] - t/2, color='r',
+                         chance=0.)
             pretty_decod(result[:, 3-ii, toi_align-len(toi_align)/2],
                          color=col, ax=ax, fill=True,
                          times=times_align[toi_align] - t/2., alpha=1.,
                          sig=sig, chance=0.)
-            ax.set_yticks([-.07, .15])
-            ax.set_yticklabels([-.07, .15])
+            ax.set_yticks([-.03, .07])
+            ax.set_yticklabels([-.03, .07])
             ax.set_ylabel('$\Delta angle$', labelpad=-15)
             if jj != 0:
                 ax.set_yticklabels(['', ''])
                 ax.set_ylabel('')
-            ax.set_ylim([-.07, .15])
+            ax.set_ylim([-.03, .07])
             xticks = np.arange(-t/2., t/2.+.01, .100)
             ax.set_xticks(xticks)
             ax.set_xticklabels([''] * len(xticks))
@@ -216,7 +219,7 @@ for analysis in analyses:
                 ax.set_xticklabels(
                     [int(x) if np.round(x) in [-t/2 * 1e3, t/2 * 1e3]
                      else '' for x in np.round(1e3 * xticks)])
-    # fig.tight_layout()
+    fig.tight_layout()
     report.add_figs_to_section(fig, 'duration', analysis['name'])
 
     # early maintain
