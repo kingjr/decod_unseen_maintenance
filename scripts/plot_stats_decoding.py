@@ -159,11 +159,11 @@ for ii, (analysis, ax_diag) in enumerate(zip(analyses, axes_alldiag)):
 fig_alldiag.tight_layout()
 report.add_figs_to_section(fig_alldiag, 'diagonal', 'all')
 
-table_toi = table2html(table_toi, head_line=tois,
+table_toi = table2html(table_toi.T, head_line=[str(t) for t in tois],
                        head_column=[a['title'] for a in analyses])
 report.add_htmls_to_section(table_toi, 'table_toi', 'all')
 
-table_reversal = table2html(table_reversal, head_line=toi_reversal,
+table_reversal = table2html(table_reversal.T, head_line=toi_reversal,
                             head_column=[a['title'] for a in analyses])
 report.add_htmls_to_section(table_reversal, 'table_reversal', 'all')
 
