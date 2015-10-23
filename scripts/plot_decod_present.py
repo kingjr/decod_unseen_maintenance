@@ -2,6 +2,7 @@ import pickle
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
+from scipy.stats import wilcoxon
 from jr.gat import get_diagonal_ypred, subscore
 from jr.stats import repeated_spearman
 from jr.plot import pretty_decod
@@ -185,8 +186,47 @@ for jj, result, toi, t in zip(range(2), data, tois[1:], [.300, .600]):
             ax.set_xticklabels(
                 [int(x) if np.round(x) in [-t/2 * 1e3, t/2 * 1e3]
                  else '' for x in np.round(1e3 * xticks)])
+
 fig.tight_layout()
 report.add_figs_to_section(fig, 'duration', 'duration')
+
+# add report to Table: Duration
+table_data = np.zeros((8, 2, len(subjects)))
+freq = len(times) / np.ptp(times)
+for jj, result, toi, t in zip(range(2), data, tois[1:], [.300, .600]):
+    for pas in range(4):
+        score = results['AUC_pas_duration'][jj, pas, :, :len(times)/2]
+        # we had .5 at the end, to ensure that we find a value for each subject
+        # This could bias the distribution towards longer duration, so we'll
+        # take the median across subjects.
+        score = np.hstack((score, [[.5]] * len(subjects)))
+        # for each subject, find the first time sample that is below chance
+        table_data[pas, jj, :] = [np.where(s <= .5)[0][0]/freq for s in score]
+    # mean across visibility to get overall estimate
+    table_data[4, jj, :] = np.nanmean(table_data[:, jj, :], axis=0)
+    # seen - unseen
+    table_data[5, jj, :] = table_data[3, jj, :] - table_data[0, jj, :]
+# interaction time
+table_data[6, 0, :] = table_data[4, 1, :] - table_data[4, 0, :]
+# interaction time x vis
+table_data[7, 0, :] = table_data[5, 1, :] - table_data[5, 0, :]
+table = np.empty((8, 2), dtype=object)
+# Transfor this data into stats summary:
+for ii in range(8):
+    for jj in range(2):
+        score = table_data[ii, jj, :]
+        m = np.nanmean(score)
+        sem = np.nanstd(score) / np.sqrt(sum(~np.isnan(score)))
+        p_val = wilcoxon(score)[1] if sum(abs(score)) > 0. else 1.
+        # the stats for each pas is not meaningful because there's no chance
+        # level, we 'll thus skip it
+        p_val = p_val if ii > 3 else np.inf
+        table[ii, jj] = '[%.3f+/-%.3f, p=%.4f]' % (m, sem, p_val)
+table = table2html(table, head_column=tois[1:3],
+                   head_line=['pas%i' % pas for pas in range(4)] +
+                             ['pst', 'seen-unseen', 'late-early',
+                              '(late-early)*(seen-unseen)'])
+report.add_htmls_to_section(table, 'duration', 'table')
 
 # Table report: AUC
 table = np.empty((4, len(tois)), dtype=object)
@@ -199,12 +239,11 @@ for pas in range(4):
         table[pas, jj] = '[%.3f+/-%.3f, p=%.4f]' % (
             np.nanmean(score_), np.nanstd(score_) / np.sqrt(len(score_)),
             np.min(p_val[toi_]))
-table = np.vstack(([str(t) for t in tois], table))
-table = np.hstack((np.array([''] +
-                   ['pas:%i' % pas for pas in range(4)])[:, None], table))
-report.add_htmls_to_section(table2html(table), 'AUC', 'table')
+table = table2html(table, head_column=tois,
+                   head_line=['pas%i' % pas for pas in range(4)])
+report.add_htmls_to_section(table, 'AUC', 'table')
 
-# Table report: R
+# Table report: R: modulation of present score by contrast and visibility
 table = np.empty((3, len(tois)), dtype=object)
 for ii, key in enumerate(['contrast', 'vis']):
     R = results['R_%s' % key]
@@ -224,8 +263,7 @@ for jj, toi in enumerate(tois):
     table[2, jj] = '[%.3f+/-%.3f, p=%.4f]' % (
         np.nanmean(R_), np.nanstd(R_) / np.sqrt(len(R_)),
         np.min(p_val[toi_]))
-table = np.vstack(([str(t) for t in tois], table))
-table = np.hstack((np.array([''] + ['R_contrast', 'R_vis', 'diff'])[:, None],
-                   table))
-report.add_htmls_to_section(table2html(table), 'R', 'table')
+table = table2html(table, head_column=tois,
+                   head_line=['R_contrast', 'R_vis', 'diff'])
+report.add_htmls_to_section(table, 'R', 'table')
 report.save()
