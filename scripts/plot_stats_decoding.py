@@ -5,6 +5,7 @@ from jr.plot import pretty_gat, pretty_decod, pretty_slices
 from jr.utils import table2html
 from scipy.stats import wilcoxon
 from scripts.config import paths, analyses, report, tois
+from base import stats
 
 fig_alldiag, axes_alldiag = plt.subplots(len(analyses), 1, figsize=[6, 9])
 
@@ -165,5 +166,55 @@ report.add_htmls_to_section(table_toi, 'table_toi', 'all')
 table_reversal = table2html(table_reversal, head_line=toi_reversal,
                             head_column=[a['title'] for a in analyses])
 report.add_htmls_to_section(table_reversal, 'table_reversal', 'all')
+
+# main effect of task relevance
+score_relevant, score_irrelevant = list(), list()
+relevant = ['target_circAngle', 'target_present', 'detect_button_pst']
+irrelevant = ['target_contrast_pst', 'target_spatialFreq', 'target_phase']
+for ii, (analysis, ax_diag) in enumerate(zip(analyses, axes_alldiag)):
+    print analysis['name']
+    # Load
+    if analysis['name'] not in relevant + irrelevant:
+        continue
+    stats_fname = paths('score', subject='fsaverage', data_type='erf',
+                        analysis=('stats_' + analysis['name']))
+    with open(stats_fname, 'rb') as f:
+        out = pickle.load(f)
+        # we'll be looking at the sign of the effect per subjects as compared
+        # to chance level
+        scores = np.array(out['scores']) - analysis['chance']
+        # XXX you need to relaunch one of the analyses that only has 153 and
+        # not 154 time points
+        times = out['times'][:153] / 1e3  # FIXME
+    scores = np.array([np.diag(subject[:, :153]) for subject in scores])
+    if analysis['name'] in relevant:
+        score_relevant.append(scores)
+    elif analysis['name'] in irrelevant:
+        score_irrelevant.append(scores)
+
+fig, ax = plt.subplots(1, figsize=[6, 2])
+# non parametric necessitate to take the mean of the sign of the effects
+# because each decoding score uses different metrics
+scores_interaction = np.mean(np.sign(score_relevant) -
+                             np.sign(score_irrelevant), axis=0)
+scores_relevant = np.mean(np.sign(score_relevant), axis=0)
+scores_irrelevant = np.mean(np.sign(score_irrelevant), axis=0)
+
+sig = stats(scores_interaction) < .05
+pretty_decod(scores_relevant, times=times, ax=ax, color='y', sig=sig,
+             fill=True, width=0.)
+sig = stats(scores_relevant) < .05
+pretty_decod(scores_relevant, times=times, ax=ax, color='r', sig=sig)
+sig = stats(scores_irrelevant) < .05
+pretty_decod(scores_irrelevant, times=times, ax=ax, color='w',
+             sig=np.ones_like(times), fill=True, width=0.)
+pretty_decod(scores_irrelevant, times=times, ax=ax, color='k', sig=sig)
+ax.set_ylim(-1., 1.)
+ax.set_yticks([-1., 1])
+ax.set_yticklabels([-1, 1])
+ax.set_xticks(np.linspace(-.100, 1., 11))
+ax.set_xticklabels(['', '0', '', '', '', '', '', '', '', '800', '', ''])
+ax.axvline(.800, color='k')
+report.add_figs_to_section(fig_alldiag, 'interaction relevance', 'all')
 
 report.save()
