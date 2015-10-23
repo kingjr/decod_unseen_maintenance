@@ -254,7 +254,7 @@ for ii, key in enumerate(['contrast', 'vis']):
         table[ii, jj] = '[%.3f+/-%.3f, p=%.4f]' % (
             np.nanmean(R_), np.nanstd(R_) / np.sqrt(len(R_)),
             np.min(p_val[toi_]))
-# add interaction
+# add interaction visibility & contrast modulation of decoding score
 R = results['R_contrast'] - results['R_vis']
 p_val = stats(R)
 for jj, toi in enumerate(tois):
@@ -266,4 +266,13 @@ for jj, toi in enumerate(tois):
 table = table2html(table, head_column=tois,
                    head_line=['R_contrast', 'R_vis', 'diff'])
 report.add_htmls_to_section(table, 'R', 'table')
+
+# Is the modulation of contrast different between early versus delay TOI?
+t_baseline, t_early, t_delay, t_probe = [
+    np.where((times >= toi[0]) & (times < toi[1]))[0] for toi in tois]
+
+R_early = np.mean(results['R_contrast'][:, t_early], axis=1)
+R_delay = np.mean(results['R_contrast'][:, t_delay], axis=1)
+wilcoxon(R_early - R_delay)
+
 report.save()
