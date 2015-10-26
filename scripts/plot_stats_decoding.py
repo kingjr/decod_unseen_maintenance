@@ -104,7 +104,7 @@ for ii, (analysis, ax_diag) in enumerate(zip(analyses, axes_alldiag)):
     pretty_decod(scores_diag, times=times, sig=p_values_diag < .05,
                  chance=chance, color=analysis['color'], fill=True, ax=ax_diag)
     xlim, ylim = ax_diag.get_xlim(), np.array(ax_diag.get_ylim())
-    ylim[1] = np.ceil(ylim[1] * 10) / 10.
+    # ylim[1] = np.ceil(ylim[1] * 10) / 10.
     ax_diag.set_ylim(ylim)
     ax_diag.axvline(.800, color='k')
     if ax_diag != axes_alldiag[-1]:
