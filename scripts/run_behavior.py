@@ -38,7 +38,7 @@ def make_3d_plot(ax, xs, y, zs, colors):
         ys = np.mean(y[:, :, ii], axis=0)
         verts.append(list(zip(np.hstack((0., xs, 1.)),
                               np.hstack((0., ys, 0.)))))
-        ys += np.std(x[:, :, ii], axis=0) / np.sqrt(len(subjects))
+        ys += np.std(y[:, :, ii], axis=0) / np.sqrt(len(subjects))
         verts_sem.append(list(zip(np.hstack((0., xs, 1.)),
                                   np.hstack((0., ys, 0.)))))
     poly = PolyCollection(verts, facecolors=colors, edgecolor=colors,
