@@ -1,3 +1,4 @@
+"""Plot analyses related to the control analyses of target and probe angles"""
 import pickle
 import numpy as np
 import matplotlib.pyplot as plt
@@ -7,19 +8,20 @@ from jr.utils import table2html
 from scripts.config import paths, report
 from scipy.stats import wilcoxon
 
+# Load data
 fname = paths('score', subject='fsaverage', analysis='target_probe')
 with open(fname, 'rb') as f:
     results = pickle.load(f)
 times = results['times']
 tois = results['tois']
 
-# Plot tuning probe time: train test target probe
+# Plot tuning curve at probe time for each estimator, alignment and tilt
 cmap = plt.get_cmap('BrBG')
 colors = cmap(np.linspace(0.2, .8, 3))
 fig, axes = plt.subplots(2, 2, figsize=[5, 3.8])
-for ii in range(2):
-    for jj in range(2):
-        for tilt, color in enumerate(colors):
+for ii in range(2):  # Estimator: target or probe orientation?
+    for jj in range(2):  # Angle error with regard to: target or probe ?
+        for tilt, color in enumerate(colors):  # clockwise or counter clockwise
             if tilt == 1:
                 continue  # do not plot absent case
             plot_tuning(results['tuning'][:, ii, jj, :, tilt],
@@ -28,7 +30,7 @@ for ii in range(2):
                         ax=axes[ii, jj], shift=np.pi, color='k', alpha=0.)
         axes[ii, jj].axvline((jj * 2 - 1) * np.pi / 3, color=colors[0])
         axes[ii, jj].axvline(-(jj * 2 - 1) * np.pi / 3, color=colors[2])
-        # axes[ii, jj].axvline(0, color='k')
+
 pretty_axes(axes, xticklabels=['$-\pi/2$', '', '$\pi/2$'],
             xlabel='Angle Error',
             ylim=[0.014, .08],
@@ -65,10 +67,9 @@ ax.set_xlabel('Times', labelpad=-10)
 fig.tight_layout()
 report.add_figs_to_section(fig, 'diagonal', 'bias')
 
-# Test significant bias in each toi for unseen and seen
-
 
 def quick_stats(x, ax=None):
+    """Test significant bias in each toi for unseen and seen"""
     pvals = [wilcoxon(ii[~np.isnan(ii)])[1] for ii in x.T]
     sig = [['', '*'][p < .05] for p in pvals]
     m = np.nanmean(x, axis=0)

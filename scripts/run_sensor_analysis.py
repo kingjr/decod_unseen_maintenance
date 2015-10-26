@@ -1,8 +1,9 @@
+"""Performs sensor analysis within each subjects separately"""
 import pickle
 import numpy as np
 import matplotlib.pyplot as plt
 from jr.plot import share_clim
-from base import meg_to_gradmag, nested_analysis
+from scripts.base import meg_to_gradmag, nested_analysis
 from orientations.utils import load_epochs_events
 
 from scripts.config import (
@@ -21,6 +22,9 @@ for subject in subjects:
     # Apply each analysis
     for analysis in analyses:
         print(analysis['name'])
+
+        # This functions computes nested contrast and return the effect size
+        # for each level of comparison.
         coef, sub = nested_analysis(
             epochs._data, events, analysis['condition'],
             function=analysis.get('erf_function', None),

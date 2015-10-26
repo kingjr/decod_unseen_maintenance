@@ -1,3 +1,6 @@
+"""These functions are used to transfer data back and forth to amazon web
+services and dropbox servers"""
+
 import sys
 sys.path.insert(0, './')
 import matplotlib
@@ -9,15 +12,15 @@ from cloud.utils import download, upload
 def download_all(overwrite=False):
     from itertools import product
     # XXX This will have to be specified for later scripts
-    from scripts.config import paths, subjects, data_types
+    from scripts.config import paths, subjects
 
     file_list = list()
     # behavior
     for subject in subjects:
         file_list.append(paths('behavior', subject=subject))
     # epoch
-    for subject, data_type in product(subjects, data_types):
-        fname = paths('epoch', subject=subject, data_type=data_type)
+    for subject in product(subjects):
+        fname = paths('epoch', subject=subject)
         file_list.append(fname)
         file_list.append(fname[:-4] + '.dat')
 

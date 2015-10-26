@@ -1,3 +1,5 @@
+"""Plot decoding and GeneralizationAcrossTime (GAT) results"""
+
 import matplotlib.pyplot as plt
 import pickle
 import numpy as np
@@ -5,7 +7,7 @@ from jr.plot import pretty_gat, pretty_decod, pretty_slices
 from jr.utils import table2html
 from scipy.stats import wilcoxon
 from scripts.config import paths, analyses, report, tois
-from base import stats
+from scripts.base import stats
 
 fig_alldiag, axes_alldiag = plt.subplots(len(analyses), 1, figsize=[6, 9])
 

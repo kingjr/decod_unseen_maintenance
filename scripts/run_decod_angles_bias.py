@@ -1,14 +1,16 @@
+"""This set of analyses are perform to test whether the decoding of the target
+angle after probe onset is bias by and/or solely due to the presence of a probe
+whose orientation is correlated to the target's"""
 import pickle
 import numpy as np
 from jr.stats import circ_tuning
 from scripts.config import paths, subjects
-from base import stats, get_predict_error, angle_acc, angle_bias
+from scripts.base import stats, get_predict_error, angle_acc, angle_bias, tois
 
-# XXX => in config
-tois = [(-.100, 0.050), (.100, .200), (.300, .800), (.900, 1.050)]
 n_bins = 24
-toi_probe = [.900, 1.050]
+toi_probe = tois[-1]
 
+# initialize results
 results = dict(accuracy=np.nan*np.zeros((20, 2, 2, 154, 154)),
                bias=np.nan*np.zeros((20, 2, 2, 154, 154)),
                bias_toi=np.nan*np.zeros((20, 2, 2, len(tois))),
@@ -16,31 +18,43 @@ results = dict(accuracy=np.nan*np.zeros((20, 2, 2, 154, 154)),
                bias_vis_toi=np.nan*np.zeros((20, 2, 2, 4, len(tois))),
                tuning=np.nan*np.zeros((20, 2, 2, n_bins, 3)))
 
+
+# This Analysis is performed twice: 1) for estimators fitted on the
+# orientations of the target 2) for estimators fitted on the orientations of
+# the probe.
 for ii, train_analysis in enumerate(['target_circAngle', 'probe_circAngle']):
     for s, subject in enumerate(subjects):
         print s
+
+        # Load decoding data
         fname = paths('decod', subject=subject, analysis=train_analysis)
         with open(fname, 'rb') as f:
             gat, _, events_sel, events = pickle.load(f)
         subevents = events.iloc[events_sel].reset_index()
+
+        # Single trial Target - Probe tilt (-1 or 1)
         y_tilt = np.array(subevents['probe_tilt'])
         times = gat.train_times_['times']
         n_train, n_test = np.shape(gat.y_pred_)[:2]
+
         # Mean error across trial on the diagonal
         # when train on probe, some trial contain no target => sel
         test_analysis = ['target_circAngle', 'probe_circAngle']
         for jj, test in enumerate(test_analysis):
             y_true = np.array(subevents[test])
             sel = np.where(~np.isnan(y_true))[0]
-            # compute angle error
+            # compute angle error between estimated angle from MEG topography
+            # and target angle (target_circAngle) OR probe angle.
+            # This therefore results in a 2x2 results of
+            # target/probe estimators X target/probe bias.
             y_error = get_predict_error(gat, mean=False, typ='gat',
                                         y_true=y_true)
 
-            # Accuracy train test target probe
+            # Accuracy train test target probe: absolute values
             accuracy = angle_acc(y_error[sel, :, :], axis=0)
             results['accuracy'][s, ii, jj, :, :] = accuracy
 
-            # Bias train test target probe
+            # Bias train test target probe: signed values
             sel = np.where(~np.isnan(subevents['target_circAngle']))[0]
             results['bias'][s, ii, jj, :, :] = angle_bias(
                 y_error[sel, :, :], y_tilt[sel])
@@ -72,7 +86,7 @@ for ii, train_analysis in enumerate(['target_circAngle', 'probe_circAngle']):
                     results['bias_vis_toi'][s, ii, jj, pas, t] = angle_bias(
                         np.squeeze(y_error_toi), y_tilt[sel])
 
-            # Tuning curve for probe 1 and probe 2
+            # Tuning curve for probe tilted to -1 and probe tilted to 1
             tuning = list()
             for probe_tilt in [-1, np.nan, 1]:
                 if np.isnan(probe_tilt):
@@ -88,20 +102,23 @@ for ii, train_analysis in enumerate(['target_circAngle', 'probe_circAngle']):
                 tuning.append(probas)
             results['tuning'][s, ii, jj, :, :] = np.transpose(tuning)
 
+# test significance of target versus probe train test
+# for biases (signed values)
 results['bias_pval'] = np.zeros_like((results['bias'][0]))
 for ii in range(2):
     for jj in range(2):
         scores = results['bias'][:, ii, jj, :, :]
         results['bias_pval'][ii, jj, :, :] = stats(scores)
 
-# test significance of target versus probe train test
+# for accuracy (absolute values)
 results['target_probe_pval'] = np.zeros((154, 154, 2, 2))
 for ii in range(2):
     for jj in range(2):
         results['target_probe_pval'][:, :, ii, jj] = stats(
             results['accuracy'][:, ii, jj, :, :])
 
-# load absent target prediction
+# load absent target prediction to perform the control analysis of virtual
+# biases
 results['target_absent'] = np.zeros((20, 154, 153))
 results['target_absent_bias_toi'] = np.zeros((20, len(tois)))
 for s, subject in enumerate(subjects):  # Loop across each subject
@@ -124,7 +141,7 @@ for s, subject in enumerate(subjects):  # Loop across each subject
             np.squeeze(y_error_toi), y_tilt)
 results['target_absent_pval'] = stats(results['target_absent'])
 
-# save
+# Save results
 results['times'] = gat.train_times_['times']
 results['bins'] = bins
 results['tois'] = tois

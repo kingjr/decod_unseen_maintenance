@@ -1,3 +1,4 @@
+"""Plot the topographical effects obtained in each analysis"""
 import pickle
 import numpy as np
 import matplotlib.pyplot as plt
@@ -31,14 +32,9 @@ for analysis, color in zip(analyses, colors):
 
     def topomap_clim(data, factor=10, grad=False, baseline=0.):
         if grad:
-            # m = np.median(data)
-            # s = np.median(np.abs(data - m))
-            # vmin, vmax = m - factor * s, m + factor * s
             vmin, vmax = np.percentile(data, [factor, 100-factor])
             vmin = 0 if vmin < 0 else vmin
         else:
-            # s = np.median(np.abs(data))
-            # vmin, vmax = -factor * s, factor * s
             vmin, vmax = np.percentile(data, [factor, 100-factor])
             vmin, vmax = (-np.max([np.abs(vmin), vmax]),
                           np.max([np.abs(vmin), vmax]))

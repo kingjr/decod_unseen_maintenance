@@ -1,12 +1,13 @@
+"""Performs stats across subjects of decoding scores fitted within subjects"""
 import pickle
 import numpy as np
-from base import stats
+from scripts.base import stats
 from scripts.config import (paths, subjects, analyses)
 
-
+# For each analysis of interest
 for analysis in analyses:
     print analysis['name']
-    # DATA
+    # Load decoding results
     scores = list()
     y_pred = list()
     for subject in subjects:
@@ -28,7 +29,8 @@ for analysis in analyses:
     alpha = 0.05
     times = gat.train_times_['times'] * 1000
 
-    # STATS
+    # Compute stats: is decoding different from theoretical chance level (using
+    # permutations across subjects)
     p_values = stats(np.array(scores) - chance)
     diag_offdiag = scores - np.tile([np.diag(score) for score in scores],
                                     [len(times), 1, 1]).transpose(1, 0, 2)
@@ -37,7 +39,7 @@ for analysis in analyses:
     scores_diag = [np.diag(score) for score in scores]
     p_values_diag = stats(np.array(scores_diag)[:, :, None] - chance)
 
-    # SAVE
+    # Save stats results
     stats_fname = paths('score',  analysis=('stats_' + analysis['name']),
                         log=True)
     with open(stats_fname, 'wb') as f:

@@ -13,7 +13,7 @@ from scripts.config import (
     # subscores,
 )
 from orientations.conditions import analysis as make_analysis
-from base import scorer_angle_tuning
+from scripts.base import scorer_angle_tuning
 
 
 analyses = [
@@ -33,7 +33,7 @@ def tuning(truth, prediction):
     # XXX can be matricize instead of loop
     n_bins = 19 + 1
     from itertools import product
-    from base import tile_memory_free
+    from scripts.base import tile_memory_free
     error = (np.pi - np.squeeze(prediction) +
              np.transpose(tile_memory_free(truth, np.shape(prediction)[:2]),
                           [1, 2, 0])) % (2 * np.pi) - np.pi

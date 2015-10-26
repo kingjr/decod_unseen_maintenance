@@ -2,13 +2,8 @@ import numpy as np
 import os
 import os.path as op
 from jr.utils import OnlineReport
-# import sys
-# sys.path.insert(0, './')
-# import matplotlib
-# matplotlib.use('Agg')
-# from time import gmtime, strftime
-# launch_time = strftime("_%Y-%m-%d_%H-%M-%S_", gmtime())
 
+# Setup online HTML report
 report = OnlineReport()
 
 # Experiment parameters
@@ -16,9 +11,6 @@ base_path = op.dirname(op.dirname(__file__))
 print base_path
 data_path = op.join(base_path, 'data/')
 data_path = '/media/jrking/harddrive/Niccolo/data/'
-# XXX what to do with this ad hoc paths?
-# script_path = '/home/niccolo/Dropbox/DOCUP/scripts/python/'
-# pyoutput_path = op.join(base_path, '/media', 'niccolo', 'ParisPy', 'data')
 
 
 def paths(typ, subject='fsaverage', data_type='erf', lock='target',
@@ -44,7 +36,8 @@ def paths(typ, subject='fsaverage', data_type='erf', lock='target',
         covariance=op.join(this_path, '%s-meg-cov.fif' % (subject)))
     file = path_template[typ]
 
-    # Log file ?
+    # Option to Log the file in order to facilitate the upload and download
+    # onto and from the Amazon Servers
     if log:
         fname = paths('log')
         print '%s: %s ' % (fname, file)
@@ -58,6 +51,7 @@ def paths(typ, subject='fsaverage', data_type='erf', lock='target',
 
     return file
 
+# Subjects pseudonimized ID
 subjects = [
     'ak130184', 'el130086', 'ga130053', 'gm130176', 'hn120493',
     'ia130315', 'jd110235', 'jm120476', 'ma130185', 'mc130295',
@@ -70,9 +64,6 @@ missing_mri = [
 runs = range(1, 6)
 
 # Define type of sensors used (useful for ICA correction, plotting etc)
-# FIXME unknown connectivity; must be mag
-# from mne.channels import read_ch_connectivity
-# meg_connectivity, _ = read_ch_connectivity('neuromag306meg')
 chan_types = [dict(name='meg')]
 
 # Decoding preprocessing steps
@@ -87,20 +78,15 @@ from orientations.conditions import analyses, subscores, analyses_order2
 # from analyses_definition_univariate import format_analysis
 # analyses = [format_analysis(contrast) for contrast in contrasts]
 
-# ############## Define type of input (erf,frequenct etc...) ##################
-data_types = ['erf'] + ['freq%s' % f for f in [7, 10, 12, 18, 29, 70, 105]]
-
-
 # EXTERNAL PARAMETER ##########################################################
 import argparse
+# This is to facilitate cluster analyses by passing parameters externally
 parser = argparse.ArgumentParser()
 parser.add_argument('--time_id', default='')
 parser.add_argument('--subject', default=None)
-parser.add_argument('--data_type', default=data_types)
 parser.add_argument('--analysis', default=analyses)
 parser.add_argument('--pyscript', default='config.py')
 args = parser.parse_args()
-
 
 time_id = args.time_id
 subjects = [args.subject] if args.subject is not None else subjects
@@ -109,16 +95,11 @@ if isinstance(args.analysis, str):
     analyses = [analyses[idx]]
 pyscript = args.pyscript
 
-# COV #########################################################################
-cov_method = ['shrunk', 'empirical']
-cov_reject = dict(grad=4000e-13, mag=4e-12, eog=180e-6)
-
+# Analysis Parameters
+tois = [(-.100, 0.050), (.100, .250), (.300, .800), (.900, 1.050)]
 
 # ##################################""
 # # UNCOMMENT TO SUBSELECTION FOR FAST PROCESSING
-# #
 # subjects = [subjects[0]]
-data_types = [data_types[0]]
 # analyses = [ana for ana in analyses if ana['name'] == 'target_present']
 preproc = dict(crop=dict(tmin=-.1, tmax=1.100))
-# preproc = dict(decim=2, crop=dict(tmin=-.1, tmax=1.100))

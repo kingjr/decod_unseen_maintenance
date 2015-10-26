@@ -6,7 +6,7 @@ from scripts.config import paths
 from jr.gif import writeGif, Figtodat
 from jr.gat.graphs import plot_graph, animate_graph
 from scripts.config import report, analyses
-from base import stats
+from scripts.base import stats
 
 
 analyses = [a for a in analyses if a['name'] in

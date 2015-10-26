@@ -1,21 +1,23 @@
+"""Sub analyses related to the decoding of probe and target orientations"""
 import pickle
 import numpy as np
 from jr.stats import circ_tuning, circ_mean, repeated_spearman
 from scripts.config import paths, subjects, subscores, analyses, tois
-from base import get_predict, get_predict_error, angle_acc
+from scripts.base import get_predict, get_predict_error, angle_acc
 analyses = [analysis for analysis in analyses if analysis['name'] in
             ['target_circAngle', 'probe_circAngle']]
 
 
-# Gather data
+# These analyses are applied both for target and probe related estimators
 for analysis in ['target_circAngle', 'probe_circAngle']:
+    # Initialize results
     results = dict(diagonal=list(), angle_pred=list(), toi=list(),
                    subscore=list(), corr_contrast=list(), corr_pas=list(),
                    R_contrast=list(), R_vis=list(), align_on_diag=list(),
                    early_maintain=list(), R_vis_duration=list(),
                    R_contrast_toi=list(), R_vis_toi=list())
     for s, subject in enumerate(subjects):
-        # load data
+        # Load data
         print s
         fname = paths('decod', subject=subject, analysis=analysis)
         with open(fname, 'rb') as f:
@@ -29,7 +31,9 @@ for analysis in ['target_circAngle', 'probe_circAngle']:
         results['diagonal'].append(y_error)
 
         # Mean prediction for each angle at peak time
-        toi = [.100, .250] if analysis == 'target_circAngle' else [.900, 1.150]
+        # This is to be able to plot the tuning functions (histogram) for each
+        # stimulus orientation separately.
+        toi = tois[1] if analysis == 'target_circAngle' else tois[3]
         results_ = list()
         for angle in np.unique(gat.y_true_):
             y_pred = get_predict(gat, sel=np.where(gat.y_true_ == angle)[0],
@@ -38,7 +42,9 @@ for analysis in ['target_circAngle', 'probe_circAngle']:
             results_.append(probas)
         results['angle_pred'].append(results_)
 
-        # Mean tuning error per toi
+        # Mean tuning error per Time Region of Interest (TOI):
+        # Does the decoding performance of stimulus orientation varies with
+        # time?
         results_ = list()
         for toi in tois:
             probas, bins = circ_tuning(get_predict_error(gat, toi=toi),
@@ -46,7 +52,9 @@ for analysis in ['target_circAngle', 'probe_circAngle']:
             results_.append(probas)
         results['toi'].append(results_)
 
-        # Mean y_error per toi per vis
+        # Mean y_error per toi per visibility rating (0-3):
+        # Is decoding performance significant when subjects reported not seen
+        # the target (0), guessing it (1) ...
         results_ = dict()
         y_error = get_predict_error(gat, mean=False)
         for subanalysis in subscores:
@@ -70,7 +78,9 @@ for analysis in ['target_circAngle', 'probe_circAngle']:
                 results_[subanalysis[0] + '_toi'].append(y_error_toi)
         results['subscore'].append(results_)
 
-        # Contrast and vis effect
+        # Contrast and visibility modulatory effects:
+        # how is decoding performance of the target/probe angles affected by/
+        # covaries with the target contrast and visibility?
         R_contrast = list()
         R_vis = list()
         subsel = subevents.query('target_present==True and ' +
@@ -87,7 +97,9 @@ for analysis in ['target_circAngle', 'probe_circAngle']:
         results['R_vis_toi'].append(R_vis)
         results['R_contrast_toi'].append(R_contrast)
 
-        # Duration
+        # Duration analyses
+        # are early a late estimators equally able to generalize over time?
+        # Do these durations vary as a function of visibility?
         results_ = list()
         R_vis_duration = list()
         for toi in tois:
@@ -120,14 +132,14 @@ for analysis in ['target_circAngle', 'probe_circAngle']:
         results['align_on_diag'].append(results_)
         results['R_vis_duration'].append(R_vis_duration)
 
-        # maintenance of early classifiers
+        # Maintenance of early classifiers
         results_ = list()
         for toi in [[.100, .150], [.170, .220]]:
             y_error = get_predict_error(gat, toi=toi, typ='gat')
             results_.append(angle_acc(y_error, axis=0))
         results['early_maintain'].append(results_)
 
-    # Save
+    # Save results
     results['times'] = times
     results['bins'] = bins
     fname = paths('score', subject='fsaverage', analysis=analysis + '-tuning')

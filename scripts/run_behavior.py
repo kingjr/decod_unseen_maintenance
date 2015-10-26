@@ -1,3 +1,4 @@
+"""Behavioral analyses and plot"""
 import numpy as np
 from mpl_toolkits.mplot3d import axes3d, Axes3D
 import matplotlib as mpl

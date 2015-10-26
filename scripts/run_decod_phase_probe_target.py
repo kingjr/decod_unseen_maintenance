@@ -1,9 +1,13 @@
+"""Additional analysis consisting in taking the estimators trained on the probe
+phase to predict the phase of the target. The results show that the phase of
+the target is decodable slightly above chance, although this effect is
+extremely tiny"""
 import numpy as np
 import pickle
 from orientations.utils import load_epochs_events
 from jr.gat import subscore
 from jr.plot import pretty_decod
-from base import resample_epochs, decim, stats
+from scripts.base import resample_epochs, decim, stats
 from scripts.config import paths, subjects, preproc, analyses, tois
 
 analysis = [ana for ana in analyses if ana['title'] == 'Target Phase'][0]
@@ -51,7 +55,7 @@ for s, subject in enumerate(subjects):  # Loop across each subject
     with open(pkl_fname, 'wb') as f:
         pickle.dump([gat, analysis, sel_gat, events], f)
 
-# XXX FIXME TODO: probe starts at 816, not 800!
+# FIXME probe starts at 816!
 times = epochs.times[:-5]
 score_diag = np.array([np.diag(np.array(score)[4:, :]) for score in scores])
 p_val = stats(score_diag)

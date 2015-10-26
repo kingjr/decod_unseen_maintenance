@@ -1,3 +1,8 @@
+"""One of the control analyses (Decoding Bias towards target for virtual
+trials) requires making angle predictions for each absent trials. The main
+run_decoding.py script does not considered these trials, so we recompute them
+here"""
+
 import numpy as np
 import pickle
 from orientations.utils import load_epochs_events
@@ -9,6 +14,7 @@ for s, subject in enumerate(subjects):  # Loop across each subject
     # load MEG data
     epochs, events = load_epochs_events(subject, paths)
     epochs.crop(-.1, 1.100)  # XXX
+
     # Load classifier
     pkl_fname = paths('decod', subject=subject, analysis=analysis['name'])
     with open(pkl_fname, 'rb') as f:

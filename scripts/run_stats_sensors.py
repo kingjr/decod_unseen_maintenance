@@ -1,3 +1,4 @@
+"""Performs statistics across subjects at the sensor level"""
 import pickle
 import numpy as np
 from jr.stats import robust_mean
@@ -53,6 +54,7 @@ for analysis in analyses:
     for cluster, pval in zip(clusters, cl_p_val):
         p_values[cluster.T] = pval
     sig = p_values < .05
+
     # Save contrast
     pkl_fname = paths('evoked', analysis=('stats_' + analysis['name']),
                       log=True)

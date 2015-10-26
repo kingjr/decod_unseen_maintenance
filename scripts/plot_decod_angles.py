@@ -1,3 +1,4 @@
+"""Plot analyses related to the decoding of target and probe angles"""
 import pickle
 import numpy as np
 from scipy.stats import wilcoxon
@@ -6,7 +7,7 @@ from jr.plot import plot_tuning, bar_sem, pretty_decod
 from jr.utils import table2html
 from jr.stats import repeated_spearman
 from scripts.config import paths, report, analyses, tois
-from base import stats
+from scripts.base import stats
 analyses = [analysis for analysis in analyses if analysis['name'] in
             ['target_circAngle', 'probe_circAngle']]
 

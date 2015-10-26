@@ -1,8 +1,12 @@
+""""Main decoding pipeline, consisting in fitting for each subject separately,
+a linear multivariate regresser (catgorical, ordinal or circular) that
+optimally predicts the trials' value from a single time slice.
+"""
 import numpy as np
 import pickle
 from mne.decoding import GeneralizationAcrossTime
 from orientations.utils import load_epochs_events
-from base import resample_epochs, decim
+from scripts.base import resample_epochs, decim
 from scripts.config import paths, subjects, preproc, analyses
 
 

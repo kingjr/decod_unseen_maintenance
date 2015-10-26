@@ -5,8 +5,8 @@ from itertools import product
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import Pipeline
 from sklearn.svm import LinearSVR
-from utils import clf_2class_proba, SVR_angle
-from base import scorer_angle, scorer_circLinear, scorer_auc, scorer_spearman
+from scripts.utils import clf_2class_proba, SVR_angle
+from scripts.base import scorer_angle, scorer_circLinear, scorer_auc, scorer_spearman
 
 
 def analysis(name, typ, condition=None, query=None, title=None):
