@@ -66,9 +66,9 @@ for ii in range(len(analyses)):
 #
 subscores = [('seen', 'detect_seen == True'),
              ('unseen', 'detect_seen == False')]
-# for pas in [1., 2., 3.]:
-#     subscores.append(('pas%s' % pas,
-#                       'detect_button == %s' % pas))
+for pas in [1., 2., 3.]:
+    subscores.append(('pas%s' % pas,
+                      'detect_button == %s' % pas))
 for contrast in [0., .5, .75, 1.]:
     subscores.append(('contrast%s' % contrast,
                       'target_contrast == %s' % contrast)),
