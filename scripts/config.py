@@ -70,7 +70,7 @@ chan_types = [dict(name='meg')]
 preproc = dict()
 
 # ###################### Define contrasts #####################
-from orientations.conditions import analyses, subscores, analyses_order2
+from scripts.conditions import analyses, subscores, analyses_order2
 
 # #############################################################################
 # univariate analyses definition: transform the input used for the decoding to
