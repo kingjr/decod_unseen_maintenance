@@ -8,9 +8,8 @@ from jr.gat.graphs import plot_graph, animate_graph
 from scripts.config import report, analyses
 from scripts.base import stats
 
-
 analyses = [a for a in analyses if a['name'] in
-            ['target_present', 'target_circAngle']]
+            ['target_present', 'target_circAngle', 'detect_button_pst']]
 
 for analysis in analyses:
     # load data
