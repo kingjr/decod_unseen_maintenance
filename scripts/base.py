@@ -26,7 +26,7 @@ def stats(X):
     p_values_ = np.ones_like(X[0]).T
     for cluster, pval in zip(clusters, p_values):
         p_values_[cluster.T] = pval
-    return np.squeeze(p_values_)
+    return np.squeeze(p_values_).T
 
 # ANALYSES ####################################################################
 
