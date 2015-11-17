@@ -14,6 +14,7 @@ fig_alldiag, axes_alldiag = plt.subplots(len(analyses), 1, figsize=[6, 9])
 table_toi = np.empty((len(analyses), len(tois)), dtype=object)
 table_reversal = np.empty((len(analyses), 2), dtype=object)
 figs = list()
+alpha = 0.01  # statistical threshold
 for ii, (analysis, ax_diag) in enumerate(zip(analyses, axes_alldiag)):
     print analysis['name']
     # Load
@@ -41,7 +42,7 @@ for ii, (analysis, ax_diag) in enumerate(zip(analyses, axes_alldiag)):
     clim = np.percentile(np.diag(np.mean(scores, axis=0)), 97)
     clim = [chance-(clim-chance), clim]
     fig_gat, ax_gat = plt.subplots(1, figsize=[7, 5.5])
-    pretty_gat(np.mean(scores, axis=0), times=times, sig=p_values < .05,
+    pretty_gat(np.mean(scores, axis=0), times=times, sig=p_values < alpha,
                chance=chance, ax=ax_gat, clim=clim)
     # for toi in slices_tois:
     #     ax_gat.axhline(toi, color='b')
@@ -62,7 +63,7 @@ for ii, (analysis, ax_diag) in enumerate(zip(analyses, axes_alldiag)):
     clim = np.percentile(np.diag(np.mean(scores, axis=0)), 97)
     clim = [chance-(clim-chance), clim]
     fig_gat_small, ax_gat = plt.subplots(1, figsize=[3.5, 2.5])
-    pretty_gat(np.mean(scores, axis=0), times=times, sig=p_values < .05,
+    pretty_gat(np.mean(scores, axis=0), times=times, sig=p_values < alpha,
                chance=chance, ax=ax_gat, clim=clim)
     ax_gat.axvline(.800, color='k')
     ax_gat.axhline(.800, color='k')
@@ -87,7 +88,7 @@ for ii, (analysis, ax_diag) in enumerate(zip(analyses, axes_alldiag)):
     # ------ Plot times slices score
     fig_offdiag, axs = plt.subplots(len(slices_tois), 1, figsize=[5, 6])
     pretty_slices(scores, times=times, chance=chance, axes=axs,
-                  sig=p_values < .05, sig_diagoff=p_values_off < .05,
+                  sig=p_values < alpha, sig_diagoff=p_values_off < alpha,
                   colors=[analysis['color'], 'b'], tois=slices_tois,
                   fill_color=analysis['color'])
     for ax in axs:
@@ -103,7 +104,7 @@ for ii, (analysis, ax_diag) in enumerate(zip(analyses, axes_alldiag)):
     report.add_figs_to_section(fig_offdiag, 'slices', analysis['name'])
 
     # Decod
-    pretty_decod(scores_diag, times=times, sig=p_values_diag < .05,
+    pretty_decod(scores_diag, times=times, sig=p_values_diag < alpha,
                  chance=chance, color=analysis['color'], fill=True, ax=ax_diag)
     xlim, ylim = ax_diag.get_xlim(), np.array(ax_diag.get_ylim())
     # ylim[1] = np.ceil(ylim[1] * 10) / 10.
@@ -202,12 +203,12 @@ scores_interaction = np.mean(np.sign(score_relevant) -
 scores_relevant = np.mean(np.sign(score_relevant), axis=0)
 scores_irrelevant = np.mean(np.sign(score_irrelevant), axis=0)
 
-sig = stats(scores_interaction) < .05
+sig = stats(scores_interaction) < alpha
 pretty_decod(scores_relevant, times=times, ax=ax, color='y', sig=sig,
              fill=True, width=0.)
-sig = stats(scores_relevant) < .05
+sig = stats(scores_relevant) < alpha
 pretty_decod(scores_relevant, times=times, ax=ax, color='r', sig=sig)
-sig = stats(scores_irrelevant) < .05
+sig = stats(scores_irrelevant) < alpha
 pretty_decod(scores_irrelevant, times=times, ax=ax, color='w',
              sig=np.ones_like(times), fill=True, width=0.)
 pretty_decod(scores_irrelevant, times=times, ax=ax, color='k', sig=sig)
