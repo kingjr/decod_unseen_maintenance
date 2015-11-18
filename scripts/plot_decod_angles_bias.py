@@ -44,7 +44,7 @@ fig, axes = plt.subplots(2, 2, figsize=[6.15, 5.6])
 fig.subplots_adjust(right=0.85, hspace=0.05, wspace=0.05)
 for ii in range(2):
     for jj in range(2):
-        scores = np.array(results['bias'][:, ii, jj, ...])
+        scores = -np.array(results['bias'][:, ii, jj, ...])
         p_val = results['bias_pval'][ii, jj, :, :].T  # XXX ? why T
         pretty_gat(scores.mean(0), times=times, ax=axes[ii, jj],
                    colorbar=False, clim=[-.1, .1], sig=p_val < .05)

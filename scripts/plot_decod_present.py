@@ -32,6 +32,7 @@ pretty_decod([np.diag(ii) for ii in results['R_vis']], times=times,
              sig=np.diag(results['p_vis']) < .05,
              color=color_vis, chance=0., fill=True,)
 ax.axvline(.800, color='k')
+ax.set_xlabel('Times', labelpad=-10)
 ylim = ax.get_ylim()
 ax.set_yticklabels(['', '', '%.2f' % ylim[1]])
 ax.text(.370, 1.1 * ylim[1], 'Visibility Effect', color=color_vis,
@@ -103,11 +104,11 @@ ax.set_yticks([1.])
 ax.set_yticklabels([1.])
 ax.axvline(.800, color='k')
 ax.set_ylabel('AUC', labelpad=-10)
-ax.text(.450, .53, 'Unseen', color='w', weight='bold')
-ax.text(.450, .83, 'Seen', color='r', weight='bold')
+# ax.text(.450, .53, 'Unseen', color='w', weight='bold')
+# ax.text(.450, .83, 'Seen', color='r', weight='bold')
 ylim = ax.get_ylim()
-ax.text(0, ylim[1], 'Target',  backgroundcolor='w', ha='center', va='top')
-ax.text(.800, ylim[1], 'Probe', backgroundcolor='w', ha='center', va='top')
+# ax.text(0, ylim[1], 'Target',  backgroundcolor='w', ha='center', va='top')
+# ax.text(.800, ylim[1], 'Probe', backgroundcolor='w', ha='center', va='top')
 fig.tight_layout()
 report.add_figs_to_section(fig, 'visibility decod', 'AUC')
 

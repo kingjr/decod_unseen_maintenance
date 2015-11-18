@@ -108,7 +108,7 @@ for analysis in analyses:
         ax.set_title('%i $-$ %i ms' % (toi[0] * 1000, toi[1] * 1000),
                      fontsize=10)
         # ylim_ = get_ylim(seen_toi)
-        ylim_ = [-.05, .34]
+        ylim_ = np.array([-.05, .34]) / 2.
         ax.set_ylim(ylim_)
         ax.set_yticks(ylim_)
         ax.set_yticklabels(['', ''])
@@ -134,7 +134,7 @@ for analysis in analyses:
         ax.set_title('%i $-$ %i ms' % (toi[0] * 1000, toi[1] * 1000),
                      fontsize=10)
         # ylim_ = get_ylim(data_contrast)
-        ylim_ = [-.05, .34]
+        ylim_ = np.array([-.05, .34]) / 2.
         ax.set_ylim(ylim_)
         ax.set_yticks(ylim_)
         ax.set_yticklabels(['', ''])
@@ -169,10 +169,10 @@ for analysis in analyses:
     ax.set_xticks(xticks)
     ax.set_xticklabels([int(1e3 * x) if x in [0., 1.] else '' for x in xticks])
     ax.set_xlabel('Times', labelpad=-10.)
-    ax.text(.200, -.05, 'Unseen', color='b', weight='bold', ha='center')
-    ax.text(.200, .18, 'Seen', color='r', weight='bold', ha='center')
-    ax.text(0, .2, 'Target',  backgroundcolor='w', ha='center', va='top')
-    ax.text(.800, .2, 'Probe', backgroundcolor='w', ha='center', va='top')
+    # ax.text(.200, -.05, 'Unseen', color='b', weight='bold', ha='center')
+    # ax.text(.200, .18, 'Seen', color='r', weight='bold', ha='center')
+    # ax.text(0, .2, 'Target',  backgroundcolor='w', ha='center', va='top')
+    # ax.text(.800, .2, 'Probe', backgroundcolor='w', ha='center', va='top')
     fig.tight_layout()
     report.add_figs_to_section(fig, 'seen_unseen', analysis['name'])
 
