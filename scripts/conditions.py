@@ -35,7 +35,7 @@ def analysis(name, typ, condition=None, query=None, title=None):
                 single_trial=True, cv=8, typ=typ, title=title)
 
 analyses = (
-    analysis('target_present',      'categorize', title='Target Present'),
+    analysis('target_present',      'categorize', title='Target Presence'),
     # analysis('target_contrast',     'regress'),
     analysis('target_contrast_pst', 'regress', condition='target_contrast',
              query='target_present == True', title='Target Contrast'),
