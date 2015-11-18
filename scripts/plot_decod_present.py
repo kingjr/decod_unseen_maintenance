@@ -155,6 +155,46 @@ for jj, result, toi, t in zip(range(2), data, tois[1:], [.300, .600]):
 fig.tight_layout()
 report.add_figs_to_section(fig, 'duration', 'duration')
 
+# Duration seen unseen for each visibility and TOI
+times_align = times - times.min()
+fig = plt.figure(figsize=[7.8, 2])
+early = dict(unseen=results['AUC_pas_duration'][1, 0, ...],
+             seen=results['AUC_pas_duration'][1, -1, ...], toi=tois[1],
+             tlim=.300, ax=plt.subplot2grid((1, 3), (0, 0), colspan=1))
+late = dict(unseen=results['AUC_pas_duration'][2, 0, ...],
+            seen=results['AUC_pas_duration'][2, -1, ...], toi=tois[2],
+            tlim=.600, ax=plt.subplot2grid((1, 3), (0, 1), colspan=2))
+for data_toi in [early, late]:
+    toi_align = np.where((times - times.min()) <= data_toi['tlim'])[0]
+    chance = .5
+    ax = data_toi['ax']
+    # seen
+    duration = data_toi['seen'][:, toi_align-len(toi_align)/2]
+    p_val = stats(duration - chance)
+    pretty_decod(duration, color='r', ax=ax, chance=chance,
+                 times=times_align[toi_align] - data_toi['tlim']/2,
+                 alpha=1., fill=True, sig=p_val < .05)
+    # unseen
+    duration = data_toi['unseen'][:, toi_align-len(toi_align)/2]
+    p_val = stats(duration - chance)
+    pretty_decod(duration, color='b', ax=ax, chance=chance,
+                 times=times_align[toi_align] - data_toi['tlim']/2,
+                 alpha=1., fill=True, sig=p_val < .05)
+    # plotting
+    ax.set_yticks([.25, 1.])
+    ax.set_yticklabels([.25, 1.])
+    ax.set_ylabel('AUC', labelpad=-15)
+    ax.set_ylim([.25, 1.])
+    ax.set_xticks(np.arange(-.600, .600, .100))
+    ax.set_xticklabels([ii if ii != 0 else ''
+                        for ii in np.arange(-600, 600, 100)])
+    ax.set_xlim(-data_toi['tlim']/2, data_toi['tlim']/2)
+    ax.set_title('%i $-$ %i ms' % (1e3 * data_toi['toi'][0],
+                 1e3 * data_toi['toi'][1]))
+    ax.set_xlabel('Duration', labelpad=-10)
+fig.tight_layout()
+report.add_figs_to_section(fig, 'duration small', 'duration')
+
 # add report to Table: Duration
 table_data = np.zeros((8, 2, len(subjects)))
 freq = len(times) / np.ptp(times)
