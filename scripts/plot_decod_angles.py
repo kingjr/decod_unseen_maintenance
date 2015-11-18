@@ -261,7 +261,7 @@ for analysis in analyses:
                      1e3 * data_toi['toi'][1]))
         ax.set_xlabel('Duration', labelpad=-10)
     fig.tight_layout()
-    report.add_figs_to_section(fig, 'duration small', 'duration')
+    report.add_figs_to_section(fig, 'duration small', analysis['name'])
 
     # early maintain
     fig, ax = plt.subplots(1)
