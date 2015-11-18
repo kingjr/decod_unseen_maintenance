@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 from scipy.stats import wilcoxon
-from jr.plot import pretty_decod
+from jr.plot import pretty_decod, pretty_gat, pretty_axes, pretty_colorbar
 from jr.utils import table2html
 from scripts.config import paths, subjects, report, analyses, tois
 from scripts.base import stats
@@ -13,17 +13,8 @@ from scripts.base import stats
 # visibility
 
 # Gather data
-n_times = 154  # XXX
-contrast_list = [.5, .75, 1.]
+contrast_list = [.5, .75, 1.]  # XXX to config
 pas_list = np.arange(4.)
-results = dict(
-    data=np.nan * np.zeros((len(subjects), n_times, 4, 3)),
-    R_vis=np.nan * np.zeros((len(subjects), n_times)),
-    R_contrast=np.nan * np.zeros((len(subjects), n_times)),
-    AUC_pas=np.nan * np.zeros((4, len(subjects), n_times)),
-    AUC_pas_duration=np.nan * np.zeros((len(tois), len(pas_list),
-                                        len(subjects), n_times))
-)
 
 # Plot
 fname = paths('score', analysis='present_anova')
@@ -37,8 +28,9 @@ color_contrast = [ana['color'] for ana in analyses
 
 # Visibility effect
 fig, ax = plt.subplots(1, figsize=[6, 2])
-pretty_decod(results['R_vis'], times=times, sig=results['p_vis'] < .05,
-             color=color_vis, chance=0., fill=True)
+pretty_decod([np.diag(ii) for ii in results['R_vis']], times=times,
+             sig=np.diag(results['p_vis']) < .05,
+             color=color_vis, chance=0., fill=True,)
 ax.axvline(.800, color='k')
 ylim = ax.get_ylim()
 ax.set_yticklabels(['', '', '%.2f' % ylim[1]])
@@ -51,8 +43,9 @@ report.add_figs_to_section(fig, 'visibility', 'R')
 
 # Contrast effect
 fig, ax = plt.subplots(1, figsize=[6, 2])
-pretty_decod(results['R_contrast'], times=times, fill=True,
-             sig=results['p_contrast'] < .05, color=color_contrast, chance=0.)
+pretty_decod([np.diag(ii) for ii in results['R_contrast']], times=times,
+             sig=np.diag(results['p_contrast']) < .05,
+             color=color_contrast, chance=0., fill=True,)
 ax.axvline(.800, color='k')
 ylim = ax.get_ylim()
 ax.set_yticklabels(['', '', '%.2f' % ylim[1]])
@@ -63,7 +56,37 @@ ax.set_ylabel('R', labelpad=-10)
 ax.set_xlabel('Times', labelpad=-10)
 report.add_figs_to_section(fig, 'contrast', 'R')
 
-# AUC for each visibility level
+# AUC for each visibility level: GAT
+gats = [('Unseen', results['AUC_pas'][0, :, :, :], .5, [0, 1], 'AUC'),
+        ('Seen', results['AUC_pas'][-1, :, :, :], .5, [0, 1], 'AUC'),
+        ('Contrast', results['R_contrast'], 0, [-.3, .3], 'R'),
+        ('Visibility', results['R_vis'], 0, [-.3, .3], 'R')]
+fig, axes = plt.subplots(2, 2, figsize=[8.3, 8.])
+axes = np.reshape(axes, -1)
+for ii, (name, gat, chance, clim, metric) in enumerate(gats):
+    p_val = stats(gat - chance)
+    pretty_gat(np.nanmean(gat, axis=0), times=times, chance=chance,
+               sig=p_val < .05, ax=axes[ii], clim=clim, colorbar=False)
+    axes[ii].axvline(.800, color='k')
+    axes[ii].axhline(.800, color='k')
+    axes[ii].set_title(name)
+ticks = np.arange(-.100, 1.101, .100)
+ticklabels = [int(1e3 * ii) if ii in [0, .800] else '' for ii in ticks]
+pretty_axes(axes.reshape(2, 2), xlabel='Test Times', ylabel='Train Times',
+            xticks=ticks, yticks=ticks,
+            xticklabels=ticklabels, yticklabels=ticklabels)
+# add colorbars
+for ii in [1, 3]:
+    pos = axes[ii].get_position()
+    clim, metric = gats[ii][-2], gats[ii][-1]
+    cax = fig.add_axes([pos.x0 + pos.width + .01, pos.y0, .02, pos.height])
+    ticks = [clim[0], np.mean(clim), clim[1]]
+    labels = [clim[0], metric, clim[1]]
+    pretty_colorbar(ax=axes[ii], cax=cax, ticks=ticks, ticklabels=labels)
+
+report.add_figs_to_section(fig, 'visibility GATs', 'AUC')
+
+# AUC for each visibility level: decoding
 fig, ax = plt.subplots(1, figsize=[6, 2])
 cmap = mpl.colors.LinearSegmentedColormap.from_list('RdPuBu', ['b', 'r'])
 colors = cmap(np.linspace(0., 1., 4))
@@ -71,9 +94,10 @@ for ii, (auc, color) in enumerate(zip(results['AUC_pas'][-1::-1, :, :],
                                       colors[-1::-1, :])):
     if ii not in [0, 3]:
         continue
-    p_val = stats(auc[:, :, None] - .5)
-    pretty_decod(auc, times=times, ax=ax, width=1., alpha=1.,
-                 chance=.5, color=color, fill=True, sig=p_val < .05)
+    p_val = stats(auc - .5)
+    pretty_decod([np.diag(ii) for ii in auc], times=times, ax=ax, width=1.,
+                 alpha=1., chance=.5, color=color, fill=True,
+                 sig=np.diag(p_val) < .05)
 ax.set_ylim([.45, 1.])
 ax.set_yticks([1.])
 ax.set_yticklabels([1.])
@@ -85,7 +109,7 @@ ylim = ax.get_ylim()
 ax.text(0, ylim[1], 'Target',  backgroundcolor='w', ha='center', va='top')
 ax.text(.800, ylim[1], 'Probe', backgroundcolor='w', ha='center', va='top')
 fig.tight_layout()
-report.add_figs_to_section(fig, 'visibility', 'AUC')
+report.add_figs_to_section(fig, 'visibility decod', 'AUC')
 
 # Duration for each visibility and TOI
 data = results['AUC_pas_duration'][1:-1, ...]  # activation & maintenance TOI
@@ -128,7 +152,6 @@ for jj, result, toi, t in zip(range(2), data, tois[1:], [.300, .600]):
             ax.set_xticklabels(
                 [int(x) if np.round(x) in [-t/2 * 1e3, t/2 * 1e3]
                  else '' for x in np.round(1e3 * xticks)])
-
 fig.tight_layout()
 report.add_figs_to_section(fig, 'duration', 'duration')
 
@@ -213,9 +236,8 @@ report.add_htmls_to_section(table, 'R', 'table')
 # Is the modulation of contrast different between early versus delay TOI?
 t_baseline, t_early, t_delay, t_probe = [
     np.where((times >= toi[0]) & (times < toi[1]))[0] for toi in tois]
-
-R_early = np.mean(results['R_contrast'][:, t_early], axis=1)
-R_delay = np.mean(results['R_contrast'][:, t_delay], axis=1)
+R_early = np.mean([np.diag(G)[t_early] for G in results['R_contrast']], axis=1)
+R_delay = np.mean([np.diag(G)[t_delay] for G in results['R_contrast']], axis=1)
 wilcoxon(R_early - R_delay)
 
 report.save()
