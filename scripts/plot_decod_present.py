@@ -7,7 +7,7 @@ from scipy.stats import wilcoxon
 from jr.plot import pretty_decod, pretty_gat, pretty_axes, pretty_colorbar
 from jr.utils import table2html
 from scripts.config import paths, subjects, report, analyses, tois
-from scripts.base import stats
+from scripts.base import stats, table_duration
 
 # Test whether decoding of presence varies as a function of contrast and
 # visibility
@@ -197,41 +197,8 @@ fig.tight_layout()
 report.add_figs_to_section(fig, 'duration small', 'duration')
 
 # add report to Table: Duration
-table_data = np.zeros((8, 2, len(subjects)))
-freq = len(times) / np.ptp(times)
-for jj, result, toi, t in zip(range(2), data, tois[1:], [.300, .600]):
-    for pas in range(4):
-        score = results['AUC_pas_duration'][jj, pas, :, :len(times)/2]
-        # we had .5 at the end, to ensure that we find a value for each subject
-        # This could bias the distribution towards longer duration, so we'll
-        # take the median across subjects.
-        score = np.hstack((score, [[.5]] * len(subjects)))
-        # for each subject, find the first time sample that is below chance
-        table_data[pas, jj, :] = [np.where(s <= .5)[0][0]/freq for s in score]
-    # mean across visibility to get overall estimate
-    table_data[4, jj, :] = np.nanmean(table_data[:, jj, :], axis=0)
-    # seen - unseen
-    table_data[5, jj, :] = table_data[3, jj, :] - table_data[0, jj, :]
-# interaction time
-table_data[6, 0, :] = table_data[4, 1, :] - table_data[4, 0, :]
-# interaction time x vis
-table_data[7, 0, :] = table_data[5, 1, :] - table_data[5, 0, :]
-table = np.empty((8, 2), dtype=object)
-# Transfor this data into stats summary:
-for ii in range(8):
-    for jj in range(2):
-        score = table_data[ii, jj, :]
-        m = np.nanmean(score)
-        sem = np.nanstd(score) / np.sqrt(sum(~np.isnan(score)))
-        p_val = wilcoxon(score)[1] if sum(abs(score)) > 0. else 1.
-        # the stats for each pas is not meaningful because there's no chance
-        # level, we 'll thus skip it
-        p_val = p_val if ii > 3 else np.inf
-        table[ii, jj] = '[%.3f+/-%.3f, p=%.4f]' % (m, sem, p_val)
-table = table2html(table, head_column=tois[1:3],
-                   head_line=['pas%i' % pas for pas in range(4)] +
-                             ['pst', 'seen-unseen', 'late-early',
-                              '(late-early)*(seen-unseen)'])
+data_ = results['AUC_pas_duration'][1:3, :, :, :]
+table = table_duration(data=data_, tois=tois[1:3], times=times, chance=.5)
 report.add_htmls_to_section(table, 'duration', 'table')
 
 # Table report: AUC

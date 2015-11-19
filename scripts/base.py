@@ -1,11 +1,12 @@
 import numpy as np
 from sklearn.svm import LinearSVR, SVC
 from sklearn.linear_model import LogisticRegression
-from jr.utils import tile_memory_free, pairwise
+from jr.utils import tile_memory_free, pairwise, table2html
 from jr.stats import (repeated_spearman, repeated_corr, corr_linear_circular,
                       circ_tuning, circ_mean, corr_circular_linear)
 from jr.gat.scorers import scorer_auc, scorer_spearman
 from mne.stats import spatio_temporal_cluster_1samp_test
+from scipy.stats import wilcoxon
 
 
 # STATS #######################################################################
@@ -29,6 +30,60 @@ def stats(X):
     return np.squeeze(p_values_).T
 
 # ANALYSES ####################################################################
+
+
+def table_duration(data, tois, times, chance):
+    n_toi, n_vis, n_subject, n_time = data.shape
+    if n_toi != 2:
+        raise RuntimeError("Can only process early versus late time windows." +
+                           " Got %i tois instead" % n_toi)
+    if n_vis != 4:
+        raise RuntimeError("Can only process early 4 visibility ratings")
+
+    if len(times) != n_time:
+        raise RuntimeError("Inconsistent time dimension")
+    freq = len(times) / np.ptp(times)
+
+    table_data = np.zeros((8, n_toi, n_subject))  # initialize array
+    # loop across tois
+    for ii, (data, toi) in enumerate(zip(data, tois)):
+        # loop across visibility ratings
+        for pas in range(n_vis):
+            score = data[pas, :, :len(times)/2]
+            # we had a chance value at the end, to ensure that we find a value
+            # for each subject. Note that this could bias the distribution
+            # towards shorter durations depending on the noise level.
+            score = np.hstack((score, [[chance]] * n_subject))
+            # for each subject, find the first time sample that is below chance
+            table_data[pas, ii, :] = [np.where(s <= chance)[0][0]/freq
+                                      for s in score]
+        # mean across visibility to get overall estimate
+        table_data[4, ii, :] = np.nanmean(table_data[:4, ii, :], axis=0)
+        # seen - unseen
+        table_data[5, ii, :] = table_data[3, ii, :] - table_data[0, ii, :]
+    # interaction time: is early duration different from late
+    table_data[6, 0, :] = table_data[4, 1, :] - table_data[4, 0, :]
+    # interaction time x vis: does the difference (seen- unseen) vary with TOI
+    table_data[7, 0, :] = table_data[5, 1, :] - table_data[5, 0, :]
+    table = np.empty((8, n_toi), dtype=object)
+
+    # Transfor this data into stats summary:
+    for ii in range(8):
+        for jj in range(n_toi):
+            score = table_data[ii, jj, :]
+            m = np.nanmean(score)
+            sem = np.nanstd(score) / np.sqrt(sum(~np.isnan(score)))
+            p_val = wilcoxon(score)[1] if sum(abs(score)) > 0. else 1.
+            # the stats for each pas is not meaningful because there's no
+            # chance level, we 'll thus skip it
+            p_val = p_val if ii > 3 else np.inf
+            table[ii, jj] = '[%.3f+/-%.3f, p=%.4f]' % (m, sem, p_val)
+    # HTML export
+    headlines = (['pas%i' % pas for pas in range(4)] +
+                 ['pst', 'seen-unseen', 'late-early',
+                  '(late-early)*(seen-unseen)'])
+    return table2html(table, head_column=tois, head_line=headlines)
+
 
 
 def nested_analysis(X, df, condition, function=None, query=None,

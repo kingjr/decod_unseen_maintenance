@@ -6,8 +6,8 @@ import matplotlib.pyplot as plt
 from jr.plot import plot_tuning, bar_sem, pretty_decod
 from jr.utils import table2html
 from jr.stats import repeated_spearman
-from scripts.config import paths, report, analyses, tois
-from scripts.base import stats
+from scripts.config import paths, report, analyses, tois, subjects
+from scripts.base import stats, table_duration
 analyses = [analysis for analysis in analyses if analysis['name'] in
             ['target_circAngle', 'probe_circAngle']]
 
@@ -262,6 +262,12 @@ for analysis in analyses:
         ax.set_xlabel('Duration', labelpad=-10)
     fig.tight_layout()
     report.add_figs_to_section(fig, 'duration small', analysis['name'])
+
+    # Duration Table
+    # data_ must be: (early, late) * (4 pas) * n_subjects * n_times
+    data_ = np.transpose(data[:, 1:3, :, :], [1, 2, 0, 3])
+    table = table_duration(data=data_, tois=tois[1:3], times=times, chance=0.)
+    report.add_htmls_to_section(table, 'duration', 'table')
 
     # early maintain
     fig, ax = plt.subplots(1)
