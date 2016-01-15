@@ -22,7 +22,7 @@ with open(fname, 'rb') as f:
     results = pickle.load(f)
 times = results['times']
 color_vis = [ana['color'] for ana in analyses
-             if ana['title'] == 'Visibility Response'][0]
+             if ana['title'] == 'Visibility Decision'][0]
 color_contrast = [ana['color'] for ana in analyses
                   if ana['title'] == 'Target Contrast'][0]
 

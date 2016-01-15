@@ -1,6 +1,7 @@
 """Plot decoding and GeneralizationAcrossTime (GAT) results"""
 
 import matplotlib.pyplot as plt
+import matplotlib.gridspec as gridspec
 import pickle
 import numpy as np
 from jr.plot import pretty_gat, pretty_decod, pretty_slices
@@ -9,7 +10,8 @@ from scipy.stats import wilcoxon
 from scripts.config import paths, analyses, report, tois
 from scripts.base import stats
 
-fig_alldiag, axes_alldiag = plt.subplots(len(analyses), 1, figsize=[6, 9])
+fig_alldiag = plt.figure(figsize=[6.5, 11])
+axes_alldiag = gridspec.GridSpec(len(analyses), 1, hspace=0.1)
 
 table_toi = np.empty((len(analyses), len(tois)), dtype=object)
 table_reversal = np.empty((len(analyses), 2), dtype=object)
@@ -104,22 +106,28 @@ for ii, (analysis, ax_diag) in enumerate(zip(analyses, axes_alldiag)):
     report.add_figs_to_section(fig_offdiag, 'slices', analysis['name'])
 
     # Decod
+    ax_diag = fig_alldiag.add_subplot(ax_diag)
     pretty_decod(scores_diag, times=times, sig=p_values_diag < alpha,
                  chance=chance, color=analysis['color'], fill=True, ax=ax_diag)
     xlim, ylim = ax_diag.get_xlim(), np.array(ax_diag.get_ylim())
     # ylim[1] = np.ceil(ylim[1] * 10) / 10.
+    sem = scores_diag.std(0) / np.sqrt(len(scores_diag))
+    ylim = [np.min(scores_diag.mean(0) - sem),
+            np.max(scores_diag.mean(0) + sem)]
     ax_diag.set_ylim(ylim)
     ax_diag.axvline(.800, color='k')
+    ax_diag.set_xticklabels([int(x) if x in np.linspace(0., 1000., 11) else ''
+                             for x in np.round(1e3 * ax_diag.get_xticks())])
     if ax_diag != axes_alldiag[-1]:
+        # bottom suplot
         ax_diag.set_xlabel('')
         ax_diag.set_xticklabels([])
     elif ax_diag == axes_alldiag[0]:
+        # top subplot
         ax_diag.text(0, ylim[1], 'Target',  backgroundcolor='w', ha='center',
                      va='top')
         ax_diag.text(.800, ylim[1], 'Probe', backgroundcolor='w', ha='center',
                      va='top')
-        ax_diag.set_xticklabels([int(x) if x in [0., 800.] else '' for x in
-                                 np.round(1e3 * ax_diag.get_xticks())])
     ax_diag.set_yticks([chance, ylim[1]])
     ax_diag.set_yticklabels(['', '%.1f' % ylim[1]])
     if analysis['typ'] == 'regress':
@@ -130,7 +138,7 @@ for ii, (analysis, ax_diag) in enumerate(zip(analyses, axes_alldiag)):
         ax_diag.set_ylabel('rad.', labelpad=-15)
     txt = ax_diag.text(xlim[0] + .5 * np.ptp(xlim),
                        ylim[0] + .75 * np.ptp(ylim),
-                       analysis['title'], color=.75 * analysis['color'],
+                       analysis['title'], color=[.2, .2, .2],
                        ha='center', weight='bold')
 
     # Add reversal score to table_toi
@@ -159,7 +167,6 @@ for ii, (analysis, ax_diag) in enumerate(zip(analyses, axes_alldiag)):
             np.nanmean(score), np.nanstd(score) / np.sqrt(len(score)),
             np.median(p_values_diag[toi]))
 
-fig_alldiag.tight_layout()
 report.add_figs_to_section(fig_alldiag, 'diagonal', 'all')
 
 table_toi = table2html(table_toi.T, head_line=[str(t) for t in tois],
@@ -217,7 +224,8 @@ ax.set_yticks([-1., 1])
 ax.set_yticklabels([-1, 1])
 xticks = np.arange(-.100, 1.101, .100)
 ax.set_xticks(xticks)
-ax.set_xticklabels([int(1e3*ii) if ii in [0, 1.] else '' for ii in xticks])
+ax.set_xticklabels([int(1e3*ii) if ii in np.linspace(-0.1, 1., 12.)
+                    else '' for ii in xticks])
 ax.axvline(.800, color='k')
 report.add_figs_to_section(fig, 'interaction relevance', 'all')
 

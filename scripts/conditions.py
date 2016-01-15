@@ -47,11 +47,11 @@ analyses = (
     analysis('probe_tilt',          'categorize', title='Target - Probe Tilt'),
     analysis('probe_phase',    'circ_regress', title='Probe Phase'),
     analysis('discrim_button',      'categorize',
-             title='Discrimination Response'),
+             title='Tilt Decision'),
     # analysis('discrim_correct',     'categorize'),
     # analysis('detect_button',       'regress'),
     analysis('detect_button_pst',   'regress', condition='detect_button',
-             query='target_present == True', title='Visibility Response'),
+             query='target_present == True', title='Visibility Decision'),
     # analysis('detect_seen',         'categorize'),
     # analysis('detect_seen_pst',     'categorize', condition='detect_seen',
     #          query='target_present == True')
