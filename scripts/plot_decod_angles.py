@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from jr.plot import plot_tuning, bar_sem, pretty_decod
 from jr.utils import table2html
 from jr.stats import repeated_spearman
-from scripts.config import paths, report, analyses, tois, subjects
+from scripts.config import paths, report, analyses, tois
 from scripts.base import stats, table_duration
 analyses = [analysis for analysis in analyses if analysis['name'] in
             ['target_circAngle', 'probe_circAngle']]
@@ -264,9 +264,14 @@ for analysis in analyses:
     report.add_figs_to_section(fig, 'duration small', analysis['name'])
 
     # Duration Table
+    toi_sel = slice(1, 3)  # only evaluates early and maintenance time windows
     # data_ must be: (early, late) * (4 pas) * n_subjects * n_times
-    data_ = np.transpose(data[:, 1:3, :, :], [1, 2, 0, 3])
-    table = table_duration(data=data_, tois=tois[1:3], times=times, chance=0.)
+    # here align_on_diag data shape: (subjects, tois, pas, times)
+    data_ = np.transpose(data[:, toi_sel, :, :], [1, 2, 0, 3])
+    # table_duration() computes the mean duration of early and late estiamtors
+    # across subjects and outputs an HTML table
+    table = table_duration(data=data_, tois=tois[toi_sel], times=times,
+                           chance=0.)
     report.add_htmls_to_section(table, 'duration', 'table')
 
     # early maintain

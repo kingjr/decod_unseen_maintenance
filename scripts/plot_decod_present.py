@@ -6,7 +6,7 @@ import matplotlib as mpl
 from scipy.stats import wilcoxon
 from jr.plot import pretty_decod, pretty_gat, pretty_axes, pretty_colorbar
 from jr.utils import table2html
-from scripts.config import paths, subjects, report, analyses, tois
+from scripts.config import paths, report, analyses, tois
 from scripts.base import stats, table_duration
 
 # Test whether decoding of presence varies as a function of contrast and
@@ -112,33 +112,41 @@ ylim = ax.get_ylim()
 fig.tight_layout()
 report.add_figs_to_section(fig, 'visibility decod', 'AUC')
 
-# Duration for each visibility and TOI
-data = results['AUC_pas_duration'][1:-1, ...]  # activation & maintenance TOI
+# Duration analyses for each visibility and each TOI.
+# Q: How long do the presence estimators generalize on average?
+toi_sel = slice(1, 3)  # only evaluates early and maintenance time windows
+results['AUC_pas_duration']  # TOI x PAS x subjects x aligned_test_times
+data = results['AUC_pas_duration'][toi_sel, ...]
+# ---- define time axis as t0 = train times
 times_align = times - times.min()
+# ---- setup figure
 fig = plt.figure(figsize=[7.8, 5.5])
+fig_time_ranges = [.300, .600]  # shorter range for early than late
 axes = list()
-for ii in range(4):
+for ii in range(4):  # one subplot for each visibility rating (PAS)
     axes.append([plt.subplot2grid((4, 3), (ii, 0), colspan=1),
                  plt.subplot2grid((4, 3), (ii, 1), colspan=2)])
 cmap = plt.get_cmap('bwr_r')
-for jj, result, toi, t in zip(range(2), data, tois[1:], [.300, .600]):
+for jj, (result, toi, time_range) in enumerate(zip(
+        data, tois[toi_sel], fig_time_ranges)):
     for ii, col in enumerate(cmap(np.linspace(0, 1, 4.))):
         ax = axes[ii][jj]
-        toi_align = np.where((times - times.min()) <= t)[0]
+        toi_align = np.where((times - times.min()) <= time_range)[0]
         p_val = stats(result[3-ii, :, toi_align-len(toi_align)/2].T - .5)
         pretty_decod(result[3, :, toi_align-len(toi_align)/2].T, ax=ax,
-                     times=times_align[toi_align] - t/2, color='r', chance=.5)
+                     times=times_align[toi_align] - time_range/2, color='r',
+                     chance=.5)
         pretty_decod(result[3-ii, :, toi_align-len(toi_align)/2].T,
                      color=col, ax=ax, chance=.5,
-                     times=times_align[toi_align] - t/2, alpha=1., fill=True,
-                     sig=p_val < .05)
+                     times=times_align[toi_align] - time_range/2, alpha=1.,
+                     fill=True, sig=p_val < .05)
         ax.set_yticks([.25, 1.])
         ax.set_yticklabels([.25, 1.])
         ax.set_ylabel('AUC', labelpad=-15)
         ax.set_ylim([.25, 1.])
-        xticks = np.arange(-t/2., t/2.+.01, .100)
+        xticks = np.arange(-time_range/2., time_range/2.+.01, .100)
         ax.set_xticks(xticks)
-        ax.set_xlim(-t/2., t/2)
+        ax.set_xlim(-time_range/2., time_range/2)
         ax.set_xticklabels([''] * len(xticks))
         if jj != 0:
             ax.set_yticklabels(['', ''])
@@ -151,12 +159,13 @@ for jj, result, toi, t in zip(range(2), data, tois[1:], [.300, .600]):
         if ii == 3:
             ax.set_xlabel('Duration', labelpad=-10)
             ax.set_xticklabels(
-                [int(x) if np.round(x) in [-t/2 * 1e3, t/2 * 1e3]
+                [int(x) if np.round(x) in
+                 [-time_range/2 * 1e3, time_range/2 * 1e3]
                  else '' for x in np.round(1e3 * xticks)])
 fig.tight_layout()
 report.add_figs_to_section(fig, 'duration', 'duration')
 
-# Duration seen unseen for each visibility and TOI
+# --- Repeat this duration figure for max seen and min unseen only
 times_align = times - times.min()
 fig = plt.figure(figsize=[7.8, 2])
 early = dict(unseen=results['AUC_pas_duration'][1, 0, ...],
@@ -197,8 +206,11 @@ fig.tight_layout()
 report.add_figs_to_section(fig, 'duration small', 'duration')
 
 # add report to Table: Duration
-data_ = results['AUC_pas_duration'][1:3, :, :, :]
-table = table_duration(data=data_, tois=tois[1:3], times=times, chance=.5)
+# AUC_pas_duration: shape(TOI x PAS x subjects x aligned_test_times)
+data_ = results['AUC_pas_duration'][toi_sel, :, :, :]
+# table_duration() computes the mean duration of early and late estiamtors
+# across subjects and outputs an HTML table
+table = table_duration(data=data_, tois=tois[toi_sel], times=times, chance=.5)
 report.add_htmls_to_section(table, 'duration', 'table')
 
 # Table report: AUC

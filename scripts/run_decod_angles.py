@@ -129,7 +129,7 @@ for analysis in ['target_circAngle', 'probe_circAngle']:
             R = repeated_spearman(X.reshape([len(sel), -1]),
                                   np.array(subevents['detect_button'][sel]))
             R_vis_duration.append(R.reshape(y_error.shape[2]))
-        results['align_on_diag'].append(results_)
+        results['align_on_diag'].append(results_)  # shape(subjects, tois, pas, times)
         results['R_vis_duration'].append(R_vis_duration)
 
         # Maintenance of early classifiers
