@@ -71,7 +71,7 @@ def table_duration(data, tois, times, chance):
     for ii in range(8):
         for jj in range(n_toi):
             score = table_data[ii, jj, :]
-            m = np.nanmean(score)
+            m = np.nanmedian(score)
             sem = np.nanstd(score) / np.sqrt(sum(~np.isnan(score)))
             p_val = wilcoxon(score)[1] if sum(abs(score)) > 0. else 1.
             # the stats for each pas is not meaningful because there's no
