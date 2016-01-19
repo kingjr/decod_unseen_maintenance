@@ -53,6 +53,6 @@ Folders
 
 - `results` is where the scripts output their figures and tables.
 
-- `cloud` is a series of script to handle data download when the pipeline is run on a distant server (typically AWS)
+- `cloud` is a series of scripts to handle data download when the pipeline is run on a distant server (typically AWS)
 
 - `sandbox` is intended to ultimately disappear.
