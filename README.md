@@ -51,7 +51,7 @@ The other `run_*` as well as `plot_` scripts are generally designed for control 
 Folders
 =======
 
-- `results` is where the scripts outputs their figures and tables.
+- `results` is where the scripts output their figures and tables.
 
 - `cloud` is a series of script to handle data download when the pipeline is run on a distant server (typically AWS)
 
