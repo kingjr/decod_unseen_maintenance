@@ -129,7 +129,7 @@ for ii, (analysis, ax_diag) in enumerate(zip(analyses, axes_alldiag)):
         ax_diag.text(.800, ylim[1], 'Probe', backgroundcolor='w', ha='center',
                      va='top')
     ax_diag.set_yticks([chance, ylim[1]])
-    ax_diag.set_yticklabels(['', '%.1f' % ylim[1]])
+    ax_diag.set_yticklabels(['', '%.2f' % ylim[1]])
     if analysis['typ'] == 'regress':
         ax_diag.set_ylabel('R', labelpad=-15)
     elif analysis['typ'] == 'categorize':
