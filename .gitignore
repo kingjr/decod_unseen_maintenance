@@ -3,6 +3,7 @@ results/
 reports/
 report/
 data/
+!data/results.pkl
 notes/
 .credentials/
 *.log

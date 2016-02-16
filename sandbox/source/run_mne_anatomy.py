@@ -1,4 +1,4 @@
-nimport os
+import os
 import os.path as op
 from mne.bem import make_watershed_bem
 from mne.commands.mne_make_scalp_surfaces import _run as make_scalp_surfaces
