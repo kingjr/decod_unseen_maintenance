@@ -8,12 +8,14 @@ The corresponding manuscript has been submitted and is currently not peer-review
 Tutorials
 =========
 
-The methods and some of the results can be interactively tested online through step-by-step tutorials via [Binder](http://mybinder.org/). [![Binder](http://mybinder.org/badge.svg)](http://app.mybinder.org/2068500364/tree/notebook/).
+The methods and some of the results can be interactively tested online through step-by-step tutorials via [Binder](http://mybinder.org/).
 
-* `method_decoding.ipynb` [![Binder](http://mybinder.org/badge.svg)](http://app.mybinder.org/2068500364/tree/notebook/method_decoding.ipyn ) shows the general procedure used to perform decoding with MEG data.
-* `method_model_types.py.ipynb` [![Binder](http://mybinder.org/badge.svg)](http://app.mybinder.org/2068500364/tree/notebook/method_model_types.py.ipynb) shows how categorical, ordinal and circular models can be fitted and scored.
-* `method_statistics.ipynb` [![Binder](http://mybinder.org/badge.svg)](http://app.mybinder.org/2068500364/tree/notebook/method_statistics.ipynb) shows how the statistics are performed in the manuscript.
-* `results_summary.ipynb` [![Binder](http://mybinder.org/badge.svg)](http://app.mybinder.org/2068500364/tree/notebook/results_summary.ipyn ) gives a previous of some of the results to allow user to replicate our analyses, or go further, see individual subjects etc, test other statistical methods etc.
+* `method_decoding.ipynb` explains the general procedure used to perform decoding with MEG data. [![Binder](http://mybinder.org/badge.svg)](mybinder.org/repo/kingjr/decoding_unconscious_maintenance/tree/notebook/method_decoding.ipynb)
+* `method_model_types.py.ipynb` explains how categorical, ordinal and circular models can be fitted and scored. [![Binder](http://mybinder.org/badge.svg)](mybinder.org/repo/kingjr/decoding_unconscious_maintenance/tree/notebook/method_model_types.py.ipynb)
+* `method_statistics.ipynb` explains how the statistics are performed in the manuscript. [![Binder](http://mybinder.org/badge.svg)](mybinder.org/repo/kingjr/decoding_unconscious_maintenance/tree/notebook/method_statistics.ipynb)
+* `results_summary.ipynb` gives a preview of some of the results to allow user to replicate our analyses, or go further by looking at individual subjects, test other statistical methods etc. [![Binder](http://mybinder.org/badge.svg)](mybinder.org/repo/kingjr/decoding_unconscious_maintenance/tree/notebook/results_summary.ipynb)
+
+Also consider looking at the [MNE-Python gallery](http://martinos.org/mne/dev/auto_examples/). You will find several examples, showing how the `TimeDecoding` and `GeneralizationAcrossTime` can be used.
 
 Scripts
 =======
