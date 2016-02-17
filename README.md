@@ -12,10 +12,10 @@ The methods and some of the results can be interactively tested online through s
 
 Click on the link to interactively test the tutorial online (no download or installation required).
 
-* [`method_decoding.ipynb`]((mybinder.org/repo/kingjr/decoding_unconscious_maintenance/tree/notebook/method_decoding.ipynb)) explains the general procedure used to perform decoding with MEG data.
-* [`method_model_types.py.ipynb`]((mybinder.org/repo/kingjr/decoding_unconscious_maintenance/tree/notebook/method_model_types.py.ipynb)) explains how categorical, ordinal and circular models can be fitted and scored.
-* [`method_statistics.ipynb`]((mybinder.org/repo/kingjr/decoding_unconscious_maintenance/tree/notebook/method_statistics.ipynb)) explains how the statistics are performed in the manuscript.
-* [`results_summary.ipynb`]((mybinder.org/repo/kingjr/decoding_unconscious_maintenance/tree/notebook/results_summary.ipynb)) gives a preview of some of the results to allow user to replicate our analyses, or go further by looking at individual subjects, test other statistical methods etc.
+* [`method_decoding.ipynb`](http://mybinder.org/repo/kingjr/decoding_unconscious_maintenance/tree/notebook/method_decoding.ipynb) explains the general procedure used to perform decoding with MEG data.
+* [`method_model_types.py.ipynb`](http://mybinder.org/repo/kingjr/decoding_unconscious_maintenance/tree/notebook/method_model_types.py.ipynb) explains how categorical, ordinal and circular models can be fitted and scored.
+* [`method_statistics.ipynb`](http://mybinder.org/repo/kingjr/decoding_unconscious_maintenance/tree/notebook/method_statistics.ipynb) explains how the statistics are performed in the manuscript.
+* [`results_summary.ipynb`](http://mybinder.org/repo/kingjr/decoding_unconscious_maintenance/tree/notebook/results_summary.ipynb) gives a preview of some of the results to allow user to replicate our analyses, or go further by looking at individual subjects, test other statistical methods etc.
 
 Also consider looking at the [MNE-Python gallery](http://martinos.org/mne/dev/auto_examples/). You will find several examples, showing how the `TimeDecoding` and `GeneralizationAcrossTime` can be used.
 
