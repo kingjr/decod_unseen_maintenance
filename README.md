@@ -59,7 +59,7 @@ The scripts are generally decomposed in terms of general functions (base), actua
 
 - `plot_graphs` transform the temporal generalization matrices in terms of animated graphs.
 
-The other `run_*` as well as `plot_` scripts are generally designed for control analyses, typically aiming at investigating properties of decoding scores as a function of time, visibility etc. These script are under documented. Do not hesitate to ask me for clarifications.
+The other `run_*` as well as `plot_*` scripts are generally designed for control analyses, typically aiming at investigating properties of decoding scores as a function of time, visibility etc. These script are under documented. Do not hesitate to ask me for clarifications.
 
 Data
 ====
