@@ -4,4 +4,4 @@ scipy
 matplotlib
 scikit-learn
 mne-python
-http://github.com/kingjr/jr-tools/
+http://github.com/kingjr/jr-tools.git
