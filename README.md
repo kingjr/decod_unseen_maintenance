@@ -72,6 +72,6 @@ Dependencies
 See `requirements.txt`
 
 
-This projects is powered by
+This project is powered by
 
 ![logos](docs/all_logos.png)
