@@ -61,9 +61,6 @@ subjects = [
     'mj130216', 'mr080072', 'oa130317', 'rg110386', 'sb120316',
     'tc120199', 'ts130283', 'yp130276', 'av130322', 'ps120458']
 
-missing_mri = [
-    'gm130176',  'ia130315', 'jm120476', 'mc130295', 'ts130283', 'yp130276']
-
 runs = range(1, 6)
 
 # Define type of sensors used (useful for ICA correction, plotting etc)

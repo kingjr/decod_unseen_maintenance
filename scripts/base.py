@@ -85,7 +85,6 @@ def table_duration(data, tois, times, chance):
     return table2html(table, head_column=tois, head_line=headlines)
 
 
-
 def nested_analysis(X, df, condition, function=None, query=None,
                     single_trial=False, y=None, n_jobs=-1):
     """ Apply a nested set of analyses.
@@ -502,6 +501,7 @@ def get_events(bhv_fname):
 
 
 # SKLEARN #####################################################################
+# FIXME: to be remove and use jr.gat instead
 
 
 class clf_2class_proba(LogisticRegression):

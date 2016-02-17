@@ -48,13 +48,8 @@ analyses = (
     analysis('probe_phase',    'circ_regress', title='Probe Phase'),
     analysis('discrim_button',      'categorize',
              title='Tilt Decision'),
-    # analysis('discrim_correct',     'categorize'),
-    # analysis('detect_button',       'regress'),
     analysis('detect_button_pst',   'regress', condition='detect_button',
              query='target_present == True', title='Visibility Decision'),
-    # analysis('detect_seen',         'categorize'),
-    # analysis('detect_seen_pst',     'categorize', condition='detect_seen',
-    #          query='target_present == True')
 )
 
 cmap = plt.get_cmap('gist_rainbow')
@@ -63,7 +58,7 @@ for ii in range(len(analyses)):
 
 # ###################### Define subscores #####################################
 
-#
+# FIXME to be eventually removed?
 subscores = [('seen', 'detect_seen == True'),
              ('unseen', 'detect_seen == False')]
 for pas in [1., 2., 3.]:
