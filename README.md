@@ -3,27 +3,20 @@ Selective maintenance of seen and unseen sensory features in the human brain
 
 ![demo](notebook/graph_target_circAngle_fast.gif)
 
-This repository stores all scripts to analyze MEG data from the unconscious orientations decoding project, led by Jean-Remi King, Niccolo Pescetelli & Stanislas Dehaene at Neurospin, CEA, Gif / Yvette, France.
+This repository stores all scripts to analyze MEG data from the eponymous manuscript, by Jean-Remi King, Niccolo Pescetelli & Stanislas Dehaene.
 
-The corresponding manuscript has been submitted and is currently not peer-reviewed. The pdf can be downloaded [here](TODO)
+The corresponding manuscript has been submitted and is currently not peer-reviewed. The pdf can be downloaded [here](TODO).
 
-Detailed Abstract
-=================
+Highlights
+==========
 
-The current neuronal models of visual awareness postulate that a stimulus becomes consciously perceptible by maintaining and sharing information across the cortex via recurrent processing [1] and/or fronto-parietal feedback [2]. Identifying neuronal mechanisms that maintain and broadcast an invisible stimulus is therefore critical to test these models.
-
-In the present study, we test models of consciousness through the use of multivariate decoding of dynamic magnetoencephalography (MEG) signals. We designed decoders that can extract, from MEG signals, the time course of the brain representations of many different variables. Those decoders attained an unprecedented level of sensitivity, allowing to track, over time, the temporal unfolding of the cerebral codes for all features of a subjectively invisible visual gabor patch (orientation, frequency, phase, etc). This advance allows us to show how different types of maintenance mechanisms can be qualitatively distinguished, and we demonstrate that unseen stimuli can be encoded, broadcasted and partially maintained by a long sequence of neural assemblies.
+* Recent studies challenge the equivalence between visual awareness and working memory.
+* We investigated human MEG activity while subjects memorized visual stimuli presented at visibility threshold.
+* Decoding analyses allowed tracking a rich set of sensory and decision features.
+* Task-relevant features are specifically maintained during the retention period.
+* Unseen but task-relevant features can maintained by late neural assemblies.
 
 ![coverletter](notebook/coverletter.png)
-
-Specifically, we first show that, while a rich set of sensory features is encoded around 150 ms after stimulus onset, only the features relevant to the task are maintained during the retention period (Fig. 1: the red, green and purple decoding curves depict the task-relevant features).
-
-We then demonstrate with temporal generalization analyses that this selective maintenance mechanism is performed by a long sequence of neuronal assemblies (Fig. 2. Each node depicts an empirically identified neural assembly), whose latest processing stages can maintain a coding activity for several hundreds of milliseconds. Critically, we show that unseen stimuli generate weak representations that are nevertheless i) broadcasted to all processing stages of this distributed network and ii) maintained by the latest processing stages (Fig. 3-4).
-The present study suggests that the visibility of a stimulus depends on the neural representation of late processing stages rather than on the ability to maintain a stimulus, and therefore calls for a partial revision of the current neuronal models of visual awareness.
-
-[1] Lamme, V., & Pieter R. "The distinct modes of vision offered by feedforward and recurrent processing." Trends in neurosciences 23.11 (2000): 571-579.
-
-[2] Dehaene, S., et al. "Conscious, preconscious, and subliminal processing: a testable taxonomy." Trends in cognitive sciences 10.5 (2006): 204-211.
 
 
 Online Tutorials and Results
