@@ -2,6 +2,7 @@ Selective maintenance of seen and unseen sensory features in the human brain
 ============================================================================
 
 ![demo](notebook/graph_target_circAngle_fast.gif)
+
 This repository stores all scripts to analyze MEG data from the unconscious orientations decoding project, led by Jean-Remi King, Niccolo Pescetelli & Stanislas Dehaene at Neurospin, CEA, Gif / Yvette, France.
 
 The corresponding manuscript has been submitted and is currently not peer-reviewed. The pdf can be downloaded [here](TODO)
