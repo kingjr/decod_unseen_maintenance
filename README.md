@@ -1,28 +1,22 @@
 Selective maintenance of seen and unseen sensory features in the human brain
 ============================================================================
 
-This repository stores all scripts to analyze MEG data from the unconscious orientations decoding project, led by Jean-Remi King and Niccolo Pescetelli at Neurospin, CEA, Gif / Yvette, France. The details of the experiment will soon be available on arXiv once the corresponding paper is under review. This repository is still work-in-progress.
+This repository stores all scripts to analyze MEG data from the unconscious orientations decoding project, led by Jean-Remi King, Niccolo Pescetelli & Stanislas Dehaene at Neurospin, CEA, Gif / Yvette, France.
 
-Overall, the scripts remain designed for research purposes, and could clearly be improved and better documented in many places. If you judge that some codes would benefit from specific clarifications do not hesitate to contact us. If, however, you are interested in using the tools implemented in the present papers for your own data, most of them have been implemented in [MNE-Python](https://github.com/mne-tools/mne-python).
+The corresponding manuscript has been submitted and is currently not peer-reviewed. The pdf can be downloaded [here](TODO)
 
-Experimental protocol
-=====================
+Method examples
+===============
 
-20 subjects were presented with a Gabor patch that could vary among 6 different orientations and flashed very briefly on screen before being masked by a heavy-contrasted circular mask. After the mask a strong contrast probe Gabor patch was flashed around 800 ms after the initial target. The probe's orientation could be tilted 30° to the right or to the left of the initial target. Subjects evaluated the tilt of the probe compared to the target (clockwise vs counter clockwise) with left button press and after reported the visibility of the target stimulus with the 'perceptual awareness scale' (PAS) ranging from 1 (not seen) to 4 (perfectly seen).
-
-
-Dependencies
-============
-
-- [MNE-Python](https://github.com/mne-tools/mne-python) to analyze MEG data
-- [Scikit-Learn](https://github.com/scikit-learn/scikit-learn) to run decoding analyses
-- [jr-tools](https://github.com/kingjr/jr-tools), wrapper to extend the functionalities of the `TimeDecoding` and `GeneralizationAcrossTime` MNE-Python classes, and add statistical and plotting functions.
+The methods and some of the results can be tested online through step-by-step tutorials via [![Binder](http://mybinder.org/badge.svg)](http://app.mybinder.org/2068500364/tree/notebook/).
 
 
 Scripts
 =======
 
-The scripts are generally decomposed in terms of general functions, actual analyses (decoding, cluster analyses), and report (plotting, tables, quick stats).
+Overall, the scripts remain designed for research purposes, and could therefore be improved and clarified. If you judge that some codes would benefit from specific clarifications do not hesitate to raise an issue.
+
+The scripts are generally decomposed in terms of general functions (base), actual analyses (decoding, cluster analyses), and report (plotting, tables, quick stats).
 
 - `conditions.py` defines the analyses at a high level: how are the contrasts defined (e.g. decoding of the presence, phase etc), which conditions to include and exclude, what statistical pipeline to use depending (circular, linear, categorical) etc.
 
@@ -55,4 +49,7 @@ Folders
 
 - `cloud` is a series of scripts to handle data download when the pipeline is run on a distant server (typically AWS)
 
-- `sandbox` is intended to ultimately disappear.
+Dependencies
+============
+
+See `requirements.txt`
