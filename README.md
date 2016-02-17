@@ -5,6 +5,8 @@ This repository stores all scripts to analyze MEG data from the unconscious orie
 
 The corresponding manuscript has been submitted and is currently not peer-reviewed. The pdf can be downloaded [here](TODO)
 
+![demo](notebook/graph_target_circAngle_fast.gif)
+
 Tutorials
 =========
 
