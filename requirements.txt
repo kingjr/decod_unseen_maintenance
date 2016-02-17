@@ -1,0 +1,7 @@
+setuptools
+numpy
+scipy
+matplotlib
+scikit-learn
+mne-python
+http://github.com/kingjr/jr-tools/
