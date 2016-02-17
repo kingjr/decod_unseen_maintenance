@@ -3,5 +3,5 @@ numpy
 scipy
 matplotlib
 scikit-learn
-mne-python
-git+http://github.com/kingjr/jr-tools.git
+git+https://github.com/mne-tools/mne-python#egg=mne-dev --user
+git+https://github.com/kingjr/jr-tools.git# --user
