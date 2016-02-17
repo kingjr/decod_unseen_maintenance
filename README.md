@@ -1,11 +1,11 @@
 Selective maintenance of seen and unseen sensory features in the human brain
 ============================================================================
 
-![demo](notebook/graph_target_circAngle_fast.gif)
+![demo](docs/graph_target_circAngle_fast.gif)
 
 This repository stores all scripts to analyze MEG data from the eponymous manuscript, by Jean-Remi King, Niccolo Pescetelli & Stanislas Dehaene.
 
-The corresponding manuscript has been submitted and is currently not peer-reviewed. The pdf can be downloaded [here](TODO).
+The corresponding manuscript has been submitted and is currently not peer-reviewed. The pdf can be downloaded from BioarXiv.
 
 Highlights
 ==========
@@ -14,9 +14,9 @@ Highlights
 * We investigated human MEG activity while subjects memorized visual stimuli presented at visibility threshold.
 * Decoding analyses allowed tracking a rich set of sensory and decision features.
 * Task-relevant features are specifically maintained during the retention period.
-* Unseen but task-relevant features can maintained by late neural assemblies.
+* Unseen but task-relevant features can be maintained by late neural assemblies.
 
-![coverletter](notebook/coverletter.png)
+![coverletter](docs/coverletter.png)
 
 
 Online Tutorials and Results
@@ -61,19 +61,17 @@ The scripts are generally decomposed in terms of general functions (base), actua
 
 The other `run_*` as well as `plot_` scripts are generally designed for control analyses, typically aiming at investigating properties of decoding scores as a function of time, visibility etc. These script are under documented. Do not hesitate to ask me for clarifications.
 
-Folders
-=======
-
-- `results` is where the scripts output their figures and tables.
-
-- `cloud` is a series of scripts to handle data download when the pipeline is run on a distant server (typically AWS)
-
 Data
 ====
 
-The complete data and non truncated results will be made publicly available once the paper is accepted for publication.
+The available data is currently partial. The complete data and non truncated results will be made publicly available once the paper is accepted for publication.
 
 Dependencies
 ============
 
 See `requirements.txt`
+
+
+This projects is powered by
+
+![logos](docs/all_logos.png)
