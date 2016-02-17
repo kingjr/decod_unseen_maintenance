@@ -3,5 +3,5 @@ numpy
 scipy
 matplotlib
 git+https://github.com/scikit-learn/scikit-learn
-git+https://github.com/kingjr/mne-python@gat_np_array
+git+https://github.com/mne-tools/mne-python#egg=mne-dev
 git+https://github.com/kingjr/jr-tools.git
