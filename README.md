@@ -72,6 +72,13 @@ Dependencies
 See `requirements.txt`
 
 
+Acknowledgements
+================
+
 This project is powered by
 
-![logos](docs/all_logos.png)
+![logos](docs/logo_computing.png)
+
+and JRK received fundings from
+
+![logos](docs/logo_funding.png)
