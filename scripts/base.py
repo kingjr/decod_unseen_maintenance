@@ -374,18 +374,20 @@ def angle_bias(y_error, y_tilt):
 
 
 def fix_wrong_channel_names(inst):
-    from mne.epochs import EpochsArray
-    from mne.evoked import Evoked
-    inst.info['chs'] = inst.info['chs'][:306]
-    inst.info['ch_names'] = inst.info['ch_names'][:306]
-    inst.info['nchan'] = 306
-    if isinstance(inst, Evoked):
-        inst.data = inst.data[:306, :]
-    elif isinstance(inst, EpochsArray):
-        inst._data = inst._data[:, :306, :]
-    else:
-        raise ValueError('Unknown instance')
+    # FIX at loading. Remove function if it works
     return inst
+    # from mne.epochs import EpochsArray
+    # from mne.evoked import Evoked
+    # inst.info['chs'] = inst.info['chs'][:306]
+    # inst.info['ch_names'] = inst.info['ch_names'][:306]
+    # inst.info['nchan'] = 306
+    # if isinstance(inst, Evoked):
+    #     inst.data = inst.data[:306, :]
+    # elif isinstance(inst, EpochsArray):
+    #     inst._data = inst._data[:, :306, :]
+    # else:
+    #     raise ValueError('Unknown instance')
+    # return inst
 
 
 def load_epochs_events(subject, paths=None, data_type='erf',
@@ -393,7 +395,7 @@ def load_epochs_events(subject, paths=None, data_type='erf',
     # Get MEG data
     meg_fname = paths('epoch', subject=subject, data_type=data_type, lock=lock)
     epochs = load_FieldTrip_data(meg_fname)
-    epochs = fix_wrong_channel_names(epochs)
+    # epochs = fix_wrong_channel_names(epochs)  FIX at loading
     # Get behavioral data
     bhv_fname = paths('behavior', subject=subject)
     events = get_events(bhv_fname)
@@ -428,12 +430,15 @@ def load_FieldTrip_data(meg_fname):
     chan_types = np.squeeze(np.concatenate(
         (np.tile(['grad', 'grad', 'mag'], (1, 102)),
          np.tile('misc', (1, n_chans - 306))), axis=1))
+    chan_names = np.array(chan_names)[:306].tolist()
+    chan_types = np.array(chan_types)[:306].tolist()
+    bin_data = bin_data[:, :306, :]
     info = create_info(chan_names, sfreq, chan_types)
     events = np.c_[np.cumsum(np.ones(n_trial)) * 5 * sfreq,
                    np.zeros(n_trial),
                    ft_data['trialinfo'].item()]
     epochs = EpochsArray(bin_data, info, events=np.array(events, int),
-                         tmin=tmin)
+                         tmin=tmin, verbose=False)
 
     return epochs
 

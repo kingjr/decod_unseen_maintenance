@@ -25,16 +25,11 @@ for analysis in analyses:
     # normalize
     weights = np.mean(scores, axis=0)
     weights /= np.percentile(np.abs(weights), 95)
-    # position nodes with MDS
-    # weights /= np.max(np.abs(weights))
-    # mds = MDS(dissimilarity='precomputed', random_state=0)
-    # pos = mds.fit_transform(1-np.abs(weights+weights.T))
     # fix bug
     weights[0, :] = 0
     weights[:, 0] = 0
     node_size = np.abs(np.diagonal(weights)) * 100
     weights *= p_values < .05
-    # plt.scatter(pos[:, 0], pos[:, 1])
     weights *= 10  # to see the weights
     clim = [-1., 1.]
     nx_params = dict(edge_curve=False, node_alpha=1., negative_weights=True,
