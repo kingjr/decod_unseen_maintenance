@@ -5,7 +5,7 @@ Selective maintenance of seen and unseen sensory features in the human brain
 
 This repository stores all scripts to analyze MEG data from the eponymous manuscript, by Jean-Remi King, Niccolo Pescetelli & Stanislas Dehaene.
 
-The corresponding manuscript has been submitted and is currently not peer-reviewed. The pdf can be downloaded from BioarXiv.
+The corresponding manuscript has been submitted and **is currently not peer-reviewed**. The preprint pdf can be downloaded from [BioArXiv](http://biorxiv.org/content/early/2016/02/18/040030).
 
 Highlights
 ==========
