@@ -14,7 +14,8 @@ def analysis(name, typ, condition=None, query=None, title=None):
     erf_function = None
     if typ == 'categorize':
         clf = Pipeline([('scaler', StandardScaler()),
-                        ('svc', clf_2class_proba(C=1, class_weight='auto'))])
+                        ('svc', clf_2class_proba(C=1,
+                                                 class_weight='balanced'))])
         scorer = scorer_auc
         chance = .5
     elif typ == 'regress':
