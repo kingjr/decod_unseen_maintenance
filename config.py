@@ -97,7 +97,7 @@ def save(var, typ, subject='fsaverage', analysis='analysis', block=999,
 
     # different data format depending file type
     if typ in ['epo_block', 'epochs']:
-        var.save(fname, overwrite=True)
+        var.save(fname)
     elif typ in ['evoked', 'decod', 'score']:
         with open(fname, 'wb') as f:
             pickle.dump(var, f)
