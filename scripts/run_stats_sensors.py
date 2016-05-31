@@ -6,8 +6,8 @@ import mne
 from mne.epochs import EpochsArray
 from mne.stats import spatio_temporal_cluster_1samp_test as stats
 from mne.channels import read_ch_connectivity
-from .config import paths, subjects
-from .conditions import analyses
+from config import paths, subjects
+from conditions import analyses
 
 # Apply contrast on each type of epoch
 for analysis in analyses:

@@ -7,7 +7,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.svm import LinearSVR, SVC
 from jr.gat import (scorer_angle, scorer_auc,
                     scorer_spearman, AngularRegression)
-from .base import scorer_circlin
+from base import scorer_circlin
 
 
 def analysis(name, typ, condition=None, query=None, title=None):

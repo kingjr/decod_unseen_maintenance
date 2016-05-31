@@ -2,8 +2,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from jr.plot import plot_butterfly, plot_gfp, pretty_colorbar
-from .config import report, load
-from .conditions import analyses
+from config import report, load
+from conditions import analyses
 
 cmap = plt.get_cmap('gist_rainbow')
 colors = cmap(np.linspace(0, 1., len(analyses) + 1))

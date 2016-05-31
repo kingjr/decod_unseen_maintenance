@@ -2,8 +2,8 @@ import os.path as op
 import mne
 from mne.forward import make_field_map
 from mne.viz import plot_evoked_field
-from .config import load
-from .conditions import analyses
+from config import load
+from conditions import analyses
 
 analyses = list(analyses)
 analyses.append(dict(name='angle_bias', title='Angle Bias'))

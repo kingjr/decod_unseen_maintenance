@@ -6,9 +6,9 @@ import numpy as np
 from jr.plot import pretty_gat, pretty_decod, pretty_slices
 from jr.utils import table2html
 from scipy.stats import wilcoxon
-from .config import load, report, tois
-from .base import stats
-from .conditions import analyses
+from config import load, report, tois
+from base import stats
+from conditions import analyses
 
 fig_alldiag = plt.figure(figsize=[6.5, 11])
 axes_alldiag = gridspec.GridSpec(len(analyses), 1, hspace=0.1)

@@ -4,8 +4,8 @@ optimally predicts the trials' value from a single time slice.
 """
 import numpy as np
 from mne.decoding import GeneralizationAcrossTime
-from .config import subjects, load, save
-from .conditions import analyses
+from config import subjects, load, save
+from conditions import analyses
 
 
 for s, subject in enumerate(subjects):  # Loop across each subject

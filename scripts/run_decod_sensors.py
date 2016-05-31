@@ -3,8 +3,8 @@ import numpy as np
 from itertools import product
 from mne import pick_types
 from jr.gat import SensorDecoding
-from .config import paths, subjects, tois, load
-from .conditions import analyses
+from config import paths, subjects, tois, load
+from conditions import analyses
 
 all_scores = list()
 for s, subject in enumerate(subjects):
@@ -48,8 +48,8 @@ with open(fname, 'wb') as f:
 # plot
 import matplotlib.pyplot as plt
 from jr.plot import share_clim
-from .config import report
-from .base import stats
+from config import report
+from base import stats
 from mne.channels import read_ch_connectivity
 connectivity, ch_names = read_ch_connectivity('neuromag306mag')
 evoked = epochs.average()

@@ -5,9 +5,9 @@ import matplotlib as mpl
 from scipy.stats import wilcoxon
 from jr.plot import pretty_decod, pretty_gat, pretty_axes, pretty_colorbar
 from jr.utils import table2html
-from .config import load, report, tois
-from .conditions import analyses
-from .base import stats, table_duration
+from config import load, report, tois
+from conditions import analyses
+from base import stats, table_duration
 
 # Test whether decoding of presence varies as a function of contrast and
 # visibility

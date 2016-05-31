@@ -5,9 +5,9 @@ extremely tiny"""
 import numpy as np
 from jr.gat import subscore
 from jr.plot import pretty_decod
-from .base import stats
-from .config import load, save, subjects
-from .conditions import analyses
+from base import stats
+from config import load, save, subjects
+from conditions import analyses
 
 analysis = [ana for ana in analyses if ana['title'] == 'Target Phase'][0]
 toi = [-.100, .305]

@@ -1,9 +1,9 @@
 """Performs stats across subjects of decoding scores fitted within subjects"""
 import pickle
 import numpy as np
-from .base import stats
-from .config import paths, subjects
-from .conditions import analyses
+from base import stats
+from config import paths, subjects
+from conditions import analyses
 
 # For each analysis of interest
 for analysis in analyses:

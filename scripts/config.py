@@ -70,7 +70,7 @@ def load(typ, subject='fsaverage', analysis='analysis', block=999,
 
     # different data format depending file type
     if typ == 'behavior':
-        from .base import read_events
+        from base import read_events
         out = read_events(fname)
     elif typ == 'sss':
         out = Raw(fname, preload=preload)
