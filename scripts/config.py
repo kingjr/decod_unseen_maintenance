@@ -33,9 +33,9 @@ def paths(typ, subject='fsaverage', analysis='analysis', block=999):
     path_template = dict(
         base_path=base_path,
         data_path=data_path,
-        behavior=op.join(this_path, 'subject_%i_behav.mat' % subject),
+        behavior=op.join(this_path, '%s_behav.mat' % subject),
         # XXX FIXME CLEAN sss naming
-        sss=op.join(this_path, 'subject_%i_%i_sss.fif' % (subject[1], block)),
+        sss=op.join(this_path, '%s_%i-sss.fif' % (subject, block)),
         epo_block=op.join(this_path,
                           '%s_%i_filtered-epo.fif' % (subject, block)),
         epochs=op.join(this_path, '%s-epo.fif' % subject),
