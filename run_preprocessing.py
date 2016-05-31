@@ -107,9 +107,8 @@ def _check_photodiod():
     plt.show()
     print(epochs.times[np.where(data > 1.)[0][1]])
 
-if __file__ == '__main__':
-    for subject in range(1, 21):
-        for block in range(1, 6):
-            _epoch_raw(subject, block, overwrite=True)
-        _concatenate_epochs(subject, overwrite=True)
-        _check_epochs(subject)
+for subject in range(1, 21):
+    for block in range(1, 6):
+        _epoch_raw(subject, block, overwrite=True)
+    _concatenate_epochs(subject, overwrite=True)
+    _check_epochs(subject)
