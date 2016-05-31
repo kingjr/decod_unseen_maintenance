@@ -1,0 +1,17 @@
+*.pyc
+results/
+reports/
+report/
+data/
+!data/results.pkl
+notes/
+.credentials/
+*.log
+*~
+sandbox/
+_sandbox/
+orientations/
+.ipynb_checkpoints/
+./*.ipynb
+cloud/
+docs/
