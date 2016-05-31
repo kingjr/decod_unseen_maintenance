@@ -1,17 +1,15 @@
 """Plot analyses related to the control analyses of target and probe angles"""
-import pickle
+
 import numpy as np
 import matplotlib.pyplot as plt
 from jr.plot import (pretty_gat, plot_tuning, pretty_axes, pretty_decod,
                      pretty_colorbar, bar_sem)
 from jr.utils import table2html
-from scripts.config import paths, report
+from scripts.config import load, report
 from scipy.stats import wilcoxon
 
 # Load data
-fname = paths('score', subject='fsaverage', analysis='target_probe')
-with open(fname, 'rb') as f:
-    results = pickle.load(f)
+results = load('score', subject='fsaverage', analysis='target_probe')
 times = results['times']
 tois = results['tois']
 

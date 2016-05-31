@@ -1,8 +1,7 @@
 """Sub analyses related to the decoding of probe and target orientations"""
-import pickle
 import numpy as np
 from jr.stats import circ_tuning, circ_mean, repeated_spearman
-from scripts.config import paths, subjects, subscores, analyses, tois
+from scripts.config import subjects, subscores, analyses, tois, load, save
 from scripts.base import get_predict, get_predict_error, angle_acc
 analyses = [analysis for analysis in analyses if analysis['name'] in
             ['target_circAngle', 'probe_circAngle']]
@@ -19,9 +18,8 @@ for analysis in ['target_circAngle', 'probe_circAngle']:
     for s, subject in enumerate(subjects):
         # Load data
         print s
-        fname = paths('decod', subject=subject, analysis=analysis)
-        with open(fname, 'rb') as f:
-            gat, _, events_sel, events = pickle.load(f)
+        gat, _, events_sel, events = load('decod', subject=subject,
+                                          analysis=analysis)
         times = gat.train_times_['times']
         subevents = events.iloc[events_sel].reset_index()
         n_bins = 24
@@ -129,7 +127,8 @@ for analysis in ['target_circAngle', 'probe_circAngle']:
             R = repeated_spearman(X.reshape([len(sel), -1]),
                                   np.array(subevents['detect_button'][sel]))
             R_vis_duration.append(R.reshape(y_error.shape[2]))
-        results['align_on_diag'].append(results_)  # shape(subjects, tois, pas, times)
+        # shape(subjects, tois, pas, times)
+        results['align_on_diag'].append(results_)
         results['R_vis_duration'].append(R_vis_duration)
 
         # Maintenance of early classifiers
@@ -142,6 +141,4 @@ for analysis in ['target_circAngle', 'probe_circAngle']:
     # Save results
     results['times'] = times
     results['bins'] = bins
-    fname = paths('score', subject='fsaverage', analysis=analysis + '-tuning')
-    with open(fname, 'wb') as f:
-        pickle.dump(results, f)
+    save(results, 'score', subject='fsaverage', analysis=analysis + '-tuning')

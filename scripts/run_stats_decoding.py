@@ -40,8 +40,7 @@ for analysis in analyses:
     p_values_diag = stats(np.array(scores_diag)[:, :, None] - chance)
 
     # Save stats results
-    stats_fname = paths('score',  analysis=('stats_' + analysis['name']),
-                        log=True)
+    stats_fname = paths('score',  analysis=('stats_' + analysis['name']))
     with open(stats_fname, 'wb') as f:
         out = dict(scores=scores, p_values=p_values, p_values_off=p_values_off,
                    times=times, analysis=analysis, p_values_diag=p_values_diag)

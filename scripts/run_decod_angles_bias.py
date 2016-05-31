@@ -4,7 +4,7 @@ whose orientation is correlated to the target's"""
 import pickle
 import numpy as np
 from jr.stats import circ_tuning
-from scripts.config import paths, subjects
+from scripts.config import load, save, subjects
 from scripts.base import stats, get_predict_error, angle_acc, angle_bias, tois
 
 n_bins = 24
@@ -27,9 +27,8 @@ for ii, train_analysis in enumerate(['target_circAngle', 'probe_circAngle']):
         print s
 
         # Load decoding data
-        fname = paths('decod', subject=subject, analysis=train_analysis)
-        with open(fname, 'rb') as f:
-            gat, _, events_sel, events = pickle.load(f)
+        gat, _, events_sel, events = load('decod', subject=subject,
+                                          analysis=train_analysis)
         subevents = events.iloc[events_sel].reset_index()
 
         # Single trial Target - Probe tilt (-1 or 1)
@@ -123,10 +122,8 @@ results['target_absent'] = np.zeros((20, 154, 153))
 results['target_absent_bias_toi'] = np.zeros((20, len(tois)))
 for s, subject in enumerate(subjects):  # Loop across each subject
     print(subject)
-    pkl_fname = paths('decod', subject=subject,
-                      analysis='target_circAngle_absent')
-    with open(pkl_fname, 'rb') as f:
-        gat, analysis, events_sel, events = pickle.load(f)
+    gat, analysis, events_sel, events = load(
+        'decod', subject=subject, analysis='target_circAngle_absent')
     results['target_absent'][s, :, :] = gat.scores_
     # compute virtual bias to compare to unseen trials
     subevents = events.iloc[events_sel].reset_index()
@@ -145,6 +142,4 @@ results['target_absent_pval'] = stats(results['target_absent'])
 results['times'] = gat.train_times_['times']
 results['bins'] = bins
 results['tois'] = tois
-fname = paths('score', subject='fsaverage', analysis='target_probe')
-with open(fname, 'wb') as f:
-    pickle.dump(results, f)
+save(results, 'score', subject='fsaverage', analysis='target_probe')

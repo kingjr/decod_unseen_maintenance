@@ -3,12 +3,10 @@ phase to predict the phase of the target. The results show that the phase of
 the target is decodable slightly above chance, although this effect is
 extremely tiny"""
 import numpy as np
-import pickle
-from orientations.utils import load_epochs_events
 from jr.gat import subscore
 from jr.plot import pretty_decod
-from scripts.base import resample_epochs, decim, stats
-from scripts.config import paths, subjects, preproc, analyses, tois
+from scripts.base import stats
+from scripts.config import load, save, subjects, analyses
 
 analysis = [ana for ana in analyses if ana['title'] == 'Target Phase'][0]
 toi = [-.100, .305]
@@ -16,14 +14,8 @@ toi = [-.100, .305]
 scores = list()
 for s, subject in enumerate(subjects):  # Loop across each subject
     print(subject)
-    epochs, events = load_epochs_events(subject, paths)
-
-    # preprocess data for memory issue
-    if 'resample' in preproc.keys():
-        epochs = resample_epochs(epochs, preproc['resample'])
-    if 'decim' in preproc.keys():
-        epochs = decim(epochs, preproc['decim'])
-    epochs.crop(toi[0], toi[1])
+    epochs = load('epochs', subject=subject)
+    events = load('behavior', subject=subject)
 
     # select trials
     query, condition = analysis['query'], analysis['condition']
@@ -33,9 +25,7 @@ for s, subject in enumerate(subjects):  # Loop across each subject
     y = np.array(events[condition], dtype=np.float32)
 
     # Load classifier
-    pkl_fname = paths('decod', subject=subject, analysis='probe_phase')
-    with open(pkl_fname, 'rb') as f:
-        gat, _, sel_gat, _ = pickle.load(f)
+    gat, _, sel_gat, _ = load('decod', subject=subject, analysis='probe_phase')
     # only keep estimators after probe onset
     times = gat.train_times_['times']
     toi_ = np.where((times >= (.800 + toi[0])) & (times < (.800 + toi[1])))[0]
@@ -50,10 +40,8 @@ for s, subject in enumerate(subjects):  # Loop across each subject
     scores.append(gat.scores_)
 
     # Save classifier results
-    pkl_fname = paths('decod', subject=subject,
-                      analysis=analysis['name'] + '_probe_to_target')
-    with open(pkl_fname, 'wb') as f:
-        pickle.dump([gat, analysis, sel_gat, events], f)
+    save([gat, analysis, sel_gat, events], 'decod', subject=subject,
+         analysis=analysis['name'] + '_probe_to_target')
 
 # FIXME probe starts at 816!
 times = epochs.times[:-5]

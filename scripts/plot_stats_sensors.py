@@ -1,9 +1,8 @@
 """Plot the topographical effects obtained in each analysis"""
-import pickle
 import numpy as np
 import matplotlib.pyplot as plt
 from jr.plot import plot_butterfly, plot_gfp, pretty_colorbar
-from scripts.config import (report, paths, analyses)
+from scripts.config import (report, load, analyses)
 
 cmap = plt.get_cmap('gist_rainbow')
 colors = cmap(np.linspace(0, 1., len(analyses) + 1))
@@ -16,9 +15,8 @@ colors = np.vstack((colors, [0., 0., 0., 0.]))
 # Apply contrast on each type of epoch
 for analysis, color in zip(analyses, colors):
     # load stats
-    pkl_fname = paths('evoked', analysis=('stats_' + analysis['name']))
-    with open(pkl_fname, 'rb') as f:
-        evoked, data, p_values, sig, analysis = pickle.load(f)
+    evoked, data, p_values, sig, analysis = load(
+        'evoked', analysis=('stats_' + analysis['name']))
     evoked_full = evoked.copy()
 
     sig = np.zeros_like(evoked.data)

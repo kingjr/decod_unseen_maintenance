@@ -9,16 +9,14 @@ from itertools import product
 from jr.plot import pretty_plot, plot_sem
 from scipy.stats import wilcoxon
 from jr.stats import dPrime, repeated_spearman
-from orientations.utils import get_events
-from scripts.config import paths, report, subjects
+from scripts.config import load, report, subjects
 mpl.rcParams['legend.fontsize'] = 10
 
 
 # Gather all beahvioral data
 subjects_events = list()
 for subject in subjects:
-    bhv_fname = paths('behavior', subject=subject)
-    events = get_events(bhv_fname)
+    events = load('behavior', subject=subject)
     events['subject'] = subject
     subjects_events.append(events)
 data = pandas.concat(subjects_events)
@@ -108,7 +106,8 @@ print('seen present: %s' % print_stats(np.mean(1. - x_vis[:, 1:, 0], axis=1)))
 x_vis_dprime = np.nan * np.zeros(len(subjects))
 for s, subject in enumerate(subjects):
     def count(pst, seen):
-        query = 'subject=="%s" and target_present==%s and detect_seen==%s' % (subject, pst, seen)
+        query = ('subject=="%s" and target_present==%s and '
+                 'detect_seen==%s' % (subject, pst, seen))
         return len(data.query(query))
     hit = count(True, True)
     fa = count(False, True)

@@ -1,8 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
-import pickle
 # from sklearn.manifold import MDS
-from scripts.config import paths
+from scripts.config import load
 from jr.gif import writeGif, Figtodat
 from jr.gat.graphs import plot_graph, animate_graph
 from scripts.config import report, analyses
@@ -13,11 +12,10 @@ analyses = [a for a in analyses if a['name'] in
 
 for analysis in analyses:
     # load data
-    with open(paths('score', analysis='stats_' + analysis['name']), 'rb') as f:
-        out = pickle.load(f)
-        scores = np.array(out['scores']) - analysis['chance']
-        p_values = out['p_values']
-        times = out['times'] / 1e3  # FIXME
+    out = load('score', analysis='stats_' + analysis['name'])
+    scores = np.array(out['scores']) - analysis['chance']
+    p_values = out['p_values']
+    times = out['times'] / 1e3  # FIXME
 
     # compute stats
     p_values = stats(scores)

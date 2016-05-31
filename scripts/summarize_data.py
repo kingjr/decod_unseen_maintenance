@@ -1,10 +1,9 @@
 """Prepare small pickle files that will allow users to interactively play with
 the decoding results online"""
 
-import pickle
 import numpy as np
-from scripts.config import paths, analyses
-
+from scripts.config import analyses, load
+import pickle
 
 # ERF
 all_data = []
@@ -12,9 +11,8 @@ downsample = slice(None, None, 10)
 for analysis in analyses:
     pass
     # load stats
-    pkl_fname = paths('evoked', analysis=('stats_' + analysis['name']))
-    with open(pkl_fname, 'rb') as f:
-        evoked, data, p_values, sig, analysis = pickle.load(f)
+    evoked, data, p_values, sig, analysis = load(
+        'evoked', analysis=('stats_' + analysis['name']))
     # only keep gradiometers 1 (They have already been combined)
     all_data.append(dict(name=analysis['name'], data=evoked.data))
 info = dict(times=evoked.times, ch_names=evoked.ch_names,
@@ -49,12 +47,10 @@ for analysis in analyses:
     print(analysis['name'])
 
     # Load
-    stats_fname = paths('score', subject='fsaverage', data_type='erf',
-                        analysis=('stats_' + analysis['name']))
-    with open(stats_fname, 'rb') as f:
-        out = pickle.load(f)
-        scores = np.array(out['scores'])
-        p_values = out['p_values']
+    out = load('score', subject='fsaverage',
+               analysis=('stats_' + analysis['name']))
+    scores = np.array(out['scores'])
+    p_values = out['p_values']
 
     # Downsample
     data = {key: analysis[key] for key in ['name', 'chance', 'color']}

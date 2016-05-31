@@ -1,12 +1,11 @@
 """Plot control analyses related to the present vs absent decoding"""
-import pickle
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 from scipy.stats import wilcoxon
 from jr.plot import pretty_decod, pretty_gat, pretty_axes, pretty_colorbar
 from jr.utils import table2html
-from scripts.config import paths, report, analyses, tois
+from scripts.config import load, report, analyses, tois
 from scripts.base import stats, table_duration
 
 # Test whether decoding of presence varies as a function of contrast and
@@ -17,9 +16,7 @@ contrast_list = [.5, .75, 1.]  # XXX to config
 pas_list = np.arange(4.)
 
 # Plot
-fname = paths('score', analysis='present_anova')
-with open(fname, 'rb') as f:
-    results = pickle.load(f)
+results = load('score', analysis='present_anova')
 times = results['times']
 color_vis = [ana['color'] for ana in analyses
              if ana['title'] == 'Visibility Decision'][0]

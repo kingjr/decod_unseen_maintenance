@@ -1,12 +1,11 @@
 """Run control analyses related to the present vs absent decoding: does it
 covary with/is modulated by target contrast and target visibility?"""
-import pickle
 import numpy as np
-from jr.gat import get_diagonal_ypred, subscore
+from jr.gat import subscore
 from jr.stats import repeated_spearman
 from jr.utils import align_on_diag
 from jr import tile_memory_free as tile
-from scripts.config import paths, subjects, tois
+from scripts.config import subjects, tois, load, save
 from scripts.base import stats
 
 # Gather data
@@ -27,9 +26,8 @@ for s, subject in enumerate(subjects):
     print s
 
     # Load data
-    fname = paths('decod', subject=subject, analysis='target_present')
-    with open(fname, 'rb') as f:
-        gat, _, events_sel, events = pickle.load(f)
+    gat, _, events_sel, events = load('decod', subject=subject,
+                                      analysis='target_present')
     times = gat.train_times_['times']
     # get single trial prediction: n_trials x nTrainTime x nTestTime
     y_pred = np.transpose(np.squeeze(gat.y_pred_), [2, 0, 1])
@@ -95,6 +93,4 @@ results['times'] = times
 results['p_vis'] = stats(results['R_vis'])
 results['p_contrast'] = stats(results['R_contrast'])
 
-fname = paths('score', analysis='present_anova')
-with open(fname, 'wb') as f:
-    pickle.dump(results, f)
+save(results, 'score', analysis='present_anova')

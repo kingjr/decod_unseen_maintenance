@@ -4,21 +4,18 @@ run_decoding.py script does not considered these trials, so we recompute them
 here"""
 
 import numpy as np
-import pickle
-from orientations.utils import load_epochs_events
-from scripts.config import paths, subjects, analyses
+from scripts.config import subjects, analyses, load, save
 analysis = [ana for ana in analyses if ana['name'] == 'target_circAngle'][0]
 
 for s, subject in enumerate(subjects):  # Loop across each subject
     print(subject)
     # load MEG data
-    epochs, events = load_epochs_events(subject, paths)
-    epochs.crop(-.1, 1.100)  # XXX
+    epochs = load('epochs', subject=subject)
+    events = load('behavior', subject=subject)
 
     # Load classifier
-    pkl_fname = paths('decod', subject=subject, analysis=analysis['name'])
-    with open(pkl_fname, 'rb') as f:
-        gat, analysis, ana_sel, events = pickle.load(f)
+    gat, analysis, ana_sel, events = load('decod', subject=subject,
+                                          analysis=analysis['name'])
 
     sel = np.where(np.array(events.target_present) == False)[0]
     y = np.array(events.probe_circAngle, dtype=np.float32)
@@ -31,7 +28,5 @@ for s, subject in enumerate(subjects):  # Loop across each subject
     gat.score(epochs[sel], y=y[sel])
 
     # Save classifier results
-    pkl_fname = paths('decod', subject=subject,
-                      analysis=analysis['name'] + '_absent', log=True)
-    with open(pkl_fname, 'wb') as f:
-        pickle.dump([gat, analysis, sel, events], f)
+    save([gat, analysis, sel, events], 'decod', subject=subject,
+         analysis=analysis['name'] + '_absent')

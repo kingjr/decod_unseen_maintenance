@@ -1,7 +1,21 @@
-import numpy as np
+import pickle
 import os
 import os.path as op
+from mne import read_epochs
+from mne.io import Raw
 from jr.utils import OnlineReport
+from jr.cloud import Client
+
+# Setup paths
+aws = False
+if 'aws' in os.environ.keys() and os.environ['aws'] == 'True':
+    aws = True
+if aws:
+    data_path = '/home/ubuntu/decoding_unconscious_wm/data/'
+else:
+    data_path = '/media/jrking/harddrive/Niccolo/'
+
+client = Client('S3', bucket='niccolo.meg', client_root=data_path)
 
 # Setup online HTML report
 report = OnlineReport()
@@ -9,97 +23,89 @@ report = OnlineReport()
 # Experiment parameters
 base_path = op.dirname(op.dirname(__file__))
 print base_path
-data_path = op.join(base_path, 'data/')
-data_path = '/media/jrking/harddrive/Niccolo/data/'
+
+subjects = range(1, 21)
 
 
-def paths(typ, subject='fsaverage', data_type='erf', lock='target',
-          analysis='analysis', pyscript='config.py', run=1, log=False):
-    # FIXME: cleanup epochs filenames
+def paths(typ, subject='fsaverage', analysis='analysis', block=999):
+    subject = 's%i' % subject if isinstance(subject, int) else subject
     this_path = op.join(data_path, subject, typ)
     path_template = dict(
         base_path=base_path,
         data_path=data_path,
-        report=op.join(base_path, 'results'),
-        log=op.join(base_path, pyscript.strip('.py') + '.log'),
-        behavior=op.join(this_path, '%s_fixed.mat' % subject),
-        raw=op.join(this_path, '%s_run%02i.fif' % (subject, run)),
-        sss=op.join(this_path, '%s_run%02i_sss.fif' % (subject, run)),
-        epoch=op.join(this_path, '%s_%s_%s.mat' % (subject, lock, data_type)),
+        behavior=op.join(this_path, 'subject_%i_behav.mat' % subject),
+        # XXX FIXME CLEAN sss naming
+        sss=op.join(this_path, 'subject_%i_%i_sss.fif' % (subject[1], block)),
+        epo_block=op.join(this_path,
+                          '%s_%i_filtered-epo.fif' % (subject, block)),
+        epochs=op.join(this_path, '%s-epo.fif' % subject),
         fwd=op.join(this_path, '%s-fwd.fif' % subject),
         cov=op.join(this_path, '%s-cov.fif' % subject),
         inv=op.join(this_path, '%s-inv.fif' % subject),
-        evoked=op.join(this_path, '%s_%s_%s_%s.pickle' % (
-            subject, lock, data_type, analysis)),
-        decod=op.join(this_path, '%s_%s_%s_%s.pickle' % (
-            subject, lock, data_type, analysis)),
-        score=op.join(this_path, '%s_%s_%s_%s_scores.pickle' % (
-            subject, lock, data_type, analysis)),
+        # XXX FIXME no pickle!
+        evoked=op.join(this_path, '%s_%s.pickle' % (subject, analysis)),
+        decod=op.join(this_path, '%s_%s.pickle' % (subject, analysis)),
+        score=op.join(this_path, '%s_%s_scores.pickle' % (subject, analysis)),
         freesurfer=op.join(data_path, 'subjects'),
         covariance=op.join(this_path, '%s-meg-cov.fif' % (subject)))
-    file = path_template[typ]
-
-    # Option to Log the file in order to facilitate the upload and download
-    # onto and from the Amazon Servers
-    if log:
-        fname = paths('log')
-        print '%s: %s ' % (fname, file)
-        with open(fname, "a") as myfile:
-            myfile.write("%s \n" % file)
+    this_file = path_template[typ]
 
     # Create subfolder if necessary
-    folder = os.path.dirname(file)
+    folder = os.path.dirname(this_file)
     if (folder != '') and (not op.exists(folder)):
         os.makedirs(folder)
 
-    return file
+    return this_file
 
-# Subjects pseudonimized ID
-subjects = [
-    'ak130184', 'el130086', 'ga130053', 'gm130176', 'hn120493',
-    'ia130315', 'jd110235', 'jm120476', 'ma130185', 'mc130295',
-    'mj130216', 'mr080072', 'oa130317', 'rg110386', 'sb120316',
-    'tc120199', 'ts130283', 'yp130276', 'av130322', 'ps120458']
 
-runs = range(1, 6)
+def load(typ, subject='fsaverage', analysis='analysis', block=999,
+         download=False, preload=False):
+    """Auxiliary saving function."""
+    # get file name
+    fname = paths(typ, subject=subject, analysis=analysis, block=block)
 
-# Define type of sensors used (useful for ICA correction, plotting etc)
-chan_types = [dict(name='meg')]
+    # check if file exists
+    if not op.exists(fname) and download:
+        client.download(fname)
 
-# Decoding preprocessing steps
-preproc = dict()
+    # different data format depending file type
+    if typ == 'behavior':
+        from scripts.base import read_events
+        out = read_events(fname)
+    elif typ == 'sss':
+        out = Raw(fname, preload=preload)
+    elif typ in ['epo_block', 'epochs']:
+        out = read_epochs(fname, preload=preload)
+    elif typ in ['evoked', 'decod', 'score']:
+        with open(fname, 'rb') as f:
+            out = pickle.load(f)
+    else:
+        raise NotImplementedError()
+    return out
 
-# ###################### Define contrasts #####################
-from scripts.conditions import analyses, subscores, analyses_order2
 
-# #############################################################################
-# univariate analyses definition: transform the input used for the decoding to
-# the univariate analyse. Yes this NEEDS to be cleaned
-# from analyses_definition_univariate import format_analysis
-# analyses = [format_analysis(contrast) for contrast in contrasts]
+def save(var, typ, subject='fsaverage', analysis='analysis', block=999,
+         upload=aws, overwrite=False):
+    """Auxiliary saving function."""
+    # get file name
+    fname = paths(typ, subject=subject, analysis=analysis, block=block)
 
-# EXTERNAL PARAMETER ##########################################################
-# import argparse
-# # This is to facilitate cluster analyses by passing parameters externally
-# parser = argparse.ArgumentParser()
-# parser.add_argument('--time_id', default='')
-# parser.add_argument('--subject', default=None)
-# parser.add_argument('--analysis', default=analyses)
-# parser.add_argument('--pyscript', default='config.py')
-# args = parser.parse_args()
-#
-# time_id = args.time_id
-# subjects = [args.subject] if args.subject is not None else subjects
-# if isinstance(args.analysis, str):
-#     idx = np.where([d['name'] == args.analysis for d in analyses])[0]
-#     analyses = [analyses[idx]]
-# pyscript = args.pyscript
+    # check if file exists
+    if op.exists(fname) and not overwrite:
+        print('%s already exists. Skipped' % fname)
+        return False
+
+    # different data format depending file type
+    if typ in ['epo_block', 'epochs']:
+        var.save(fname, overwrite=True)
+    elif typ in ['evoked', 'decod', 'score']:
+        with open(fname, 'wb') as f:
+            pickle.dump(var, f)
+    else:
+        raise NotImplementedError()
+    if upload:
+        client.upload(fname)
+    return True
 
 # Analysis Parameters
 tois = [(-.100, 0.050), (.100, .250), (.300, .800), (.900, 1.050)]
-
-# ##################################""
-# # UNCOMMENT TO SUBSELECTION FOR FAST PROCESSING
-# subjects = [subjects[0]]
-# analyses = [ana for ana in analyses if ana['name'] == 'target_present']
-preproc = dict(crop=dict(tmin=-.1, tmax=1.100))

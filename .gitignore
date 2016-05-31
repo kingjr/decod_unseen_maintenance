@@ -8,3 +8,10 @@ notes/
 .credentials/
 *.log
 *~
+sandbox/
+_sandbox/
+orientations/
+.ipynb_checkpoints/
+./*.ipynb
+cloud/
+docs/

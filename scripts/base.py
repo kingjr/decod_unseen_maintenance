@@ -1,17 +1,16 @@
 import numpy as np
-from sklearn.svm import LinearSVR, SVC
-from sklearn.linear_model import LogisticRegression
 from jr.utils import tile_memory_free, pairwise, table2html
-from jr.stats import (repeated_spearman, repeated_corr, corr_linear_circular,
-                      circ_tuning, circ_mean, corr_circular_linear)
-from jr.gat.scorers import scorer_auc, scorer_spearman
+from jr.stats import (repeated_spearman, corr_linear_circular,
+                      circ_mean, corr_circular_linear)
 from mne.stats import spatio_temporal_cluster_1samp_test
+from mne import read_epochs
 from scipy.stats import wilcoxon
 
 
 # STATS #######################################################################
 
 def stat_fun(x, sigma=0, method='relative'):
+    """Aux. function of stats"""
     from mne.stats import ttest_1samp_no_p
     t_values = ttest_1samp_no_p(x, sigma=sigma, method=method)
     t_values[np.isnan(t_values)] = 0
@@ -19,6 +18,7 @@ def stat_fun(x, sigma=0, method='relative'):
 
 
 def stats(X, connectivity=None):
+    """Use systematically the same stat with multiple comparison correction."""
     X = np.array(X)
     X = X[:, :, None] if X.ndim == 2 else X
     T_obs_, clusters, p_values, _ = spatio_temporal_cluster_1samp_test(
@@ -150,7 +150,7 @@ def nested_analysis(X, df, condition, function=None, query=None,
         # Store values to keep track
         sub_list = dict(X=X_mean, y=y_mean, sel=sel, query=query,
                         condition=condition, values=values,
-                        single_trial=single_trial)
+                        single_trial=True)
     elif isinstance(condition, list):
         # If condition is a list, we must recall the function to gather
         # the results of the lower levels
@@ -219,43 +219,6 @@ def meg_to_gradmag(chan_types):
     return chan_types
 
 
-def resample_epochs(epochs, sfreq):
-    """faster resampling"""
-    # from librosa import resample
-    # librosa.resample(channel, o_sfreq, sfreq, res_type=res_type)
-    from scipy.signal import resample
-
-    # resample
-    epochs._data = resample(
-        epochs._data, epochs._data.shape[2] / epochs.info['sfreq'] * sfreq,
-        axis=2)
-    # update metadata
-    epochs.info['sfreq'] = sfreq
-    epochs.times = (np.arange(epochs._data.shape[2],
-                              dtype=np.float) / sfreq + epochs.times[0])
-    return epochs
-
-
-def decim(inst, decim):
-    """faster resampling"""
-    from mne.io.base import _BaseRaw
-    from mne.epochs import _BaseEpochs
-    if isinstance(inst, _BaseRaw):
-        inst._data = inst._data[:, ::decim]
-        inst.info['sfreq'] /= decim
-        inst._first_samps /= decim
-        inst.first_samp /= decim
-        inst._last_samps /= decim
-        inst.last_samp /= decim
-        inst._raw_lengths /= decim
-        inst._times = inst._times[::decim]
-    elif isinstance(inst, _BaseEpochs):
-        inst._data = inst._data[:, :, ::decim]
-        inst.info['sfreq'] /= decim
-        inst.times = inst.times[::decim]
-    return inst
-
-
 # DECODING ####################################################################
 
 
@@ -291,7 +254,9 @@ def scorer_angle(truth, prediction):
     return np.pi / 2 - score
 
 
-def scorer_circLinear(y_line, y_circ):
+def scorer_circlin(y_line, y_circ):
+    """Scoring function to compute pseudo R value from circular linear
+    correlation"""
     R, R2, pval = corr_linear_circular(y_line, y_circ)
     return R
 
@@ -373,77 +338,9 @@ def angle_bias(y_error, y_tilt):
 # LOAD DATA ###################################################################
 
 
-def fix_wrong_channel_names(inst):
-    # FIX at loading. Remove function if it works
-    return inst
-    # from mne.epochs import EpochsArray
-    # from mne.evoked import Evoked
-    # inst.info['chs'] = inst.info['chs'][:306]
-    # inst.info['ch_names'] = inst.info['ch_names'][:306]
-    # inst.info['nchan'] = 306
-    # if isinstance(inst, Evoked):
-    #     inst.data = inst.data[:306, :]
-    # elif isinstance(inst, EpochsArray):
-    #     inst._data = inst._data[:, :306, :]
-    # else:
-    #     raise ValueError('Unknown instance')
-    # return inst
-
-
-def load_epochs_events(subject, paths=None, data_type='erf',
-                       lock='target'):
-    # Get MEG data
-    meg_fname = paths('epoch', subject=subject, data_type=data_type, lock=lock)
-    epochs = load_FieldTrip_data(meg_fname)
-    # epochs = fix_wrong_channel_names(epochs)  FIX at loading
-    # Get behavioral data
-    bhv_fname = paths('behavior', subject=subject)
-    events = get_events(bhv_fname)
-    epochs.crop(-.200, 1.200)
-    return epochs, events
-
-
-def angle2circle(angles):
-    """from degree to radians multipled by rm2"""
-    return np.deg2rad(2 * (np.array(angles) + 7.5))
-
-
-def load_FieldTrip_data(meg_fname):
-    import scipy.io as sio
-    from mne.io.meas_info import create_info
-    from mne.epochs import EpochsArray
-    """XXX Here explain what this does"""
-    # import information from fieldtrip data to get data shape
-    ft_data = sio.loadmat(meg_fname[:-4] + '.mat', squeeze_me=True,
-                          struct_as_record=True)['data']
-    # import binary MEG data
-    bin_data = np.fromfile(meg_fname[:-4] + '.dat', dtype=np.float32)
-    Xdim = ft_data['Xdim'].item()
-    bin_data = np.reshape(bin_data, Xdim[[2, 1, 0]]).transpose([2, 1, 0])
-
-    # Create an MNE Epoch
-    n_trial, n_chans, n_time = bin_data.shape
-    sfreq = ft_data['fsample'].item()
-    time = ft_data['time'].item()[0]
-    tmin = min(time)
-    chan_names = [str(label) for label in ft_data['label'].item()]
-    chan_types = np.squeeze(np.concatenate(
-        (np.tile(['grad', 'grad', 'mag'], (1, 102)),
-         np.tile('misc', (1, n_chans - 306))), axis=1))
-    chan_names = np.array(chan_names)[:306].tolist()
-    chan_types = np.array(chan_types)[:306].tolist()
-    bin_data = bin_data[:, :306, :]
-    info = create_info(chan_names, sfreq, chan_types)
-    events = np.c_[np.cumsum(np.ones(n_trial)) * 5 * sfreq,
-                   np.zeros(n_trial),
-                   ft_data['trialinfo'].item()]
-    epochs = EpochsArray(bin_data, info, events=np.array(events, int),
-                         tmin=tmin, verbose=False)
-
-    return epochs
-
-
-def get_events(bhv_fname):
+def read_events(bhv_fname):
+    """Reads events from mat file, convert and clean them into readable
+    variables."""
     import scipy.io as sio
     import pandas as pd
     # Load behavioral file
@@ -496,74 +393,15 @@ def get_events(bhv_fname):
     for t, trial in enumerate(trials):
         # define previous trial
         event = trial2event(trial)
-        if t > 1:
-            previous_event = trial2event(trials[t-1])
-            for key in previous_event:
-                event['previous_' + key] = previous_event[key]
         events.append(event)
     events = pd.DataFrame(events)
     return events
 
 
-# SKLEARN #####################################################################
-# FIXME: to be remove and use jr.gat instead
+def angle2circle(angles):
+    """from degree to radians multipled by rm2"""
+    return np.deg2rad(2 * (np.array(angles) + 7.5))
 
 
-class clf_2class_proba(LogisticRegression):
-    """Probabilistic SVC for 2 classes only"""
-    def predict(self, x):
-        probas = super(clf_2class_proba, self).predict_proba(x)
-        return probas[:, 1]
-
-
-class SVC_2class_proba(SVC):  # XXX not used
-    """Probabilistic SVC for 2 classes only"""
-    def predict(self, x):
-        probas = super(clf_2class_proba, self).predict_proba(x)
-        return probas[:, 1]
-
-
-class SVR_angle(LinearSVR):
-
-    def __init__(self):
-        from sklearn.svm import LinearSVR
-        from sklearn.preprocessing import StandardScaler
-        from sklearn.pipeline import Pipeline
-        scaler_cos = StandardScaler()
-        scaler_sin = StandardScaler()
-        svr_cos = LinearSVR(C=1)
-        svr_sin = LinearSVR(C=1)
-        self.clf_cos = Pipeline([('scaler', scaler_cos), ('svr', svr_cos)])
-        self.clf_sin = Pipeline([('scaler', scaler_sin), ('svr', svr_sin)])
-
-    def fit(self, X, y):
-        """
-        Fit 2 regressors cos and sin of angles y
-        Parameters
-        ----------
-        X : np.array, shape(n_trials, n_chans, n_time)
-            MEG data
-        y : list | np.array (n_trials)
-            angles in degree
-        """
-        # Go from orientation space (0-180 degrees) to complex space
-        # (0 - 2 pi radians)
-        self.clf_cos.fit(X, np.cos(y))
-        self.clf_sin.fit(X, np.sin(y))
-
-    def predict(self, X):
-        """
-        Predict orientation from MEG data in radians
-        Parameters
-        ----------
-        X : np.array, shape(n_trials, n_chans, n_time)
-            MEG data
-        Returns
-        -------
-        predict_angle : list | np.array, shape(n_trials)
-            angle predictions in radian
-        """
-        predict_cos = self.clf_cos.predict(X)
-        predict_sin = self.clf_sin.predict(X)
-        predict_angle = np.arctan2(predict_sin, predict_cos)
-        return predict_angle
+def load(subject='fsaverage', data_type='erf', lock='target',
+          analysis='analysis', pyscript='config.py', run=1)

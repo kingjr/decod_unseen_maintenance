@@ -2,12 +2,11 @@
 
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
-import pickle
 import numpy as np
 from jr.plot import pretty_gat, pretty_decod, pretty_slices
 from jr.utils import table2html
 from scipy.stats import wilcoxon
-from scripts.config import paths, analyses, report, tois
+from scripts.config import load, analyses, report, tois
 from scripts.base import stats
 
 fig_alldiag = plt.figure(figsize=[6.5, 11])
@@ -20,15 +19,13 @@ alpha = 0.01  # statistical threshold
 for ii, (analysis, ax_diag) in enumerate(zip(analyses, axes_alldiag)):
     print analysis['name']
     # Load
-    stats_fname = paths('score', subject='fsaverage', data_type='erf',
-                        analysis=('stats_' + analysis['name']))
-    with open(stats_fname, 'rb') as f:
-        out = pickle.load(f)
-        scores = np.array(out['scores'])
-        p_values = out['p_values']
-        p_values_off = out['p_values_off']
-        p_values_diag = np.squeeze(out['p_values_diag'])
-        times = out['times'] / 1e3  # FIXME
+    out = load('score', subject='fsaverage', data_type='erf',
+               analysis=('stats_' + analysis['name']))
+    scores = np.array(out['scores'])
+    p_values = out['p_values']
+    p_values_off = out['p_values_off']
+    p_values_diag = np.squeeze(out['p_values_diag'])
+    times = out['times'] / 1e3  # FIXME
 
     if 'Angle' in analysis['title']:
         scores /= 2.  # from circle to half circle
@@ -186,16 +183,14 @@ for ii, (analysis, ax_diag) in enumerate(zip(analyses, axes_alldiag)):
     # Load
     if analysis['name'] not in relevant + irrelevant:
         continue
-    stats_fname = paths('score', subject='fsaverage', data_type='erf',
-                        analysis=('stats_' + analysis['name']))
-    with open(stats_fname, 'rb') as f:
-        out = pickle.load(f)
-        # we'll be looking at the sign of the effect per subjects as compared
-        # to chance level
-        scores = np.array(out['scores']) - analysis['chance']
-        # XXX you need to relaunch one of the analyses that only has 153 and
-        # not 154 time points
-        times = out['times'][:153] / 1e3  # FIXME
+    out = load('score', subject='fsaverage', data_type='erf',
+               analysis=('stats_' + analysis['name']))
+    # we'll be looking at the sign of the effect per subjects as compared
+    # to chance level
+    scores = np.array(out['scores']) - analysis['chance']
+    # XXX you need to relaunch one of the analyses that only has 153 and
+    # not 154 time points
+    times = out['times'][:153] / 1e3  # FIXME
     scores = np.array([np.diag(subject[:, :153]) for subject in scores])
     if analysis['name'] in relevant:
         score_relevant.append(scores)

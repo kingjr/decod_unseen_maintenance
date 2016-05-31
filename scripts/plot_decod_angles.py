@@ -1,12 +1,11 @@
 """Plot analyses related to the decoding of target and probe angles"""
-import pickle
 import numpy as np
 from scipy.stats import wilcoxon
 import matplotlib.pyplot as plt
 from jr.plot import plot_tuning, bar_sem, pretty_decod
 from jr.utils import table2html
 from jr.stats import repeated_spearman
-from scripts.config import paths, report, analyses, tois
+from scripts.config import load, report, analyses, tois
 from scripts.base import stats, table_duration
 analyses = [analysis for analysis in analyses if analysis['name'] in
             ['target_circAngle', 'probe_circAngle']]
@@ -58,10 +57,8 @@ def get_ylim(data):
 ylim = [.01, .08]
 for analysis in analyses:
     # load data
-    fname = paths('score', subject='fsaverage',
-                  analysis=analysis['name'] + '-tuning')
-    with open(fname, 'rb') as f:
-        results = pickle.load(f)
+    results = load('score', subject='fsaverage',
+                   analysis=analysis['name'] + '-tuning')
     times = results['times']
     n_bins = len(results['bins'])
 
