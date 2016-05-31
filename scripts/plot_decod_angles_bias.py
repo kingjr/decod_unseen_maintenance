@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from jr.plot import (pretty_gat, plot_tuning, pretty_axes, pretty_decod,
                      pretty_colorbar, bar_sem)
 from jr.utils import table2html
-from scripts.config import load, report
+from .config import load, report
 from scipy.stats import wilcoxon
 
 # Load data

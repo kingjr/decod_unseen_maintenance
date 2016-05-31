@@ -5,8 +5,8 @@ import matplotlib.pyplot as plt
 from jr.plot import plot_tuning, bar_sem, pretty_decod
 from jr.utils import table2html
 from jr.stats import repeated_spearman
-from scripts.config import load, report, analyses, tois
-from scripts.base import stats, table_duration
+from .config import load, report, analyses, tois
+from .base import stats, table_duration
 analyses = [analysis for analysis in analyses if analysis['name'] in
             ['target_circAngle', 'probe_circAngle']]
 

@@ -4,7 +4,8 @@ run_decoding.py script does not considered these trials, so we recompute them
 here"""
 
 import numpy as np
-from scripts.config import subjects, analyses, load, save
+from .config import subjects, load, save
+from .conditions import analyses
 analysis = [ana for ana in analyses if ana['name'] == 'target_circAngle'][0]
 
 for s, subject in enumerate(subjects):  # Loop across each subject

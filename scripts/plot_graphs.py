@@ -1,11 +1,12 @@
 import matplotlib.pyplot as plt
 import numpy as np
 # from sklearn.manifold import MDS
-from scripts.config import load
+from .config import load
 from jr.gif import writeGif, Figtodat
 from jr.gat.graphs import plot_graph, animate_graph
-from scripts.config import report, analyses
-from scripts.base import stats
+from .config import report
+from .conditions import analyses
+from .base import stats
 
 analyses = [a for a in analyses if a['name'] in
             ['target_present', 'target_circAngle', 'detect_button_pst']]

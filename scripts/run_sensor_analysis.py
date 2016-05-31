@@ -1,6 +1,7 @@
 """Performs sensor analysis within each subjects separately"""
-from scripts.base import nested_analysis, load, save
-from scripts.config import subjects, analyses
+from .base import nested_analysis, load, save
+from .config import subjects
+from .conditions import analyses
 
 for subject in subjects:
     print('load %s' % subject)

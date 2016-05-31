@@ -5,8 +5,8 @@ from jr.gat import subscore
 from jr.stats import repeated_spearman
 from jr.utils import align_on_diag
 from jr import tile_memory_free as tile
-from scripts.config import subjects, tois, load, save
-from scripts.base import stats
+from .config import subjects, tois, load, save
+from .base import stats
 
 # Gather data
 n_times = 154  # XXX the number of time samples in an epoch should be automatic

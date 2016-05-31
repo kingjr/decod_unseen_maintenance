@@ -4,8 +4,7 @@ import numpy as np
 from scipy.io import loadmat
 from nose.tools import assert_true
 from mne.io import RawArray
-from mne import (Epochs, find_events, create_info,
-                 concatenate_epochs)
+from mne import Epochs, find_events, create_info, concatenate_epochs
 from config import paths, load, save
 
 

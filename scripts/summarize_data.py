@@ -2,7 +2,8 @@
 the decoding results online"""
 
 import numpy as np
-from scripts.config import analyses, load
+from .config import load
+from .conditions import analyses
 import pickle
 
 # ERF

@@ -4,8 +4,8 @@ whose orientation is correlated to the target's"""
 import pickle
 import numpy as np
 from jr.stats import circ_tuning
-from scripts.config import load, save, subjects
-from scripts.base import stats, get_predict_error, angle_acc, angle_bias, tois
+from .config import load, save, subjects
+from .base import stats, get_predict_error, angle_acc, angle_bias, tois
 
 n_bins = 24
 toi_probe = tois[-1]

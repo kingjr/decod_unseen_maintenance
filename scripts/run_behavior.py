@@ -9,7 +9,7 @@ from itertools import product
 from jr.plot import pretty_plot, plot_sem
 from scipy.stats import wilcoxon
 from jr.stats import dPrime, repeated_spearman
-from scripts.config import load, report, subjects
+from .config import load, report, subjects
 mpl.rcParams['legend.fontsize'] = 10
 
 

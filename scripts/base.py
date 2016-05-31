@@ -3,7 +3,6 @@ from jr.utils import tile_memory_free, pairwise, table2html
 from jr.stats import (repeated_spearman, corr_linear_circular,
                       circ_mean, corr_circular_linear)
 from mne.stats import spatio_temporal_cluster_1samp_test
-from mne import read_epochs
 from scipy.stats import wilcoxon
 
 
@@ -401,7 +400,3 @@ def read_events(bhv_fname):
 def angle2circle(angles):
     """from degree to radians multipled by rm2"""
     return np.deg2rad(2 * (np.array(angles) + 7.5))
-
-
-def load(subject='fsaverage', data_type='erf', lock='target',
-          analysis='analysis', pyscript='config.py', run=1)
