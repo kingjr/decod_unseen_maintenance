@@ -11,7 +11,7 @@ aws = False
 if 'aws' in os.environ.keys() and os.environ['aws'] == 'True':
     aws = True
 if aws:
-    data_path = '/home/ubuntu/decoding_unconscious_wm/data/'
+    data_path = '/home/ubuntu/decod_unseen_maintenance/data/'
 else:
     data_path = '/media/jrking/harddrive/Niccolo/'
 
