@@ -116,7 +116,7 @@ def _decimate_epochs(subject, overwrite=True):
     if op.exists(epo_fname) and not overwrite:
         return
     # load non decimated data
-    epochs = load('epochs', subject=subject, preoload=True)
+    epochs = load('epochs', subject=subject, preload=True)
     epochs._data = low_pass_filter(epochs._data, epochs.info['sfreq'], 30.,
                                    n_jobs=-1)
     epochs.crop(-.200, 1.600)
