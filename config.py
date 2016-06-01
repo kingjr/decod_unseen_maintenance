@@ -13,7 +13,7 @@ if 'aws' in os.environ.keys() and os.environ['aws'] == 'True':
 if aws:
     data_path = '/home/ubuntu/decod_unseen_maintenance/data/'
 else:
-    data_path = '/media/jrking/harddrive/Niccolo/'
+    data_path = '/media/jrking/harddrive/Niccolo/data/'
 
 client = Client('S3', bucket='meg.niccolo', client_root=data_path)
 
@@ -25,6 +25,14 @@ base_path = op.dirname(op.dirname(__file__))
 print base_path
 
 subjects = range(1, 21)
+
+subjects_id = [
+    'ak130184', 'el130086', 'ga130053', 'gm130176', 'hn120493',
+    'ia130315', 'jd110235', 'jm120476', 'ma130185', 'mc130295',
+    'mj130216', 'mr080072', 'oa130317', 'rg110386', 'sb120316',
+    'tc120199', 'ts130283', 'yp130276', 'av130322', 'ps120458']
+missing_mri = [
+    'gm130176',  'ia130315', 'jm120476', 'mc130295', 'ts130283', 'yp130276']
 
 
 def paths(typ, subject='fsaverage', analysis='analysis', block=999):
@@ -50,7 +58,8 @@ def paths(typ, subject='fsaverage', analysis='analysis', block=999):
         score=op.join(this_path, '%s_%s_scores.pickle' % (subject, analysis)),
         score_tfr=op.join(this_path,
                           '%s_%s_tfr_scores.pickle' % (subject, analysis)),
-        freesurfer=op.join(data_path, 'subjects'),
+        freesurfer=op.join('data/'.join(data_path.split('data/')[:-1]),
+                           'subjects'),
         covariance=op.join(this_path, '%s-meg-cov.fif' % (subject)))
     this_file = path_template[typ]
 

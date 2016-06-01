@@ -5,7 +5,8 @@ import matplotlib.pyplot as plt
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import make_pipeline
 from sklearn.metrics import roc_auc_score
-from sklearn.svm import LinearSVR, SVC
+from sklearn.svm import LinearSVR
+from sklearn.linear_model import LogisticRegression
 from jr.gat import (scorer_angle, force_predict,
                     scorer_spearman, AngularRegression)
 from base import scorer_circlin
@@ -25,8 +26,7 @@ def analysis(name, typ, condition=None, query=None, title=None):
     if typ == 'categorize':
         clf = make_pipeline(
             StandardScaler(),
-            force_predict(SVC(kernel='linear',  C=1, probability=True,
-                              class_weight='balanced'), axis=1))
+            force_predict(LogisticRegression(class_weight='balanced'), axis=1))
         scorer = scorer_auc
         chance = .5
     elif typ == 'regress':
