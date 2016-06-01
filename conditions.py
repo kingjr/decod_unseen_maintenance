@@ -4,10 +4,18 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import make_pipeline
+from sklearn.metrics import roc_auc_score
 from sklearn.svm import LinearSVR, SVC
-from jr.gat import (scorer_angle, scorer_auc, force_predict,
+from jr.gat import (scorer_angle, force_predict,
                     scorer_spearman, AngularRegression)
 from base import scorer_circlin
+
+
+def scorer_auc(y_true, y_pred):
+    """Aux. function to return AUC score from a probabilistic prediction"""
+    # FIXME jr.gat.scorers.scorer_auc crashes when too many values with the
+    # same proba.
+    return roc_auc_score(y_true == np.max(y_true), y_pred[:, 0])
 
 
 def analysis(name, typ, condition=None, query=None, title=None):
