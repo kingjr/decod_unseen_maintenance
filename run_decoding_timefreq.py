@@ -13,6 +13,7 @@ for s, subject in enumerate(subjects):  # Loop across each subject
     print(subject)
 
     epochs = load('epochs', subject=subject, preload=True)
+    epochs.decimate(4)  # 250 Hz is enough
     events = load('behavior', subject=subject)
     start = np.where(epochs.times >= -.200)[0][0]
     stop = np.where(epochs.times >= 1.400)[0][0]
@@ -33,13 +34,16 @@ for s, subject in enumerate(subjects):  # Loop across each subject
         # Apply analysis
         td = TimeDecoding(clf=analysis['clf'], cv=analysis['cv'],
                           scorer=analysis['scorer'], n_jobs=-1)
-        tfd = TimeFrequencyDecoding(frequencies=np.arange(8, 70, .5), td=td,
-                                    tfr_kwargs=dict(n_cycles=5),
-                                    decim=slice(start, stop, 10))
+        frequencies = np.arange(8, 70, .5)
+        decim = slice(start, stop, 4)  # 61 Hz after TFR
+        times = epochs.times[decim]
+        tfd = TimeFrequencyDecoding(
+            frequencies, td=td, n_jobs=-1,
+            tfr_kwargs=dict(n_cycles=5, decim=decim))
         tfd.fit(epochs[sel], y=y[sel])
-        tfd.score(epochs[sel], y=y[sel])
+        score = tfd.score()
 
         # Save analysis
-        save([tfd, analysis, sel, events], 'decod-tfr',
+        save([score, frequencies, times], 'score_tfr',
              subject=subject, analysis=analysis['name'],
              upload=True, overwrite=True)

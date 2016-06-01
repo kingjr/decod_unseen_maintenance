@@ -46,7 +46,10 @@ def paths(typ, subject='fsaverage', analysis='analysis', block=999):
         # XXX FIXME no pickle!
         evoked=op.join(this_path, '%s_%s.pickle' % (subject, analysis)),
         decod=op.join(this_path, '%s_%s.pickle' % (subject, analysis)),
+        decod_tfr=op.join(this_path, '%s_%s_tfr.pickle' % (subject, analysis)),
         score=op.join(this_path, '%s_%s_scores.pickle' % (subject, analysis)),
+        score_tfr=op.join(this_path,
+                          '%s_%s_tfr_scores.pickle' % (subject, analysis)),
         freesurfer=op.join(data_path, 'subjects'),
         covariance=op.join(this_path, '%s-meg-cov.fif' % (subject)))
     this_file = path_template[typ]
