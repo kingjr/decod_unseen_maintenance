@@ -15,7 +15,7 @@ if aws:
 else:
     data_path = '/media/jrking/harddrive/Niccolo/'
 
-client = Client('S3', bucket='niccolo.meg', client_root=data_path)
+client = Client('S3', bucket='meg.niccolo', client_root=data_path)
 
 # Setup online HTML report
 report = OnlineReport()

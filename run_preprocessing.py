@@ -58,7 +58,8 @@ def _epoch_raw(subject, block, overwrite=False):
     # Epoch continuous data
     epochs = Epochs(raw, events, reject=None, tmin=-.600, tmax=1.8,
                     picks=picks, baseline=None)
-    save(epochs, 'epo_block', subject=subject, block=block, overwrite=True)
+    save(epochs, 'epo_block', subject=subject, block=block, overwrite=True,
+         upload=False)
 
 
 def _concatenate_epochs(subject, overwrite=False):
@@ -73,7 +74,7 @@ def _concatenate_epochs(subject, overwrite=False):
                            preload=False)
         epochs.append(this_epochs)
     epochs = concatenate_epochs(epochs)
-    save(epochs, 'epochs', subject=subject, overwrite=True)
+    save(epochs, 'epochs', subject=subject, overwrite=True, upload=False)
 
 
 def _check_epochs(subject):
