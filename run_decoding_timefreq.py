@@ -8,7 +8,6 @@ from mne.decoding import TimeDecoding
 from config import subjects, load, save
 from conditions import analyses
 
-
 for s, subject in enumerate(subjects):  # Loop across each subject
     print(subject)
 
@@ -17,6 +16,9 @@ for s, subject in enumerate(subjects):  # Loop across each subject
     events = load('behavior', subject=subject)
     start = np.where(epochs.times >= -.200)[0][0]
     stop = np.where(epochs.times >= 1.400)[0][0]
+    frequencies = np.arange(8, 70, 1.)
+    decim = slice(start, stop, 4)  # 61 Hz after TFR
+    times = epochs.times[decim]
 
     # Apply to each analysis
     for analysis in analyses:
@@ -34,9 +36,6 @@ for s, subject in enumerate(subjects):  # Loop across each subject
         # Apply analysis
         td = TimeDecoding(clf=analysis['clf'], cv=analysis['cv'],
                           scorer=analysis['scorer'], n_jobs=-1)
-        frequencies = np.arange(8, 70, .5)
-        decim = slice(start, stop, 4)  # 61 Hz after TFR
-        times = epochs.times[decim]
         tfd = TimeFrequencyDecoding(
             frequencies, td=td, n_jobs=-1,
             tfr_kwargs=dict(n_cycles=5, decim=decim))

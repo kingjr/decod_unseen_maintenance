@@ -11,7 +11,7 @@ from conditions import analyses
 for s, subject in enumerate(subjects):  # Loop across each subject
     print(subject)
 
-    epochs = load('epochs', subject=subject, preload=True)
+    epochs = load('epochs_decim', subject=subject, preload=True)
     events = load('behavior', subject=subject)
 
     # Apply to each analysis
@@ -33,9 +33,12 @@ for s, subject in enumerate(subjects):  # Loop across each subject
                                        scorer=analysis['scorer'],
                                        n_jobs=-1)
         gat.fit(epochs[sel], y=y[sel])
-        gat.score(epochs[sel], y=y[sel])
+        score = gat.score(epochs[sel], y=y[sel])
 
         # Save analysis
         save([gat, analysis, sel, events], 'decod',
+             subject=subject, analysis=analysis['name'],
+             upload=True, overwrite=True)
+        save([score, epochs.times], 'score',
              subject=subject, analysis=analysis['name'],
              upload=True, overwrite=True)

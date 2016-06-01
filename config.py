@@ -100,7 +100,7 @@ def save(var, typ, subject='fsaverage', analysis='analysis', block=999,
         return False
 
     # different data format depending file type
-    if typ in ['epo_block', 'epochs']:
+    if typ in ['epo_block', 'epochs', 'epochs_decim']:
         var.save(fname)
     elif typ in ['evoked', 'decod', 'score', 'score_tfr']:
         with open(fname, 'wb') as f:
