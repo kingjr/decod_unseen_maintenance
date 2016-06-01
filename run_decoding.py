@@ -37,4 +37,5 @@ for s, subject in enumerate(subjects):  # Loop across each subject
 
         # Save analysis
         save([gat, analysis, sel, events], 'decod',
-             subject=subject, analysis=analysis['name'])
+             subject=subject, analysis=analysis['name'],
+             upload=True, overwrite=True)

@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import make_pipeline
 from sklearn.svm import LinearSVR, SVC
-from jr.gat import (scorer_angle, scorer_auc,
+from jr.gat import (scorer_angle, scorer_auc, force_predict,
                     scorer_spearman, AngularRegression)
 from base import scorer_circlin
 
@@ -15,9 +15,10 @@ def analysis(name, typ, condition=None, query=None, title=None):
     of analyses: e.g. categorical, regression, circular regression."""
     erf_function = None
     if typ == 'categorize':
-        clf = make_pipeline(StandardScaler(),
-                            SVC(kernel='linear', probability=True,
-                                class_weight='balanced', C=1))
+        clf = make_pipeline(
+            StandardScaler(),
+            force_predict(SVC(kernel='linear',  C=1, probability=True,
+                              class_weight='balanced'), axis=1))
         scorer = scorer_auc
         chance = .5
     elif typ == 'regress':
