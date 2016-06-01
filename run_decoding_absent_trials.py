@@ -11,7 +11,7 @@ analysis = [ana for ana in analyses if ana['name'] == 'target_circAngle'][0]
 for s, subject in enumerate(subjects):  # Loop across each subject
     print(subject)
     # load MEG data
-    epochs = load('epochs', subject=subject)
+    epochs = load('epochs', subject=subject, preload=True)
     events = load('behavior', subject=subject)
 
     # Load classifier

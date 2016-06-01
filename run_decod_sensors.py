@@ -9,7 +9,7 @@ from conditions import analyses
 all_scores = list()
 for s, subject in enumerate(subjects):
     # Read data
-    epochs = load('epochs', subject=subject)
+    epochs = load('epochs', subject=subject, preload=True)
     events = load('behavior', subject=subject)
 
     # decode on combination of gradiometers

@@ -6,7 +6,7 @@ from conditions import analyses
 for subject in subjects:
     print('load %s' % subject)
 
-    epochs = load('epochs', subject=subject)
+    epochs = load('epochs', subject=subject, preload=True)
     events = load('behavior', subject=subject)
 
     # Apply each analysis

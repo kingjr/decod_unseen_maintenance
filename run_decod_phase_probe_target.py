@@ -15,7 +15,7 @@ toi = [-.100, .305]
 scores = list()
 for s, subject in enumerate(subjects):  # Loop across each subject
     print(subject)
-    epochs = load('epochs', subject=subject)
+    epochs = load('epochs', subject=subject, preload=True)
     events = load('behavior', subject=subject)
 
     # select trials
