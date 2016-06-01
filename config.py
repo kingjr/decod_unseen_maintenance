@@ -39,6 +39,7 @@ def paths(typ, subject='fsaverage', analysis='analysis', block=999):
         epo_block=op.join(this_path,
                           '%s_%i_filtered-epo.fif' % (subject, block)),
         epochs=op.join(this_path, '%s-epo.fif' % subject),
+        epochs_decim=op.join(this_path, '%s_decim-epo.fif' % subject),
         fwd=op.join(this_path, '%s-fwd.fif' % subject),
         cov=op.join(this_path, '%s-cov.fif' % subject),
         inv=op.join(this_path, '%s-inv.fif' % subject),

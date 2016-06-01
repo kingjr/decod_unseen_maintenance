@@ -5,6 +5,7 @@ from scipy.io import loadmat
 from nose.tools import assert_true
 from mne.io import RawArray
 from mne import Epochs, find_events, create_info, concatenate_epochs
+from mne.filter import low_pass_filter
 from config import paths, load, save
 
 
@@ -108,8 +109,27 @@ def _check_photodiod():
     plt.show()
     print(epochs.times[np.where(data > 1.)[0][1]])
 
+
+def _decimate_epochs(subject, overwrite=True):
+    # check overwrite
+    epo_fname = paths('epochs_decim', subject=subject)
+    if op.exists(epo_fname) and not overwrite:
+        return
+    # load non decimated data
+    epochs = load('epochs', subject=subject)
+    epochs._data = low_pass_filter(epochs._data, epochs.info['sfreq'], 30.,
+                                   n_jobs=-1)
+    epochs.crop(-.200, 1.600)
+    epochs.decimate(10)
+    save(epochs, 'epochs_decim', subject=subject, overwrite=True, upload=True)
+
 for subject in range(1, 21):
+    # high pass filter and epoch
     for block in range(1, 6):
-        _epoch_raw(subject, block, overwrite=True)
-    _concatenate_epochs(subject, overwrite=True)
+        _epoch_raw(subject, block, overwrite=False)
+    # concatenate epochs
+    _concatenate_epochs(subject, overwrite=False)
+    # check that match behavioral file
     _check_epochs(subject)
+    # save decimated copy for ERF analyses
+    _decimate_epochs(subject, overwrite=True)
