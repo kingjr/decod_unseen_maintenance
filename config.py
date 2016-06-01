@@ -78,9 +78,9 @@ def load(typ, subject='fsaverage', analysis='analysis', block=999,
         out = read_events(fname)
     elif typ == 'sss':
         out = Raw(fname, preload=preload)
-    elif typ in ['epo_block', 'epochs']:
+    elif typ in ['epo_block', 'epochs', 'epochs_decim']:
         out = read_epochs(fname, preload=preload)
-    elif typ in ['evoked', 'decod', 'score']:
+    elif typ in ['evoked', 'decod', 'decod_tfr', 'score', 'score_tfr']:
         with open(fname, 'rb') as f:
             out = pickle.load(f)
     else:
@@ -102,7 +102,7 @@ def save(var, typ, subject='fsaverage', analysis='analysis', block=999,
     # different data format depending file type
     if typ in ['epo_block', 'epochs', 'epochs_decim']:
         var.save(fname)
-    elif typ in ['evoked', 'decod', 'score', 'score_tfr']:
+    elif typ in ['evoked', 'decod', 'decod_tfr', 'score', 'score_tfr']:
         with open(fname, 'wb') as f:
             pickle.dump(var, f)
     else:
