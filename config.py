@@ -72,7 +72,7 @@ def paths(typ, subject='fsaverage', analysis='analysis', block=999):
 
 
 def load(typ, subject='fsaverage', analysis='analysis', block=999,
-         download=False, preload=False):
+         download=True, preload=False):
     """Auxiliary saving function."""
     # get file name
     fname = paths(typ, subject=subject, analysis=analysis, block=block)

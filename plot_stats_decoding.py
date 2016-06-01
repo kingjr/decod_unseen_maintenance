@@ -16,17 +16,17 @@ axes_alldiag = gridspec.GridSpec(len(analyses), 1, hspace=0.1)
 table_toi = np.empty((len(analyses), len(tois)), dtype=object)
 table_reversal = np.empty((len(analyses), 2), dtype=object)
 figs = list()
-alpha = 0.01  # statistical threshold
+alpha = 0.01  # statistical threshold for line delimitation
 for ii, (analysis, ax_diag) in enumerate(zip(analyses, axes_alldiag)):
     print analysis['name']
     # Load
-    out = load('score', subject='fsaverage', data_type='erf',
+    out = load('score', subject='fsaverage',
                analysis=('stats_' + analysis['name']))
     scores = np.array(out['scores'])
     p_values = out['p_values']
     p_values_off = out['p_values_off']
     p_values_diag = np.squeeze(out['p_values_diag'])
-    times = out['times'] / 1e3  # FIXME
+    times = out['times']
 
     if 'Angle' in analysis['title']:
         scores /= 2.  # from circle to half circle
@@ -184,15 +184,14 @@ for ii, (analysis, ax_diag) in enumerate(zip(analyses, axes_alldiag)):
     # Load
     if analysis['name'] not in relevant + irrelevant:
         continue
-    out = load('score', subject='fsaverage', data_type='erf',
+    out = load('score', subject='fsaverage',
                analysis=('stats_' + analysis['name']))
     # we'll be looking at the sign of the effect per subjects as compared
     # to chance level
     scores = np.array(out['scores']) - analysis['chance']
     # XXX you need to relaunch one of the analyses that only has 153 and
     # not 154 time points
-    times = out['times'][:153] / 1e3  # FIXME
-    scores = np.array([np.diag(subject[:, :153]) for subject in scores])
+    scores = np.array([np.diag(subject) for subject in scores])
     if analysis['name'] in relevant:
         score_relevant.append(scores)
     elif analysis['name'] in irrelevant:
