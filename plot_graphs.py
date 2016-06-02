@@ -16,7 +16,7 @@ for analysis in analyses:
     out = load('score', analysis='stats_' + analysis['name'])
     scores = np.array(out['scores']) - analysis['chance']
     p_values = out['p_values']
-    times = out['times'] / 1e3  # FIXME
+    times = out['times']
 
     # compute stats
     p_values = stats(scores)
