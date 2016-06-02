@@ -1,8 +1,8 @@
 """Sub analyses related to the decoding of probe and target orientations"""
 import numpy as np
 from jr.stats import circ_tuning, circ_mean, repeated_spearman
-from config import subjects, subscores, tois, load, save
-from conditions import analyses
+from config import subjects, tois, load, save
+from conditions import analyses, subscores
 from base import get_predict, get_predict_error, angle_acc
 analyses = [analysis for analysis in analyses if analysis['name'] in
             ['target_circAngle', 'probe_circAngle']]

@@ -2,6 +2,7 @@
 # Decoding parameters
 import numpy as np
 import matplotlib.pyplot as plt
+from itertools import product
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import make_pipeline
 from sklearn.metrics import roc_auc_score
@@ -68,3 +69,19 @@ analyses = (
 cmap = plt.get_cmap('gist_rainbow')
 for ii in range(len(analyses)):
     analyses[ii]['color'] = np.array(cmap(float(ii) / len(analyses)))
+
+
+# To control for correlation across variables, we'll score the classifiers on a
+# subset of trials.
+subscores = [('seen', 'detect_seen == True'),
+             ('unseen', 'detect_seen == False')]
+for pas in [1., 2., 3.]:
+    subscores.append(('pas%s' % pas,
+                      'detect_button == %s' % pas))
+for contrast in [0., .5, .75, 1.]:
+    subscores.append(('contrast%s' % contrast,
+                      'target_contrast == %s' % contrast)),
+for pas, contrast in product([0., 1., 2., 3.], [.5, .75, 1.]):
+    subscores.append(('pas%s-contrast%s' % (pas, contrast),
+                      'detect_button == %s and target_contrast == %s' % (
+                      pas, contrast)))
