@@ -29,8 +29,14 @@ def _run(epochs, events, analysis):
     print(subject, analysis['name'], 'save')
 
     # save space
-    gat.estimators_ = None
-    if analysis['name'] not in ['target_present', 'target_circAngle']:
+    if analysis['name'] != 'probe_phase':
+        # we'll need the estimator trained on the probe_phase and to generalize
+        # to the target phase and prove that there is a significant signal.
+        gat.estimators_ = None
+    if analysis['name'] not in ['target_present', 'target_circAngle',
+                                'probe_circAngle']:
+        # We need these individual prediction to control for the correlation
+        # between target and probe angle.
         gat.y_pred_ = None
 
     # Save analysis
