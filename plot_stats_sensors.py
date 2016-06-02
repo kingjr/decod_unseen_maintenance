@@ -26,7 +26,7 @@ for analysis, color in zip(analyses, colors):
 
     # Plot topo
     continuous_tois = np.linspace(0, .500, 6)
-    sig = sig[:, np.where((evoked.times > -.100) & (evoked.times <= .600))[0]]
+    sig = sig[:, np.where((evoked.times >= -.100) & (evoked.times <= .600))[0]]
     evoked.crop(-.100, .600)
 
     def topomap_clim(data, factor=10, grad=False, baseline=0.):
@@ -70,7 +70,7 @@ for analysis, color in zip(analyses, colors):
     cax.set_yticks([vmin, vmax])
     cax.set_yticklabels([smin, '', smax])
     cax.set_title('')
-    fig_mag.tight_layout()
+    # fig_mag.tight_layout()
     report.add_figs_to_section(fig_mag, 'topo_mag', analysis['name'])
 
     # Plot butterfly
@@ -79,7 +79,7 @@ for analysis, color in zip(analyses, colors):
     # ax.axvline(800, color='k')
     ax.set_xlim([-100, 600])
     ax.set_xlabel('Times (ms)', labelpad=-15)
-    fig_butt_m.tight_layout()
+    # fig_butt_m.tight_layout()
     report.add_figs_to_section(fig_butt_m, 'butterfly_mag', analysis['name'])
 
     # plot GFP
@@ -88,7 +88,7 @@ for analysis, color in zip(analyses, colors):
     # ax.axvline(800, color='k')
     ax.set_xlim([-100, 600])
     ax.set_xlabel('Times (ms)', labelpad=-15)
-    fig_butt_gfp.tight_layout()
+    # fig_butt_gfp.tight_layout()
     report.add_figs_to_section(fig_butt_gfp, 'butterfly_gfp', analysis['name'])
 
     # Plot topo of mean |effect| on TOI
@@ -101,8 +101,10 @@ for analysis, color in zip(analyses, colors):
                                  cmap='afmhot_r', ch_type='grad', show=False,
                                  vmin=vmin, vmax=vmax, contours=False, scale=1,
                                  colorbar=False, sensors=False, axes=ax)
+    from matplotlib.image import AxesImage
+    objects = axes[-2].get_children()
+    im = objects[np.where([isinstance(ii, AxesImage) for ii in objects])[0][0]]
     pretty_colorbar(cax=fig.add_axes([.91, 0.15, .03, .6]),
-                    im=axes[-2].get_children()[7],
-                    ticklabels=[smin, '', smax])
+                    im=im, ticklabels=[smin, '', smax])
     report.add_figs_to_section(fig, 'topo_mean', analysis['name'])
 report.save()

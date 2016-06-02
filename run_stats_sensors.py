@@ -1,12 +1,11 @@
 """Performs statistics across subjects at the sensor level"""
-import pickle
 import numpy as np
 from jr.stats import robust_mean
 import mne
 from mne.epochs import EpochsArray
 from mne.stats import spatio_temporal_cluster_1samp_test as stats
 from mne.channels import read_ch_connectivity
-from config import paths, subjects
+from config import save, load, subjects
 from conditions import analyses
 
 # Apply contrast on each type of epoch
@@ -16,16 +15,16 @@ for analysis in analyses:
     # Load data across all subjects
     data = list()
     for s, subject in enumerate(subjects):
-        pkl_fname = paths('evoked', subject=subject, analysis=analysis['name'])
-        with open(pkl_fname, 'rb') as f:
-            evoked, sub, _ = pickle.load(f)
+        evoked, sub, _ = load('evoked', subject=subject,
+                              analysis=analysis['name'])
+        evoked.pick_types(meg=True, eeg=False)
         data.append(evoked.data)
 
-    epochs = EpochsArray(np.array(data), evoked.info,
+    data = np.array(data)
+    epochs = EpochsArray(data, evoked.info,
                          events=np.zeros((len(data), 3), dtype=int),
                          tmin=evoked.times[0])
     # combine grad at subject level
-    data = np.array(data)
     grad = mne.pick_types(evoked.info, 'grad')
     if analysis['typ'] == 'categorize':
         data[:, grad, :] -= .5  # AUC center
@@ -54,6 +53,5 @@ for analysis in analyses:
     sig = p_values < .05
 
     # Save contrast
-    pkl_fname = paths('evoked', analysis=('stats_' + analysis['name']))
-    with open(pkl_fname, 'wb') as f:
-        pickle.dump([evoked, data, p_values, sig, analysis], f)
+    save([evoked, data, p_values, sig, analysis],
+         'evoked', analysis=('stats_' + analysis['name']))
