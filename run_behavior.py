@@ -77,7 +77,7 @@ def fill_between_gradient(xx, yy, clim=None, cmap='RdBu_r', alpha=1., ax=None,
 x_vis = np.zeros((len(subjects), len(contrasts), len(visibilities)))
 for (s, subject), (c, contrast), (v, visibility) in product(
         enumerate(subjects), enumerate(contrasts), enumerate(visibilities)):
-    query = 'subject=="%s" and target_contrast==%s and detect_button==%s' % (
+    query = 'subject==%s and target_contrast==%s and detect_button==%s' % (
         subject, contrast, visibility)
     x_vis[s, c, v] = len(data.query(query))
 # normalize per subject per contrast
@@ -106,7 +106,7 @@ print('seen present: %s' % print_stats(np.mean(1. - x_vis[:, 1:, 0], axis=1)))
 x_vis_dprime = np.nan * np.zeros(len(subjects))
 for s, subject in enumerate(subjects):
     def count(pst, seen):
-        query = ('subject=="%s" and target_present==%s and '
+        query = ('subject==%s and target_present==%s and '
                  'detect_seen==%s' % (subject, pst, seen))
         return len(data.query(query))
     hit = count(True, True)
@@ -172,7 +172,7 @@ report.add_figs_to_section(fig, 'visibility 2d', 'visibility')
 # 2.0 Overall discrimination performance
 x = dict(Accuracy=list(), Dprime=list())
 for subject in subjects:
-    query = 'subject=="%s" and target_present==True' % subject
+    query = 'subject==%s and target_present==True' % subject
     x['Accuracy'].append(np.nanmean(data.query(query)['discrim_correct']))
 
     def count(tilt, acc):
@@ -194,7 +194,7 @@ print('Overall discrimination dprime: %s' % print_stats(x['Dprime']))
 x = dict(Accuracy=np.zeros((len(subjects), 4)),
          Dprime=np.zeros((len(subjects), 4)))
 for (s, subject), vis in product(enumerate(subjects), range(4)):
-    query = ('subject=="%s" and target_present==True' % subject +
+    query = ('subject==%s and target_present==True' % subject +
              ' and detect_button==%f' % vis)
     x['Accuracy'][s, vis] = np.nanmean(data.query(query)['discrim_correct'])
 
@@ -219,7 +219,7 @@ x = dict(Accuracy=np.nan * np.zeros((len(subjects), 3, 4)),
 for (s, subject), (c, contrast), (v, visibility) in product(
         enumerate(subjects), enumerate(contrasts[1:]),
         enumerate(visibilities)):
-    query = ('subject=="%s" and target_contrast==%s and detect_button==%s'
+    query = ('subject==%s and target_contrast==%s and detect_button==%s'
              ' and target_present') % (subject, contrast, visibility)
     x['Accuracy'][s, c, v] = np.nanmean(data.query(query)['discrim_correct'])
     count = lambda tilt, acc: len(data.query(
@@ -292,7 +292,7 @@ for metric, ylim, in zip(['Accuracy', 'Dprime'], ((.5, 1.), (0., 3.))):
 # 2.2 discrimination performance of unseen trials
 x = dict(Accuracy=list(), Dprime=list())
 for subject in subjects:
-    query = ('subject=="%s"' % subject + ' and target_present==True and '
+    query = ('subject==%s' % subject + ' and target_present==True and '
              'detect_button==0. and (discrim_button==-1 or discrim_button==1)')
     x['Accuracy'].append(np.nanmean(data.query(query)['discrim_correct']))
 
@@ -315,51 +315,5 @@ print('discrimination of unseen trials (Acc): %s, p=%.5f' % (
     wilcoxon(np.array(x['Accuracy']) - .5)[1]))
 print('discrimination of unseen trials (Dprime): %s, p=%.5f' % (
       print_stats(x['Dprime']), wilcoxon(x['Dprime'])[1]))
-# #############################################################################
-# Effect of previous trial on current visibility
-x = np.zeros((len(subjects), len(contrasts), len(visibilities), 2))
-for (s, subject), (c, contrast), (v, visibility) in product(
-        enumerate(subjects), enumerate(contrasts), enumerate(visibilities)):
-    query = 'subject=="%s" and target_contrast==%s and detect_button==%s' % (
-        subject, contrast, visibility)
-    x[s, c, v, 0] = len(data.query(query + ' and previous_detect_seen==False'))
-    x[s, c, v, 1] = len(data.query(query + ' and previous_detect_seen==True'))
-# normalize per subject per contrast
-for (s, subject), (c, contrast) in product(
-        enumerate(subjects), enumerate(contrasts)):
-    x[s, c, :, 0] /= np.sum(x[s, c, :, 0])
-    x[s, c, :, 1] /= np.sum(x[s, c, :, 1])
-
-
-fig, axes = plt.subplots(2, 1, figsize=[4, 7])
-ax = axes[0]
-plot_sem(np.linspace(0, 1, 4), x[:, :, :, 1].mean(1), color='r', ax=ax)
-plot_sem(np.linspace(0, 1, 4), x[:, :, :, 0].mean(1), color='b', ax=axes[0])
-ax.text(0.05, .35, 'Previously unseen', color='b')
-ax.text(0.05, .12, 'Previously seen', color='r')
-ax = pretty_plot(axes[0])
-ax.set_ylabel('Response %')
-ax.set_ylim(.1, .4)
-ax.set_yticks([.1, .4])
-ax.set_xticks([0, 1])
-
-ax = axes[1]
-contrast = np.squeeze(np.mean(x[:, :, :, 1] - x[:, :, :, 0], axis=1))
-ax.set_ylim([-.15, .15])
-plot_sem(np.linspace(0, 1, 4), contrast, color='k', ax=ax)
-fill_between_gradient(np.hstack((0, np.linspace(0, 1, 4), 1)),
-                      np.hstack((0, contrast.mean(0), 0)),
-                      ax=ax, cmap='seismic', clim=[-.5, 1.5])
-ax = pretty_plot(ax)
-ax.set_xticks([0, 1])
-ylim = ax.get_ylim()
-ax.axhline(0., linestyle='--', color='k')
-ax.set_yticks(ylim)
-ax.set_xlabel('Visibilities')
-ax.set_ylabel('P. Seen - P. Unseen')
-# plt.show()
-report.add_figs_to_section(fig, 'visibility prior', 'prior')
-# #############################################################################
-# Effect of previous trial on current orientation XXX for later
 
 report.save()
