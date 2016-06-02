@@ -5,7 +5,7 @@ optimally predicts the trials' value from a single time slice.
 import numpy as np
 from jr.gat import TimeFrequencyDecoding
 from mne.decoding import TimeDecoding
-from config import subjects, load, save
+from config import subjects, load, save, client, paths
 from conditions import analyses
 
 
@@ -59,4 +59,7 @@ for s, subject in enumerate(subjects):  # Loop across each subject
 
     # Apply to each analysis
     for analysis in analyses:
+        fname = paths('score_tfr', subject=subject, analysis=analysis['name'])
+        if client.metadata(fname)['exist']:
+            continue
         _run(epochs, events, analysis)
