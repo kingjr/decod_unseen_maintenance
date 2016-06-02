@@ -1,7 +1,6 @@
 """This set of analyses are perform to test whether the decoding of the target
 angle after probe onset is bias by and/or solely due to the presence of a probe
 whose orientation is correlated to the target's"""
-import pickle
 import numpy as np
 from jr.stats import circ_tuning
 from config import load, save, subjects
