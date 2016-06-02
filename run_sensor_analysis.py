@@ -1,12 +1,12 @@
 """Performs sensor analysis within each subjects separately"""
-from base import nested_analysis, load, save
-from config import subjects
+from base import nested_analysis
+from config import subjects, load, save
 from conditions import analyses
 
 for subject in subjects:
     print('load %s' % subject)
 
-    epochs = load('epochs', subject=subject, preload=True)
+    epochs = load('epochs_decim', subject=subject, preload=True)
     events = load('behavior', subject=subject)
 
     # Apply each analysis
