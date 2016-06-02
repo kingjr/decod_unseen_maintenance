@@ -16,7 +16,7 @@ axes_alldiag = gridspec.GridSpec(len(analyses), 1, hspace=0.1)
 table_toi = np.empty((len(analyses), len(tois)), dtype=object)
 table_reversal = np.empty((len(analyses), 2), dtype=object)
 figs = list()
-alpha = 0.01  # statistical threshold for line delimitation
+alpha = 0.05  # statistical threshold for line delimitation
 for ii, (analysis, ax_diag) in enumerate(zip(analyses, axes_alldiag)):
     print analysis['name']
     # Load
