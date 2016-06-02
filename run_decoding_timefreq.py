@@ -14,7 +14,7 @@ def _run(epochs, events, analysis):
     # Set time frequency parameters
     start = np.where(epochs.times >= -.200)[0][0]
     stop = np.where(epochs.times >= 1.400)[0][0]
-    frequencies = np.arange(8, 70, 1.)
+    frequencies = np.logspace(np.log10(4), np.log10(80))
     decim = slice(start, stop, 8)  # ~62 Hz after TFR
 
     # Get relevant trials
@@ -40,19 +40,14 @@ def _run(epochs, events, analysis):
     print(subject, analysis['name'], 'score')
     score = tfd.score()
 
-    # save space
-    tfd.td.estimators_ = None
-    if analysis['name'] not in ['target_present', 'target_circAngle']:
-        tfd.td.y_pred_ = None
-
     # Save analysis
     print(subject, analysis['name'], 'save')
-    save([tfd, analysis, sel, events], 'decod_tfr',
-         subject=subject, analysis=analysis['name'],
-         upload=True, overwrite=True)
+    if analysis['name'] not in ['target_present', 'target_circAngle']:
+        save([tfd.td.y_pred_, sel, events, epochs.times[decim], frequencies],
+             'decod_tfr',
+             subject=subject, analysis=analysis['name'], overwrite=True)
     save([score, epochs.times[decim], frequencies], 'score_tfr',
-         subject=subject, analysis=analysis['name'],
-         upload=True, overwrite=True)
+         subject=subject, analysis=analysis['name'], overwrite=True)
 
 for s, subject in enumerate(subjects):  # Loop across each subject
     print(subject)

@@ -32,14 +32,12 @@ def _run(epochs, events, analysis):
     gat.estimators_ = None
     if analysis['name'] not in ['target_present', 'target_circAngle']:
         gat.y_pred_ = None
-    
+
     # Save analysis
     save([gat, analysis, sel, events], 'decod',
-         subject=subject, analysis=analysis['name'],
-         upload=True, overwrite=True)
+         subject=subject, analysis=analysis['name'], overwrite=True)
     save([score, epochs.times], 'score',
-         subject=subject, analysis=analysis['name'],
-         upload=True, overwrite=True)
+         subject=subject, analysis=analysis['name'], overwrite=True)
     return
 
 
