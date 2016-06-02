@@ -14,7 +14,7 @@ def _run(epochs, events, analysis):
     # Set time frequency parameters
     start = np.where(epochs.times >= -.200)[0][0]
     stop = np.where(epochs.times >= 1.400)[0][0]
-    frequencies = np.logspace(np.log10(4), np.log10(80))
+    frequencies = np.logspace(np.log10(4), np.log10(80), 25)
     decim = slice(start, stop, 8)  # ~62 Hz after TFR
 
     # Get relevant trials
