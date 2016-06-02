@@ -37,6 +37,8 @@ def _run(epochs, events, analysis):
         tfr_kwargs=dict(n_cycles=5, decim=decim))
     print(subject, analysis['name'], 'fit')
     tfd.fit(epochs[sel], y=y[sel])
+    tfd.n_jobs = 1  # FIXME joblib else error with too many jobs?!
+    tfd.td.n_jobs = 1
     print(subject, analysis['name'], 'score')
     score = tfd.score()
 
@@ -52,9 +54,7 @@ def _run(epochs, events, analysis):
 for s, subject in enumerate(subjects):  # Loop across each subject
     print(subject)
 
-    epochs = load('epochs', subject=subject, preload=True)
-    epochs.decimate(2)  # 500 Hz is enough
-    epochs.pick_types(meg=True, eeg=False, stim=False, eog=False, ecg=False)
+    epochs = load('epochs', subject=subject, preload=False)
     events = load('behavior', subject=subject)
 
     # Apply to each analysis
@@ -62,4 +62,10 @@ for s, subject in enumerate(subjects):  # Loop across each subject
         fname = paths('score_tfr', subject=subject, analysis=analysis['name'])
         if client.metadata(fname)['exist']:
             continue
+        if not epochs.preload:
+            epochs._data = epochs.get_data()
+            epochs.preload = True
+            epochs.decimate(2)  # 500 Hz is enough
+            epochs.pick_types(meg=True, eeg=False, stim=False,
+                              eog=False, ecg=False)
         _run(epochs, events, analysis)
