@@ -1,14 +1,17 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap
+import matplotlib.gridspec as gridspec
+
 from jr.plot import pretty_plot, pretty_colorbar
 from base import stats
 from conditions import analyses
 from config import load, subjects, report
 
-fig, axes = plt.subplots(5, 2, figsize=[8, 15])
-axes = axes.ravel()
-for analysis, ax in zip(analyses, axes):
+fig = plt.figure(figsize=[18, 5])
+axes = gridspec.GridSpec(2, 5, left=0.05, right=.95, hspace=0.35, wspace=.25)
+for ii, (analysis, ax) in enumerate(zip(analyses, axes)):
+    ax = fig.add_subplot(ax)
     scores = list()
     for subject in subjects:
         score, times, freqs = load('score_tfr', subject=subject,
@@ -36,21 +39,24 @@ for analysis, ax in zip(analyses, axes):
 
     # pretty plot
     pretty_plot(ax)
-    ticks = []
-    for ii in np.arange(10, 71, 10):
-        ticks.append(np.where(np.round(freqs) >= ii)[0][0])
+    ticks = [0]
+    for freq in np.arange(10, 71, 10):
+        ticks.append(np.where(np.round(freqs) >= freq)[0][0])
+    ticks.append(len(freqs))
     ax.set_yticks(ticks)
     ax.set_yticklabels([])
-    if ax in axes[::2]:
-        ax.set_yticklabels([10, '', 30, '', '', '', 70])
-    ax.set_xticks([0., .800])
-    ax.set_xticklabels(['', ''])
-    if ax in axes[-2:]:
-        ax.set_xticklabels([0., .800])
+    if ii in [0, (len(analyses)//2)]:
+        ax.set_yticklabels([freqs[0], 10, '', 30, '', '', '', '', freqs[-1]])
+    xticks = np.arange(-.200, 1.301, .100)
+    ax.set_xticks(xticks)
+    ax.set_xticklabels([])
+    if ii >= (len(analyses)//2):
+        ax.set_xticklabels([int(tim * 1e3) if tim in [.0, .800] else ''
+                            for tim in xticks])
     ax.axvline([0.], color='k')
     ax.axvline([.800], color='k')
     ax.set_title(analysis['title'])
     pretty_colorbar(im, ax=ax, ticks=[analysis['chance'], np.max(scores)])
 
-fig.tight_layout()
 report.add_figs_to_section([fig], ['all freqs'], 'all')
+report.save()
