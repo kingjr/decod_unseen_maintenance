@@ -46,7 +46,8 @@ for ii, (analysis, ax) in enumerate(zip(analyses, axes)):
     ax.set_yticks(ticks)
     ax.set_yticklabels([])
     if ii in [0, (len(analyses)//2)]:
-        ax.set_yticklabels([freqs[0], 10, '', 30, '', '', '', '', freqs[-1]])
+        ax.set_yticklabels([int(freqs[0]), 10, '', 30, '',
+                            '', '', '', int(freqs[-1])])
     xticks = np.arange(-.200, 1.301, .100)
     ax.set_xticks(xticks)
     ax.set_xticklabels([])
