@@ -29,7 +29,7 @@ def _run(epochs, events, analysis):
     print(subject, analysis['name'], 'save')
 
     # save space
-    if analysis['name'] != 'probe_phase':
+    if analysis['name'] not in ['probe_phase', 'target_circAngle']:
         # we'll need the estimator trained on the probe_phase and to generalize
         # to the target phase and prove that there is a significant signal.
         gat.estimators_ = None
@@ -41,9 +41,11 @@ def _run(epochs, events, analysis):
 
     # Save analysis
     save([gat, analysis, sel, events], 'decod',
-         subject=subject, analysis=analysis['name'], overwrite=True)
+         subject=subject, analysis=analysis['name'], overwrite=True,
+         upload=True)
     save([score, epochs.times], 'score',
-         subject=subject, analysis=analysis['name'], overwrite=True)
+         subject=subject, analysis=analysis['name'], overwrite=True,
+         upload=True)
     return
 
 
