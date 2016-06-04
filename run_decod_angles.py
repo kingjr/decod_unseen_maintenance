@@ -142,4 +142,5 @@ for analysis in ['target_circAngle', 'probe_circAngle']:
     # Save results
     results['times'] = times
     results['bins'] = bins
-    save(results, 'score', subject='fsaverage', analysis=analysis + '-tuning')
+    save(results, 'score', subject='fsaverage', analysis=analysis + '-tuning',
+         overwrite=True, upload=True)

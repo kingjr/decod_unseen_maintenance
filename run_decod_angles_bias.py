@@ -3,17 +3,18 @@ angle after probe onset is bias by and/or solely due to the presence of a probe
 whose orientation is correlated to the target's"""
 import numpy as np
 from jr.stats import circ_tuning
-from config import load, save, subjects
-from base import stats, get_predict_error, angle_acc, angle_bias, tois
+from config import load, save, subjects, tois
+from base import stats, get_predict_error, angle_acc, angle_bias
 
 n_bins = 24
 toi_probe = tois[-1]
 
+n_time = 151  # XXX should be identified automatically
 # initialize results
-results = dict(accuracy=np.nan*np.zeros((20, 2, 2, 154, 154)),
-               bias=np.nan*np.zeros((20, 2, 2, 154, 154)),
+results = dict(accuracy=np.nan*np.zeros((20, 2, 2, n_time, n_time)),
+               bias=np.nan*np.zeros((20, 2, 2, n_time, n_time)),
                bias_toi=np.nan*np.zeros((20, 2, 2, len(tois))),
-               bias_vis=np.nan*np.zeros((20, 2, 2, 4, 154, 154)),
+               bias_vis=np.nan*np.zeros((20, 2, 2, 4, n_time, n_time)),
                bias_vis_toi=np.nan*np.zeros((20, 2, 2, 4, len(tois))),
                tuning=np.nan*np.zeros((20, 2, 2, n_bins, 3)))
 
@@ -91,7 +92,7 @@ for ii, train_analysis in enumerate(['target_circAngle', 'probe_circAngle']):
                     sel = np.where(np.isnan(subevents.probe_tilt))[0]
                 else:
                     sel = np.where(subevents.probe_tilt == probe_tilt)[0]
-                if len(sel) == 0:
+                if len(sel) == 0 or np.isnan(y_true[sel]).any():
                     tuning.append(np.nan * np.zeros(n_bins))
                     continue
                 y_error = get_predict_error(gat, toi=toi_probe, sel=sel,
@@ -109,7 +110,7 @@ for ii in range(2):
         results['bias_pval'][ii, jj, :, :] = stats(scores)
 
 # for accuracy (absolute values)
-results['target_probe_pval'] = np.zeros((154, 154, 2, 2))
+results['target_probe_pval'] = np.zeros((n_time, n_time, 2, 2))
 for ii in range(2):
     for jj in range(2):
         results['target_probe_pval'][:, :, ii, jj] = stats(
@@ -117,7 +118,7 @@ for ii in range(2):
 
 # load absent target prediction to perform the control analysis of virtual
 # biases
-results['target_absent'] = np.zeros((20, 154, 153))
+results['target_absent'] = np.zeros((20, n_time, n_time))
 results['target_absent_bias_toi'] = np.zeros((20, len(tois)))
 for s, subject in enumerate(subjects):  # Loop across each subject
     print(subject)
@@ -141,4 +142,4 @@ results['target_absent_pval'] = stats(results['target_absent'])
 results['times'] = gat.train_times_['times']
 results['bins'] = bins
 results['tois'] = tois
-save(results, 'score', subject='fsaverage', analysis='target_probe')
+save(results, 'score', analysis='target_probe', overwrite=True, upload=True)
