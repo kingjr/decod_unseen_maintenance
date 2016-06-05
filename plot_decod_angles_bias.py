@@ -68,7 +68,7 @@ report.add_figs_to_section(fig, 'diagonal', 'bias')
 
 def quick_stats(x, ax=None):
     """Test significant bias in each toi for unseen and seen"""
-    pvals = [wilcoxon(ii[~np.isnan(ii)])[1] for ii in x.T]
+    pvals = [wilcoxon(ii)[1] for ii in x.T]
     sig = [['', '*'][p < .05] for p in pvals]
     m = np.nanmean(x, axis=0)
     s = np.nanstd(x, axis=0)
