@@ -9,7 +9,7 @@ from config import subjects, tois, load, save
 from base import stats
 
 # Gather data
-n_times = 154  # XXX the number of time samples in an epoch should be automatic
+n_times = 151  # XXX the number of time samples in an epoch should be automatic
 contrast_list = [.5, .75, 1.]
 pas_list = np.arange(4.)
 
@@ -28,6 +28,7 @@ for s, subject in enumerate(subjects):
     # Load data
     gat, _, events_sel, events = load('decod', subject=subject,
                                       analysis='target_present')
+    gat.score_mode = 'mean-sample-wise'
     times = gat.train_times_['times']
     # get single trial prediction: n_trials x nTrainTime x nTestTime
     y_pred = np.transpose(np.squeeze(gat.y_pred_), [2, 0, 1])
@@ -75,7 +76,7 @@ for s, subject in enumerate(subjects):
     # versus absent target (all vis)
     for ii, pas in enumerate(pas_list):
         key = 'detect_button == %s or target_present == False' % pas
-        subsel = subevents.query(key).index
+        subsel = np.array(subevents.query(key).index)
         if len(subsel) == 0:
             continue
         score = subscore(gat, subsel)
