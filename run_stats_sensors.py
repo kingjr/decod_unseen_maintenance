@@ -54,4 +54,5 @@ for analysis in analyses:
 
     # Save contrast
     save([evoked, data, p_values, sig, analysis],
-         'evoked', analysis=('stats_' + analysis['name']))
+         'evoked', analysis=('stats_' + analysis['name']),
+         overwrite=True)

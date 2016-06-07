@@ -10,7 +10,6 @@ colors = cmap(np.linspace(0, 1., len(analyses) + 1))
 tois = [(-.100, 0.050), (.100, .250), (.300, .800), (.900, 1.050)]
 
 analyses = list(analyses)
-analyses.append(dict(name='angle_bias', title='Angle Bias'))
 colors = np.vstack((colors, [0., 0., 0., 0.]))
 
 # Apply contrast on each type of epoch
