@@ -21,11 +21,11 @@ for subject in subjects:
             function=analysis.get('erf_function', None),
             query=analysis.get('query', None),
             single_trial=analysis.get('single_trial', False),
-            y=analysis.get('y', None))
+            y=analysis.get('y', None), n_jobs=-1)
 
         evoked = epochs.average()
         evoked.data = coef
 
         # Save all_evokeds
         save([evoked, sub, analysis], 'evoked', subject=subject,
-             analysis=analysis['name'])
+             analysis=analysis['name'], overwrite=True)
