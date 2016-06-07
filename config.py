@@ -1,3 +1,4 @@
+import numpy as np
 import pickle
 import os
 import os.path as op
@@ -38,6 +39,8 @@ missing_mri = [
 def paths(typ, subject='fsaverage', analysis='analysis', block=999):
     subject = 's%i' % subject if isinstance(subject, int) else subject
     this_path = op.join(data_path, subject, typ)
+    if typ in ['fwd', 'inv', 'cov', 'morph', 'trans', 'stc']:
+        this_path = op.join(data_path, subject, 'source')
     path_template = dict(
         base_path=base_path,
         data_path=data_path,
@@ -48,19 +51,22 @@ def paths(typ, subject='fsaverage', analysis='analysis', block=999):
                           '%s_%i_filtered-epo.fif' % (subject, block)),
         epochs=op.join(this_path, '%s-epo.fif' % subject),
         epochs_decim=op.join(this_path, '%s_decim-epo.fif' % subject),
+        epochs_vhp=op.join(this_path, '%s_vhp-epo.fif' % subject),
+        trans=op.join(this_path, '%s-trans.fif' % subject),
         fwd=op.join(this_path, '%s-fwd.fif' % subject),
         cov=op.join(this_path, '%s-cov.fif' % subject),
         inv=op.join(this_path, '%s-inv.fif' % subject),
+        morph=op.join(this_path, '%s-morph.pickle' % subject),
         # XXX FIXME no pickle!
         evoked=op.join(this_path, '%s_%s.pickle' % (subject, analysis)),
+        evoked_source=op.join(this_path, '%s_%s.pickle' % (subject, analysis)),
         decod=op.join(this_path, '%s_%s.pickle' % (subject, analysis)),
         decod_tfr=op.join(this_path, '%s_%s_tfr.pickle' % (subject, analysis)),
         score=op.join(this_path, '%s_%s_scores.pickle' % (subject, analysis)),
         score_tfr=op.join(this_path,
                           '%s_%s_tfr_scores.pickle' % (subject, analysis)),
         freesurfer=op.join('data/'.join(data_path.split('data/')[:-1]),
-                           'subjects'),
-        covariance=op.join(this_path, '%s-meg-cov.fif' % (subject)))
+                           'subjects'))
     this_file = path_template[typ]
 
     # Create subfolder if necessary
@@ -87,11 +93,24 @@ def load(typ, subject='fsaverage', analysis='analysis', block=999,
         out = read_events(fname)
     elif typ == 'sss':
         out = Raw(fname, preload=preload)
-    elif typ in ['epo_block', 'epochs', 'epochs_decim']:
+    elif typ in ['epo_block', 'epochs', 'epochs_decim', 'epochs_vhp']:
         out = read_epochs(fname, preload=preload)
-    elif typ in ['evoked', 'decod', 'decod_tfr', 'score', 'score_tfr']:
+    elif typ in ['cov']:
+        from mne.cov import read_cov
+        out = read_cov(fname)
+    elif typ in ['fwd']:
+        from mne import read_forward_solution
+        out = read_forward_solution(fname, surf_ori=True)
+    elif typ in ['inv']:
+        from mne.minimum_norm import read_inverse_operator
+        out = read_inverse_operator(fname)
+    elif typ in ['evoked', 'decod', 'decod_tfr', 'score', 'score_tfr',
+                 'evoked_source']:
         with open(fname, 'rb') as f:
             out = pickle.load(f)
+    elif typ == 'morph':
+        from sklearn.externals import joblib
+        out = joblib.load(fname)
     else:
         raise NotImplementedError()
     return out
@@ -109,11 +128,21 @@ def save(var, typ, subject='fsaverage', analysis='analysis', block=999,
         return False
 
     # different data format depending file type
-    if typ in ['epo_block', 'epochs', 'epochs_decim']:
+    if typ in ['epo_block', 'epochs', 'epochs_decim', 'cov', 'epochs_vhp']:
         var.save(fname)
-    elif typ in ['evoked', 'decod', 'decod_tfr', 'score', 'score_tfr']:
+    elif typ in ['evoked', 'decod', 'decod_tfr', 'score', 'score_tfr',
+                 'evoked_source']:
         with open(fname, 'wb') as f:
             pickle.dump(var, f)
+    elif typ in ['inv']:
+        from mne.minimum_norm import write_inverse_operator
+        write_inverse_operator(fname, var)
+    elif typ in ['fwd']:
+        from mne import write_forward_solution
+        write_forward_solution(fname, var)
+    elif typ == 'morph':
+        from sklearn.externals import joblib
+        joblib.dump(fname, var)
     else:
         raise NotImplementedError()
     if upload:
