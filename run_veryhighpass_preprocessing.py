@@ -172,8 +172,6 @@ for analysis in analyses:
     out = _stats(analysis)
     scores = out['scores']
     times = out['times']
-    plt.matshow(np.mean(scores, axis=0))
-
     alpha = .05
     chance = analysis['chance']
     p_values = stats(scores - chance)
