@@ -44,7 +44,7 @@ def analysis(name, typ, condition=None, query=None, title=None):
         condition = name
     return dict(name=name, condition=condition, query=query, clf=clf,
                 scorer=scorer, chance=chance, erf_function=erf_function,
-                cv=8, typ=typ, title=title)
+                cv=8, typ=typ, title=title, single_trial=True)
 
 
 # For each analysis we need to specifically analyze a subset of trials to avoid
