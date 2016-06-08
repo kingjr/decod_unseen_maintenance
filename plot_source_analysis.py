@@ -2,7 +2,7 @@ import os
 import numpy as np
 from mne import morph_data_precomputed
 from conditions import analyses
-from config import load, bad_mri, subjects_id, report
+from config import load, bad_mri, subjects_id, report, paths
 report._setup_provenance()
 sel_analyses = ['target_present', 'target_circAngle', 'probe_circAngle']
 analyses = [ana for ana in analyses if ana['name'] in sel_analyses]
@@ -52,4 +52,17 @@ for analysis in analyses:
         brain.save_image(os.path.join(image_path, fname))
         print(t)
     brain.close()
+
+for meg_subject, subject in zip(range(1, 21), subjects_id):
+    if subject in bad_mri:
+        continue
+    stc, _, _ = load('evoked_source', subject=meg_subject,
+                     analysis='target_present')
+    brain = stc.plot(hemi='split', subject=subject, views=['lat', 'med'],
+                     subjects_dir=paths('freesurfer'))
+    brain.set_time(180)
+    image_path = os.path.join(report.report.data_path)
+    brain.save_image(os.path.join(image_path, subject + '.png'))
+    brain.close()
+
 # report.save()

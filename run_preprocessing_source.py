@@ -92,16 +92,20 @@ def _copy_from_fsaverage(subject, subjects_dir, overwrite=False):
                         '%s-5120-bem.fif' % subject)
     if overwrite or not os.path.exists(f_to):
         copyfile(f_from, f_to)
-    surf_files = ['surf/lh.white', 'surf/rh.white',
-                  'surf/lh.sphere', 'surf/rh.sphere',
-                  'surf/lh.sphere.reg', 'surf/rh.sphere.reg']
+    surf_files = [
+        # required for source space
+        'surf/lh.white', 'surf/rh.white', 'surf/lh.sphere', 'surf/rh.sphere',
+        # required for morph
+        'surf/lh.sphere.reg', 'surf/rh.sphere.reg',
+        # required for plotting
+        'surf/lh.inflated', 'surf/rh.inflated', 'surf/lh.curv', 'surf/rh.curv']
     for fname in surf_files:
         f_from = os.path.join(subjects_dir, 'fsaverage', fname)
         f_to = os.path.join(subjects_dir, subject, fname)
         if overwrite or not(os.path.exists(f_to)):
             copyfile(f_from, f_to)
 
-if False:
+if True:
     # coregistration and source space for missing mri
     from shutil import copyfile
     anatomy_pipeline(subject='fsaverage', subjects_dir=subjects_dir,
