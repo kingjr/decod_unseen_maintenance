@@ -34,6 +34,8 @@ subjects_id = [
     'tc120199', 'ts130283', 'yp130276', 'av130322', 'ps120458']
 missing_mri = [
     'gm130176',  'ia130315', 'jm120476', 'mc130295', 'ts130283', 'yp130276']
+bad_mri = ['av130322'],  # missing temporal cortex
+bad_watershed = ['jd110235', 'oa130317']
 
 
 def paths(typ, subject='fsaverage', analysis='analysis', block=999):
@@ -56,7 +58,7 @@ def paths(typ, subject='fsaverage', analysis='analysis', block=999):
         fwd=op.join(this_path, '%s-fwd.fif' % subject),
         cov=op.join(this_path, '%s-cov.fif' % subject),
         inv=op.join(this_path, '%s-inv.fif' % subject),
-        morph=op.join(this_path, '%s-morph.pickle' % subject),
+        morph=op.join(this_path, '%s-morph.npz' % subject),
         # XXX FIXME no pickle!
         evoked=op.join(this_path, '%s_%s.pickle' % (subject, analysis)),
         evoked_source=op.join(this_path, '%s_%s.pickle' % (subject, analysis)),
@@ -109,8 +111,10 @@ def load(typ, subject='fsaverage', analysis='analysis', block=999,
         with open(fname, 'rb') as f:
             out = pickle.load(f)
     elif typ == 'morph':
-        from sklearn.externals import joblib
-        out = joblib.load(fname)
+        from scipy.sparse import csr_matrix
+        loader = np.load(fname)
+        out = csr_matrix((loader['data'], loader['indices'], loader['indptr']),
+                         shape=loader['shape'])
     else:
         raise NotImplementedError()
     return out
@@ -141,8 +145,8 @@ def save(var, typ, subject='fsaverage', analysis='analysis', block=999,
         from mne import write_forward_solution
         write_forward_solution(fname, var)
     elif typ == 'morph':
-        from sklearn.externals import joblib
-        joblib.dump(fname, var)
+        np.savez(fname, data=var.data, indices=var.indices,
+                 indptr=var.indptr, shape=var.shape)
     else:
         raise NotImplementedError()
     if upload:

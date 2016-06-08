@@ -2,7 +2,7 @@ import numpy as np
 from mne.minimum_norm import apply_inverse, apply_inverse_epochs
 
 from conditions import analyses
-from config import load, save, missing_mri, subjects_id
+from config import load, save, bad_mri, subjects_id
 from base import nested_analysis
 
 sel_analyses = ['target_circAngle', 'target_present', 'probe_circAngle']
@@ -15,7 +15,7 @@ inv_params = dict(lambda2=1.0 / (2 ** 3.0),
                   verbose=False)
 
 for meg_subject, subject in zip(range(1, 21), subjects_id):
-    if subject in missing_mri:
+    if subject in bad_mri:
         continue
     epochs = load('epochs_decim', subject=meg_subject, preload=True)
     events = load('behavior', subject=meg_subject)

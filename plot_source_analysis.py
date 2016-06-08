@@ -1,8 +1,8 @@
 import os
 import numpy as np
-from mne import compute_morph_matrix, morph_data_precomputed
+from mne import morph_data_precomputed
 from conditions import analyses
-from config import load, missing_mri, subjects_id, paths, report
+from config import load, bad_mri, subjects_id, report
 report._setup_provenance()
 sel_analyses = ['target_present', 'target_circAngle', 'probe_circAngle']
 analyses = [ana for ana in analyses if ana['name'] in sel_analyses]
@@ -11,17 +11,12 @@ morphs = dict()
 for analysis in analyses:
     stcs = list()
     for meg_subject, subject in zip(range(1, 21), subjects_id):
-        if subject in missing_mri:
+        if subject in bad_mri:
             continue
         stc, _, _ = load('evoked_source', subject=meg_subject,
                          analysis=analysis['name'])
-        # compute morph matrix
-        if subject not in morphs:
-            vertices_to = [np.arange(10242)] * 2
-            morphs[subject] = compute_morph_matrix(
-                subject, 'fsaverage', stc.vertices,
-                vertices_to=vertices_to,
-                subjects_dir=paths('freesurfer'))
+        morphs[subject] = load('morph', subject=meg_subject)
+        vertices_to = [np.arange(10242)] * 2
 
         # apply morph
         stc_morph = morph_data_precomputed(subject, 'fsaverage', stc,
