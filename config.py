@@ -27,15 +27,14 @@ print base_path
 
 subjects = range(1, 21)
 
-subjects_id = [
-    'ak130184', 'el130086', 'ga130053', 'gm130176', 'hn120493',
-    'ia130315', 'jd110235', 'jm120476', 'ma130185', 'mc130295',
-    'mj130216', 'mr080072', 'oa130317', 'rg110386', 'sb120316',
-    'tc120199', 'ts130283', 'yp130276', 'av130322', 'ps120458']
-missing_mri = [
-    'gm130176',  'ia130315', 'jm120476', 'mc130295', 'ts130283', 'yp130276']
-bad_mri = ['av130322'],  # missing temporal cortex
+subjects_id = ['ak130184', 'el130086', 'ga130053', 'gm130176', 'hn120493',
+               'ia130315', 'jd110235', 'jm120476', 'ma130185', 'mc130295',
+               'mj130216', 'mr080072', 'oa130317', 'rg110386', 'sb120316',
+               'tc120199', 'ts130283', 'yp130276', 'av130322', 'ps120458']
+missing_mri = ['gm130176',  'ia130315', 'jm120476', 'mc130295', 'ts130283',
+               'yp130276']
 bad_watershed = ['jd110235', 'oa130317']
+bad_mri = ['av130322']  # missing temporal cortex!
 
 
 def paths(typ, subject='fsaverage', analysis='analysis', block=999):
@@ -67,6 +66,10 @@ def paths(typ, subject='fsaverage', analysis='analysis', block=999):
         score=op.join(this_path, '%s_%s_scores.pickle' % (subject, analysis)),
         score_tfr=op.join(this_path,
                           '%s_%s_tfr_scores.pickle' % (subject, analysis)),
+        score_source=op.join(
+            this_path, '%s_%s_scores.npy' % (subject, analysis)),
+        score_pval=op.join(
+            this_path, '%s_%s_pval.npy' % (subject, analysis)),
         freesurfer=op.join('data/'.join(data_path.split('data/')[:-1]),
                            'subjects'))
     this_file = path_template[typ]
@@ -115,6 +118,8 @@ def load(typ, subject='fsaverage', analysis='analysis', block=999,
         loader = np.load(fname)
         out = csr_matrix((loader['data'], loader['indices'], loader['indptr']),
                          shape=loader['shape'])
+    elif typ in ['score_source', 'score_pval']:
+        out = np.load(fname)
     else:
         raise NotImplementedError()
     return out
@@ -147,6 +152,8 @@ def save(var, typ, subject='fsaverage', analysis='analysis', block=999,
     elif typ == 'morph':
         np.savez(fname, data=var.data, indices=var.indices,
                  indptr=var.indptr, shape=var.shape)
+    elif typ in ['score_source', 'score_pval']:
+        np.save(fname, var)
     else:
         raise NotImplementedError()
     if upload:
@@ -154,4 +161,4 @@ def save(var, typ, subject='fsaverage', analysis='analysis', block=999,
     return True
 
 # Analysis Parameters
-tois = [(-.100, 0.050), (.100, .250), (.300, .800), (.900, 1.050)]
+tois = np.array([[-.100, 0.050], [.100, .250], [.300, .800], [.900, 1.050]])

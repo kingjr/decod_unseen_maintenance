@@ -72,6 +72,7 @@ if False:
         if subject == 'ps120458':
             raw_fname.split('1-sss.fif')[0] + '2-sss.fif'
         # Manual coregistration
+        print(subject, meg_subject)
         coregistration(subject=subject, subjects_dir=subjects_dir,
                        inst=raw_fname)
         # Plot
@@ -105,7 +106,7 @@ def _copy_from_fsaverage(subject, subjects_dir, overwrite=False):
         if overwrite or not(os.path.exists(f_to)):
             copyfile(f_from, f_to)
 
-if True:
+if False:
     # coregistration and source space for missing mri
     from shutil import copyfile
     anatomy_pipeline(subject='fsaverage', subjects_dir=subjects_dir,
@@ -154,7 +155,7 @@ if False:
         forward_pipeline(raw_fname, fwd_fname=fwd_fname,
                          trans_fname=trans_fname,
                          subject=subject, subjects_dir=subjects_dir,
-                         overwrite=False)
+                         overwrite=True)
 
 # Covariance -----------------------------------------------------------------
 from mne.cov import compute_covariance

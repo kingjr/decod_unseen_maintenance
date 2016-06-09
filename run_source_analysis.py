@@ -5,9 +5,6 @@ from conditions import analyses
 from config import load, save, bad_mri, subjects_id
 from base import nested_analysis
 
-sel_analyses = ['target_circAngle', 'target_present', 'probe_circAngle']
-analyses = [ana for ana in analyses if ana['name'] in sel_analyses]
-
 # params
 inv_params = dict(lambda2=1.0 / (2 ** 3.0),
                   method='dSPM',
