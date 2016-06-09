@@ -16,13 +16,13 @@ def stat_fun(x, sigma=0, method='relative'):
     return t_values
 
 
-def stats(X, connectivity=None):
+def stats(X, connectivity=None, n_jobs=-1):
     """Use systematically the same stat with multiple comparison correction."""
     X = np.array(X)
     X = X[:, :, None] if X.ndim == 2 else X
     T_obs_, clusters, p_values, _ = spatio_temporal_cluster_1samp_test(
         X, out_type='mask', stat_fun=stat_fun, n_permutations=2**12,
-        n_jobs=-1, connectivity=connectivity)
+        n_jobs=n_jobs, connectivity=connectivity)
     p_values_ = np.ones_like(X[0]).T
     for cluster, pval in zip(clusters, p_values):
         p_values_[cluster.T] = pval
