@@ -6,11 +6,19 @@ from itertools import product
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import make_pipeline
 from sklearn.metrics import roc_auc_score
-from sklearn.svm import LinearSVR
-from sklearn.linear_model import LogisticRegression
-from jr.gat import (scorer_angle, force_predict,
-                    scorer_spearman, AngularRegression)
+from sklearn.linear_model import LogisticRegression, Ridge
+from jr.gat import force_predict, scorer_spearman, PolarRegression
+from jr.gat import scorer_angle as _scorer_angle
 from base import scorer_circlin
+
+
+def scorer_angle(y_true, y_pred):
+    """We are keeping the predicted radius for TOI averaging purposes.
+    However we will not need it for most scorers."""
+    y_pred = np.array(y_pred)
+    if y_pred.ndim == 1:
+        y_pred = y_pred[:, np.newaxis]
+    return _scorer_angle(y_true, y_pred[:, 0])
 
 
 def scorer_auc(y_true, y_pred):
@@ -31,12 +39,11 @@ def analysis(name, typ, condition=None, query=None, title=None):
         scorer = scorer_auc
         chance = .5
     elif typ == 'regress':
-        clf = make_pipeline(StandardScaler(), LinearSVR(C=1))
+        clf = make_pipeline(StandardScaler(), Ridge())
         scorer = scorer_spearman
         chance = 0.
     elif typ == 'circ_regress':
-        clf = make_pipeline(StandardScaler(),
-                            AngularRegression(LinearSVR(C=1)))
+        clf = make_pipeline(StandardScaler(), PolarRegression(Ridge()))
         scorer = scorer_angle
         chance = 0.
         erf_function = scorer_circlin
