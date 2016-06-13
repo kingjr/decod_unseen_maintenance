@@ -62,7 +62,7 @@ for ii, train_analysis in enumerate(['target_circAngle', 'probe_circAngle']):
             sel = np.where(~np.isnan(subevents['target_circAngle']))[0]
             for t, toi in enumerate(tois):
                 y_error_toi = get_predict_error(gat, y_true=y_true[sel],
-                                                sel=sel, toi=toi,
+                                                sel=sel, toi=toi, mean=True,
                                                 typ='diagonal')
                 # same but after averaging predicted angle across time
                 results['bias_toi'][s, ii, jj, t] = angle_bias(
@@ -80,6 +80,7 @@ for ii, train_analysis in enumerate(['target_circAngle', 'probe_circAngle']):
                 for t, toi in enumerate(tois):
                     y_error_toi = get_predict_error(gat, y_true=y_true[sel],
                                                     sel=sel, toi=toi,
+                                                    mean=True,
                                                     typ='diagonal')
                     # same but after averaging predicted angle across time
                     results['bias_vis_toi'][s, ii, jj, pas, t] = angle_bias(
@@ -96,7 +97,7 @@ for ii, train_analysis in enumerate(['target_circAngle', 'probe_circAngle']):
                     tuning.append(np.nan * np.zeros(n_bins))
                     continue
                 y_error = get_predict_error(gat, toi=toi_probe, sel=sel,
-                                            y_true=y_true[sel])
+                                            mean=True, y_true=y_true[sel])
                 probas, bins = circ_tuning(y_error, n=n_bins)
                 tuning.append(probas)
             results['tuning'][s, ii, jj, :, :] = np.transpose(tuning)
@@ -132,7 +133,7 @@ for s, subject in enumerate(subjects):  # Loop across each subject
     y_true = subevents['probe_circAngle']
     for t, toi in enumerate(tois):
         y_error_toi = get_predict_error(gat, y_true=y_true, toi=toi,
-                                        typ='diagonal')
+                                        typ='diagonal', mean=True)
         # same but after averaging predicted angle across time
         results['target_absent_bias_toi'][s, t] = angle_bias(
             np.squeeze(y_error_toi), y_tilt)
