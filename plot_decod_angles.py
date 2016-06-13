@@ -95,6 +95,32 @@ for analysis in analyses:
     fig.tight_layout()
     report.add_figs_to_section(fig, 'toi', analysis['name'])
 
+    # all vis toi
+    scores_vis = np.transpose([get_sub('unseen_toi'), get_sub('pas1.0_toi'),
+                               get_sub('pas2.0_toi'), get_sub('pas3.0_toi')],
+                              [2, 1, 0]) / 2.
+    cmap = plt.get_cmap('bwr_r')
+    colors = cmap(np.linspace(1., 0., 4.))
+    fig, axes = plt.subplots(1, len(tois), figsize=[6, 1.5])
+    for ax, score, toi in zip(axes, scores_vis, tois):
+        print(toi)
+        bar_sem(range(4), score, ax=ax, color=colors)
+        quick_stats(score, ax=ax)
+        ax.set_xticks([])
+        ax.set_title('%i $-$ %i ms' % (toi[0] * 1000, toi[1] * 1000),
+                     fontsize=10)
+        # ylim_ = get_ylim(seen_toi)
+        ylim_ = np.array([-.05, .25]) / 2.
+        ax.set_ylim(ylim_)
+        ax.set_yticks(ylim_)
+        ax.set_yticklabels(['', ''])
+        if ax == axes[0]:
+            ax.set_yticklabels(['%.2f' % ylim_[0], '%.2f' % ylim_[1]])
+            ax.set_ylabel('rad.', labelpad=-15)
+    fig.tight_layout()
+    fig.subplots_adjust(wspace=.2)
+    report.add_figs_to_section(fig, 'all_vis_toi', analysis['name'])
+
     # seen versus unseen (/ 2 because circle => orientation)
     seen_toi = get_sub('seen_toi').T / 2.
     unseen_toi = get_sub('unseen_toi').T / 2.
@@ -144,11 +170,35 @@ for analysis in analyses:
     fig.subplots_adjust(wspace=.25)
     report.add_figs_to_section(fig, 'contrast_toi', analysis['name'])
 
+    # dynamics all scores
+    cmap = plt.get_cmap('bwr_r')
+    colors = cmap(np.linspace(0., 1., 4.))
+    scores_vis = np.array([get_sub('pas3.0'), get_sub('pas2.0'),
+                           get_sub('pas1.0'), get_sub('unseen')]) / 2.
+    times_r = np.squeeze(resample1D(times[1:]))
+    fig, ax = plt.subplots(1, figsize=[6, 2.])
+    for score, color in zip(scores_vis, colors):
+        score = resample1D(score)
+        p_val = stats(score[:, :, None])
+        pretty_decod(np.nanmean(score, axis=0), sig=p_val < .05, color=color,
+                     times=times_r, fill=True, alpha=1., chance=0.)
+    ax.axvline(.800, color='k')
+    ax.set_ylim([-.03, .12])
+    ax.set_xlim(-.05, 1.200)
+    ax.set_yticks([ax.get_ylim()[1]])
+    ax.set_yticklabels(['%.1f' % ax.get_ylim()[1]])
+    ax.set_ylabel('rad.', labelpad=-15.)
+    xticks = np.arange(-.100, 1.101, .100)
+    ax.set_xticks(xticks)
+    ax.set_xticklabels([int(1e3 * x) if x in [0., 1.] else '' for x in xticks])
+    ax.set_xlabel('Times', labelpad=-10.)
+    fig.tight_layout()
+    report.add_figs_to_section(fig, 'all_vis', analysis['name'])
+
     # dynamics
     seen, unseen = get_sub('seen') / 2., get_sub('unseen') / 2.
     seen = resample1D(get_sub('seen'))
     unseen = resample1D(get_sub('unseen'))
-    times_r = np.squeeze(resample1D(times[1:]))
     p_seen = stats(seen[:, :, None])
     p_unseen = stats(unseen[:, :, None])
     fig, ax = plt.subplots(1, figsize=[6, 2.])

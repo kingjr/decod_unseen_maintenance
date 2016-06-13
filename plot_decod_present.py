@@ -110,7 +110,29 @@ ylim = ax.get_ylim()
 # ax.text(0, ylim[1], 'Target',  backgroundcolor='w', ha='center', va='top')
 # ax.text(.800, ylim[1], 'Probe', backgroundcolor='w', ha='center', va='top')
 fig.tight_layout()
-report.add_figs_to_section(fig, 'visibility decod', 'AUC')
+report.add_figs_to_section(fig, 'seen_unseen_decod', 'AUC')
+
+
+# AUC for each visibility level: decoding
+fig, ax = plt.subplots(1, figsize=[6, 2])
+cmap = plt.get_cmap('bwr')
+colors = cmap(np.linspace(.0, 1., 4.))
+for ii, (auc, color) in enumerate(zip(results['AUC_pas'][::-1, :, :],
+                                      colors[::-1, :])):
+    if ii == 1:
+        continue  # XXX the highest visibility levels are difficult to distinguish  # noqa
+    scores = np.array([np.diag(ii) for ii in auc])
+    sig = stats(scores - chance) < .05
+    pretty_decod(scores, times=times, ax=ax, width=1.,
+                 alpha=1., chance=.5, color=color, fill=True, sig=sig)
+ax.set_ylim([.45, 1.])
+ax.set_yticks([1.])
+ax.set_yticklabels([1.])
+ax.axvline(.800, color='k')
+ax.set_ylabel('AUC', labelpad=-10)
+ylim = ax.get_ylim()
+fig.tight_layout()
+report.add_figs_to_section(fig, 'all_vis_decod', 'AUC')
 
 # Duration analyses for each visibility and each TOI.
 # Q: How long do the presence estimators generalize on average?
