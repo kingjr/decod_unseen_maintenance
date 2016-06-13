@@ -1,6 +1,7 @@
 """Sub analyses related to the decoding of probe and target orientations"""
 import numpy as np
 from jr.stats import circ_tuning, circ_mean, repeated_spearman
+from jr.gat import get_diagonal_ypred, scorer_angle
 from config import subjects, tois, load, save
 from conditions import analyses, subscores
 from base import get_predict, get_predict_error, angle_acc
@@ -9,7 +10,7 @@ analyses = [analysis for analysis in analyses if analysis['name'] in
 
 
 # These analyses are applied both for target and probe related estimators
-for analysis in ['target_circAngle', 'probe_circAngle']:
+for analysis in ['target_circAngle']:  # XXX FIXME, 'probe_circAngle']:
     # Initialize results
     results = dict(diagonal=list(), angle_pred=list(), toi=list(),
                    subscore=list(), corr_contrast=list(), corr_pas=list(),
@@ -21,22 +22,24 @@ for analysis in ['target_circAngle', 'probe_circAngle']:
         print s
         gat, _, events_sel, events = load('decod', subject=subject,
                                           analysis=analysis)
+        y_true = gat.y_train_
         times = gat.train_times_['times']
         subevents = events.iloc[events_sel].reset_index()
         n_bins = 24
 
         # Mean error across trial on the diagonal
-        y_error = angle_acc(get_predict_error(gat, mean=False), axis=0)
-        results['diagonal'].append(y_error)
+        y_pred = np.transpose(get_diagonal_ypred(gat), [1, 0, 2])
+        score = scorer_angle(y_true, y_pred)
+        results['diagonal'].append(score)
 
         # Mean prediction for each angle at peak time
         # This is to be able to plot the tuning functions (histogram) for each
         # stimulus orientation separately.
         toi = tois[1] if analysis == 'target_circAngle' else tois[3]
         results_ = list()
-        for angle in np.unique(gat.y_true_):
-            y_pred = get_predict(gat, sel=np.where(gat.y_true_ == angle)[0],
-                                 toi=toi)
+        for angle in np.unique(y_true):
+            y_pred = get_predict(gat, sel=np.where(y_true == angle)[0],
+                                 toi=toi, mean=True)[..., 0]
             probas, bins = circ_tuning(y_pred, n=n_bins)
             results_.append(probas)
         results['angle_pred'].append(results_)
@@ -46,8 +49,8 @@ for analysis in ['target_circAngle', 'probe_circAngle']:
         # time?
         results_ = list()
         for toi in tois:
-            probas, bins = circ_tuning(get_predict_error(gat, toi=toi),
-                                       n=n_bins)
+            y_error = get_predict_error(gat, toi=toi, mean=True)
+            probas, bins = circ_tuning(y_error, n=n_bins)
             results_.append(probas)
         results['toi'].append(results_)
 
@@ -55,31 +58,39 @@ for analysis in ['target_circAngle', 'probe_circAngle']:
         # Is decoding performance significant when subjects reported not seen
         # the target (0), guessing it (1) ...
         results_ = dict()
-        y_error = get_predict_error(gat, mean=False)
+        y_pred = np.transpose(get_diagonal_ypred(gat), [1, 0, 2])
+        n_train = len(gat.y_pred_)
         for subanalysis in subscores:
             results_[subanalysis[0] + '_toi'] = list()
             # subselect events (e.g. seen vs unseen)
             subsel = subevents.query(subanalysis[1]).index
             # add nan if no trial matches subconditions
-            if len(subsel) == 0:
-                results_[subanalysis[0]] = np.nan * np.zeros(y_error.shape[1])
+            if len(subsel) < 5:
+                results_[subanalysis[0]] = np.nan * np.zeros(n_train)
                 for toi in tois:
                     results_[subanalysis[0] + '_toi'].append(np.nan)
                 continue
             # dynamics of mean error
-            results_[subanalysis[0]] = angle_acc(y_error[subsel, :], axis=0)
+            results_[subanalysis[0]] = scorer_angle(
+                y_true[subsel], y_pred[subsel, :, 0])
             # mean error per toi
             for toi in tois:
-                # mean error across time
-                toi_ = np.where((times >= toi[0]) & (times < toi[1]))[0]
-                y_error_toi = circ_mean(y_error[:, toi_], axis=1)
-                y_error_toi = angle_acc(y_error_toi[subsel])
-                results_[subanalysis[0] + '_toi'].append(y_error_toi)
+                # integrate over time points to get single estimate
+                toi = np.where((times >= toi[0]) &
+                               (times <= toi[1]))[0]
+                angle, radius = y_pred[..., 0], y_pred[..., 1]
+                cmplx = radius * (np.cos(angle) + 1j * np.sin(angle))
+                y_pred_toi = np.angle(np.median(cmplx[:, toi], 1))
+                # score
+                score = scorer_angle(y_true[subsel], y_pred_toi[subsel])
+                # store
+                results_[subanalysis[0] + '_toi'].append(score)
         results['subscore'].append(results_)
 
         # Contrast and visibility modulatory effects:
         # how is decoding performance of the target/probe angles affected by/
         # covaries with the target contrast and visibility?
+        y_error = get_predict_error(gat, mean=False)
         R_contrast = list()
         R_vis = list()
         subsel = subevents.query('target_present==True and ' +
@@ -135,7 +146,7 @@ for analysis in ['target_circAngle', 'probe_circAngle']:
         # Maintenance of early classifiers
         results_ = list()
         for toi in [[.100, .150], [.170, .220]]:
-            y_error = get_predict_error(gat, toi=toi, typ='gat')
+            y_error = get_predict_error(gat, toi=toi, typ='gat', mean=True)
             results_.append(angle_acc(y_error, axis=0))
         results['early_maintain'].append(results_)
 

@@ -80,8 +80,8 @@ for ii in range(len(analyses)):
 
 # To control for correlation across variables, we'll score the classifiers on a
 # subset of trials.
-subscores = [('seen', 'detect_seen == True'),
-             ('unseen', 'detect_seen == False')]
+subscores = [('seen', 'detect_seen == True and detect_pressed == True'),
+             ('unseen', 'detect_seen == False and detect_pressed == True')]
 for pas in [1., 2., 3.]:
     subscores.append(('pas%s' % pas,
                       'detect_button == %s' % pas))

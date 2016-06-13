@@ -41,8 +41,8 @@ def quick_stats(x, ax=None):
     """returns wilcoxon stats and plot stars where p<.05"""
     pvals = [wilcoxon(ii)[1] for ii in x.T]
     sig = [['', '*'][p < .05] for p in pvals]
-    m = np.mean(x, axis=0)
-    s = np.std(x, axis=0)
+    m = np.nanmean(x, axis=0)
+    s = np.nanstd(x, axis=0)
     print(m, s, pvals, sig)
     if ax is not None:
         for x_, (y_, sig_) in enumerate(zip(m / 2., sig)):
@@ -157,7 +157,7 @@ for analysis in analyses:
     pretty_decod(np.mean(seen, axis=0), sig=p_seen < .05, color='k',
                  times=times_r)
     pretty_decod(unseen, sig=p_unseen < .05, color='b', **opts)
-    pretty_decod(np.mean(unseen, axis=0), sig=p_unseen < .05, color='k',
+    pretty_decod(np.nanmean(unseen, axis=0), sig=p_unseen < .05, color='k',
                  times=times_r)
     ax.axvline(.800, color='k')
     ax.set_ylim([-.1, .21])
