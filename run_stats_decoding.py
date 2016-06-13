@@ -37,4 +37,4 @@ for analysis in analyses:
     print('save', analysis['name'])
     out = dict(scores=scores, p_values=p_values, p_values_off=p_values_off,
                times=times, analysis=analysis, p_values_diag=p_values_diag)
-    save(out, 'score',  analysis=('stats_' + analysis['name']))
+    save(out, 'score',  analysis=('stats_' + analysis['name']), overwrite=True)

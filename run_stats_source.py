@@ -55,4 +55,4 @@ for analysis in analyses:
 
     # Save and upload
     save(p_val, 'score_pval', subject='fsaverage',
-         analysis=analysis['name'], overwrite=True, upload=True)
+         analysis=analysis['name'], overwrite=True, upload=False)
