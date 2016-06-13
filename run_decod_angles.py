@@ -10,7 +10,7 @@ analyses = [analysis for analysis in analyses if analysis['name'] in
 
 
 # These analyses are applied both for target and probe related estimators
-for analysis in ['target_circAngle']:  # XXX FIXME, 'probe_circAngle']:
+for analysis in ['target_circAngle', 'probe_circAngle']:
     # Initialize results
     results = dict(diagonal=list(), angle_pred=list(), toi=list(),
                    subscore=list(), corr_contrast=list(), corr_pas=list(),
