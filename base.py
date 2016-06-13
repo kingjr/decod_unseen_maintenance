@@ -265,11 +265,11 @@ def get_predict(gat, sel=None, toi=None, mean=True, typ='diagonal'):
     from jr.utils import align_on_diag
     # select data in the gat matrix
     if typ == 'diagonal':
-        y_pred = np.squeeze(get_diagonal_ypred(gat)).T
+        y_pred = np.transpose(get_diagonal_ypred(gat), [1, 0, 2])
     elif typ == 'align_on_diag':
-        y_pred = np.squeeze(align_on_diag(gat.y_pred_)).transpose([2, 0, 1])
+        y_pred = np.squeeze(align_on_diag(gat.y_pred_)).transpose([2, 0, 1, 3])
     elif typ == 'gat':
-        y_pred = np.squeeze(gat.y_pred_).transpose([2, 0, 1])
+        y_pred = np.squeeze(gat.y_pred_).transpose([2, 0, 1, 3])
     elif typ == 'slice':
         raise NotImplementedError('slice')
     y_pred = y_pred % (2 * np.pi)  # make sure data is in on circle
@@ -283,13 +283,23 @@ def get_predict(gat, sel=None, toi=None, mean=True, typ='diagonal'):
     y_pred = y_pred[:, toi_, ...]
     # mean across time point
     if mean:
-        y_pred = circ_mean(y_pred, axis=1)
+        # weighted circular mean (dim = angle * radius)
+        cos = np.mean(np.cos(y_pred[..., 0]) * y_pred[..., 1], axis=1)
+        sin = np.mean(np.sin(y_pred[..., 0]) * y_pred[..., 1], axis=1)
+        radius = np.median(y_pred[..., 1], axis=1)
+        angle = np.arctan2(sin, cos)
+        y_pred = lstack(angle, radius)
     return y_pred[:, None] if y_pred.ndim == 1 else y_pred
+
+
+def lstack(x, y):
+    z = np.stack([x, y])
+    return np.transpose(z, np.r_[range(1, z.ndim), 0])
 
 
 def get_predict_error(gat, sel=None, toi=None, mean=True, typ='diagonal',
                       y_true=None):
-    y_pred = get_predict(gat, sel=sel, toi=toi, mean=mean, typ=typ)
+    y_pred = get_predict(gat, sel=sel, toi=toi, mean=mean, typ=typ)[..., 0]
     # error is diff modulo pi centered on 0
     sel = range(len(y_pred)) if sel is None else sel
     if y_true is None:
