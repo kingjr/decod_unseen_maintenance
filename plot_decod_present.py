@@ -25,10 +25,11 @@ color_contrast = [ana['color'] for ana in analyses
                   if ana['title'] == 'Target Contrast'][0]
 
 # Visibility effect
+scores = np.array([np.diag(ii) for ii in results['R_vis']])
+sig = stats(scores) < .05  # compute cluster stats on diag only
 fig, ax = plt.subplots(1, figsize=[6, 2])
-pretty_decod([np.diag(ii) for ii in results['R_vis']], times=times,
-             sig=np.diag(results['p_vis']) < .05,
-             color=color_vis, chance=0., fill=True,)
+pretty_decod(scores, times=times,
+             sig=sig, color=color_vis, chance=0., fill=True,)
 ax.axvline(.800, color='k')
 ax.set_xlabel('Times', labelpad=-10)
 ylim = ax.get_ylim()
@@ -41,10 +42,11 @@ fig.tight_layout()
 report.add_figs_to_section(fig, 'visibility', 'R')
 
 # Contrast effect
+scores = np.array([np.diag(ii) for ii in results['R_contrast']])
+sig = stats(scores) < .05  # compute cluster stats on diag only
 fig, ax = plt.subplots(1, figsize=[6, 2])
-pretty_decod([np.diag(ii) for ii in results['R_contrast']], times=times,
-             sig=np.diag(results['p_contrast']) < .05,
-             color=color_contrast, chance=0., fill=True,)
+pretty_decod(scores, times=times,
+             sig=sig, color=color_contrast, chance=0., fill=True,)
 ax.axvline(.800, color='k')
 ylim = ax.get_ylim()
 ax.set_yticklabels(['', '', '%.2f' % ylim[1]])
@@ -93,10 +95,10 @@ for ii, (auc, color) in enumerate(zip(results['AUC_pas'][-1::-1, :, :],
                                       colors[-1::-1, :])):
     if ii not in [0, 3]:
         continue
-    p_val = stats(auc - .5)
-    pretty_decod([np.diag(ii) for ii in auc], times=times, ax=ax, width=1.,
-                 alpha=1., chance=.5, color=color, fill=True,
-                 sig=np.diag(p_val) < .05)
+    scores = np.array([np.diag(ii) for ii in auc])
+    sig = stats(scores - .5) < .05
+    pretty_decod(scores, times=times, ax=ax, width=1.,
+                 alpha=1., chance=.5, color=color, fill=True, sig=sig)
 ax.set_ylim([.45, 1.])
 ax.set_yticks([1.])
 ax.set_yticklabels([1.])
@@ -119,7 +121,7 @@ data = results['AUC_pas_duration'][toi_sel, ...]
 times_align = times - times.min()
 # ---- setup figure
 fig = plt.figure(figsize=[7.8, 5.5])
-fig_time_ranges = [.300, .600]  # shorter range for early than late
+fig_time_ranges = [.500, 1.000]  # shorter range for early than late
 axes = list()
 for ii in range(4):  # one subplot for each visibility rating (PAS)
     axes.append([plt.subplot2grid((4, 3), (ii, 0), colspan=1),
@@ -168,7 +170,7 @@ times_align = times - times.min()
 fig = plt.figure(figsize=[7.8, 2])
 early = dict(unseen=results['AUC_pas_duration'][1, 0, ...],
              seen=results['AUC_pas_duration'][1, -1, ...], toi=tois[1],
-             tlim=.300, ax=plt.subplot2grid((1, 3), (0, 0), colspan=1))
+             tlim=.500, ax=plt.subplot2grid((1, 3), (0, 0), colspan=1))
 late = dict(unseen=results['AUC_pas_duration'][2, 0, ...],
             seen=results['AUC_pas_duration'][2, -1, ...], toi=tois[2],
             tlim=.600, ax=plt.subplot2grid((1, 3), (0, 1), colspan=2))
