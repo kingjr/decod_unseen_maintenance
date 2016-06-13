@@ -13,6 +13,8 @@ for s, subject in enumerate(subjects):  # Loop across each subject
     # load MEG data
     epochs = load('epochs_decim', subject=subject, preload=True)
     events = load('behavior', subject=subject)
+    epochs.pick_types(meg=True, eeg=False, stim=False, eog=False, ecg=False)
+    epochs.crop(-.1, 1.4)
 
     # Load classifier
     gat, analysis, ana_sel, events = load('decod', subject=subject,
@@ -30,4 +32,4 @@ for s, subject in enumerate(subjects):  # Loop across each subject
 
     # Save classifier results
     save([gat, analysis, sel, events], 'decod', subject=subject,
-         analysis=analysis['name'] + '_absent')
+         analysis=analysis['name'] + '_absent', overwrite=True)
