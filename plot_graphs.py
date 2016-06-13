@@ -1,10 +1,9 @@
 import matplotlib.pyplot as plt
 import numpy as np
-# from sklearn.manifold import MDS
-from config import load
+from sklearn.manifold import MDS
 from jr.gif import writeGif, Figtodat
 from jr.gat.graphs import plot_graph, animate_graph
-from config import report
+from config import report, load
 from conditions import analyses
 from base import stats
 
@@ -36,59 +35,70 @@ for analysis in analyses:
                      final_pos='horizontal', prune=p_values > .05,
                      edge_color=plt.get_cmap('coolwarm'))
 
-    # snapshots construction --------------------------------------------------
-    fig, axes = plt.subplots(1, 4, figsize=[12, 3])
-    fig.subplots_adjust(wspace=0, hspace=0)
-    for iteration, ax in zip([0, 3, 6, 9], axes):
-        G, nodes, edges = plot_graph(weights, ax=ax, iterations=int(iteration),
-                                     node_size=node_size / 3., **nx_params)
-        nodes._alpha = 0.
-        nodes.set_edgecolors((1., 1., 1., 0.))
-        ax.patch.set_visible(False)
-    report.add_figs_to_section(fig, analysis['name'], 'build')
+    # # snapshots construction ------------------------------------------------
+    # fig, axes = plt.subplots(1, 4, figsize=[12, 3])
+    # fig.subplots_adjust(wspace=0, hspace=0)
+    # for iteration, ax in zip([0, 3, 6, 9], axes):
+    #     G, nodes, edges = plot_graph(weights, ax=ax,
+    #                                  iterations=int(iteration),
+    #                                  node_size=node_size / 3., **nx_params)
+    #     nodes._alpha = 0.
+    #     nodes.set_edgecolors((1., 1., 1., 0.))
+    #     ax.patch.set_visible(False)
+    # report.add_figs_to_section(fig, analysis['name'], 'build')
+    #
+    # # animation construction ------------------------------------------------
+    # images = list()
+    # for iteration in np.logspace(0, .9, 50):
+    #     print iteration
+    #     fig, ax = plt.subplots(1, figsize=[5, 5], facecolor='w')
+    #     G, nodes, edges = plot_graph(weights, ax=ax,
+    #                                  iterations=int(iteration),
+    #                                  node_size=node_size / 3., **nx_params)
+    #     nodes._alpha = 0.
+    #     nodes.set_edgecolors((1., 1., 1., 0.))
+    #     im = Figtodat.fig2img(fig)
+    #     images.append(im)
+    # name = "/network_construction%s.gif" % analysis['name']
+    # writeGif(report.report.data_path + name, images)
+    # report.add_images_to_section(report.report.data_path + name,
+    #                              analysis['name'], 'build')
+    # plt.close('all')
 
-    # animation construction --------------------------------------------------
-    images = list()
-    for iteration in np.logspace(0, .9, 50):
-        print iteration
-        fig, ax = plt.subplots(1, figsize=[5, 5], facecolor='w')
-        G, nodes, edges = plot_graph(weights, ax=ax, iterations=int(iteration),
-                                     node_size=node_size / 3., **nx_params)
-        nodes._alpha = 0.
-        nodes.set_edgecolors((1., 1., 1., 0.))
-        im = Figtodat.fig2img(fig)
-        images.append(im)
-    name = "/network_construction%s.gif" % analysis['name']
-    writeGif(report.report.data_path + name, images)
-    report.add_images_to_section(report.report.data_path + name,
-                                 analysis['name'], 'build')
-    plt.close('all')
+    # MDS
+    mds = MDS(dissimilarity='precomputed')
+    X = np.abs(weights - analysis['chance'])
+    X = (X+X.T) / 2.
+    pos = mds.fit_transform(X.max() - X)
 
     # final construction ------------------------------------------------------
     fig, ax = plt.subplots(1, figsize=[10, 10])
-    G, nodes, edges = plot_graph(weights, ax=ax, iterations=100,
-                                 node_size=node_size, **nx_params)
+    G, nodes, edges = plot_graph(weights, ax=ax, iterations=0,
+                                 node_size=node_size, init_pos=pos.T,
+                                 **nx_params)
     nodes._alpha = 0.
     nodes.set_edgecolors((1., 1., 1., 0.))
     ax.patch.set_visible(False)
+    plt.show()
+    0/0
     report.add_figs_to_section(fig, analysis['name'], 'network')
 
-    # Dynamics ---------------------------------------------------------------
-    fig, ax = plt.subplots(1, figsize=[5, 5])
-    G, nodes, edges = plot_graph(weights, ax=ax, iterations=100,
-                                 node_size=node_size, **nx_params)
-    fig.set_facecolor(None)
-    anim = animate_graph(weights, G, nodes, times=times * 1e3,
-                         clim=clim, cmap='RdBu_r')
-    gif_name = report.report.data_path + '/' + analysis['name'] + '_dyn.gif'
-    anim.save(gif_name, writer='imagemagick', dpi=75)
-    anim = animate_graph(weights[::2, :], G, nodes,
-                         times=times[::2] * 1e3, clim=clim,
-                         cmap='RdBu_r')
-    report.add_images_to_section(gif_name, analysis['name'], 'gif')
-    gif_name = gif_name[:-4] + '_fast.gif'
-    anim.save(gif_name, writer='imagemagick', dpi=50)
-    report.add_images_to_section(gif_name, analysis['name'] + 'fast', 'gif')
+    # # Dynamics --------------------------------------------------------------
+    # fig, ax = plt.subplots(1, figsize=[5, 5])
+    # G, nodes, edges = plot_graph(weights, ax=ax, iterations=100,
+    #                              node_size=node_size, **nx_params)
+    # fig.set_facecolor(None)
+    # anim = animate_graph(weights, G, nodes, times=times * 1e3,
+    #                      clim=clim, cmap='RdBu_r')
+    # gif_name = report.report.data_path + '/' + analysis['name'] + '_dyn.gif'
+    # anim.save(gif_name, writer='imagemagick', dpi=75)
+    # anim = animate_graph(weights[::2, :], G, nodes,
+    #                      times=times[::2] * 1e3, clim=clim,
+    #                      cmap='RdBu_r')
+    # report.add_images_to_section(gif_name, analysis['name'], 'gif')
+    # gif_name = gif_name[:-4] + '_fast.gif'
+    # anim.save(gif_name, writer='imagemagick', dpi=50)
+    # report.add_images_to_section(gif_name, analysis['name'] + 'fast', 'gif')
 
     def snapshot(time, title, clim=None):
         dynamics = np.mean(scores, axis=0)
