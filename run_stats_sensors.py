@@ -26,11 +26,12 @@ for analysis in analyses:
                          tmin=evoked.times[0])
     # combine grad at subject level
     grad = mne.pick_types(evoked.info, 'grad')
-    if analysis['typ'] == 'categorize':
-        data[:, grad, :] -= .5  # AUC center
-    data[:, grad[::2], :] = np.sqrt(data[:, grad[::2], :] ** 2 +
-                                    data[:, grad[1::2], :] ** 2)
-    data[:, grad[1::2], :] = 0
+    data[:, grad, :] -= analysis['chance']
+    # combine grad with RMS
+    data[:, grad[::2], :] = np.sqrt((data[:, grad[::2], :] ** 2 +
+                                    data[:, grad[1::2], :] ** 2) / 2.)
+    data[:, grad[1::2], :] = data[:, grad[::2], :]
+    data[:, grad, :] += analysis['chance']
 
     # keep robust averaging for plotting
     epochs = EpochsArray(data, evoked.info,
