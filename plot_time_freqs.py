@@ -1,6 +1,5 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.colors import LinearSegmentedColormap
 import matplotlib.gridspec as gridspec
 
 from jr.plot import pretty_plot, pretty_colorbar
@@ -26,11 +25,10 @@ for ii, (analysis, ax) in enumerate(zip(analyses, axes)):
 
     # plot effect size
     scores = np.mean(scores, axis=0)
-    cmap = LinearSegmentedColormap.from_list(
-        'RdBu', ['w', analysis['color'], 'k'])
     im = ax.matshow(scores, aspect='auto', origin='lower',
                     extent=[times[0], times[-1], 0, len(freqs)],
-                    vmin=analysis['chance'], vmax=np.max(scores), cmap=cmap)
+                    vmin=analysis['chance'], vmax=np.max(scores),
+                    cmap=analysis['cmap'])
 
     # plot stats
     xx, yy = np.meshgrid(times, range(len(freqs)), copy=False, indexing='xy')

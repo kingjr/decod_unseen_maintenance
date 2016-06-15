@@ -2,6 +2,7 @@
 # Decoding parameters
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.colors import LinearSegmentedColormap
 from itertools import product
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import make_pipeline
@@ -75,7 +76,10 @@ analyses = (
 # Define a specific color for each analysis
 cmap = plt.get_cmap('gist_rainbow')
 for ii in range(len(analyses)):
-    analyses[ii]['color'] = np.array(cmap(float(ii) / len(analyses)))
+    color = np.array(cmap(float(ii) / len(analyses)))
+    analyses[ii]['color'] = color
+    analyses[ii]['cmap'] = LinearSegmentedColormap.from_list(
+        'RdBu', ['w', color, 'k'])
 
 
 # To control for correlation across variables, we'll score the classifiers on a
