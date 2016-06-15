@@ -171,6 +171,8 @@ analyses = [ana for ana in analyses if ana['name'] in
 for analysis in analyses:
     out = _stats(analysis)
     scores = out['scores']
+    if 'circAngle' in analysis['name']:
+        scores /= 2.
     times = out['times']
     alpha = .05
     chance = analysis['chance']
