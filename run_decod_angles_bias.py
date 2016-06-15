@@ -119,7 +119,7 @@ for ii in range(2):
 
 # load absent target prediction to perform the control analysis of virtual
 # biases
-results['target_absent'] = np.zeros((20, n_time, n_time))
+results['target_absent'] = np.zeros((20, n_time, 181))
 results['target_absent_bias_toi'] = np.zeros((20, len(tois)))
 for s, subject in enumerate(subjects):  # Loop across each subject
     print(subject)

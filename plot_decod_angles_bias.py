@@ -8,6 +8,9 @@ from jr.utils import table2html
 from config import load, report
 from scipy.stats import wilcoxon
 
+cmap = plt.get_cmap('bwr')
+colors_vis = cmap(np.linspace(0, 1, 4))
+
 # Load data
 results = load('score', subject='fsaverage', analysis='target_probe')
 times = results['times']
@@ -84,16 +87,14 @@ for TP, stimuli in enumerate(['target', 'probe']):
     fig, axes = plt.subplots(1, len(tois), figsize=[8, 2])
     table = np.empty((5, len(tois)), dtype=object)
     for t, (toi, ax) in enumerate(zip(tois, axes)):
-        absent = -results['target_absent_bias_toi'][:, t]
-        present = -results['bias_toi'][:, TP, 1, t]
-        seen = -results['bias_vis_toi'][:, TP, 1, 3, t]
-        unseen = -results['bias_vis_toi'][:, TP, 1, 0, t]
-        bar_sem(np.vstack((absent, unseen, seen)).T, color=['k', 'b', 'r'],
-                ax=ax)
-        quick_stats(np.vstack((absent, unseen, seen)).T, ax=ax)
-        diff = seen - unseen
+        score = list()
+        for vis in range(4):
+            score.append(-results['bias_vis_toi'][:, TP, 1, vis, t])
+        bar_sem(np.vstack(score).T, color=colors_vis, ax=ax)
+        quick_stats(np.vstack(score).T, ax=ax)
+        diff = score[-1] - score[0]  # max vis - min vis
         # print 'diff', wilcoxon(diff[~np.isnan(diff)])
-        for ii, score in enumerate([present, absent, seen, unseen, diff]):
+        for ii, score in enumerate(score + [diff]):
             p_val = wilcoxon(score)[1]
             m = np.nanmean(score)
             sem = np.nanstd(score) / np.sqrt(sum(~np.isnan(score)))
@@ -107,7 +108,7 @@ for TP, stimuli in enumerate(['target', 'probe']):
 
     table = np.vstack(([str(t) for t in tois], table))
     table = np.hstack((
-        np.array(['', 'present', 'absent', 'seen', 'unseen', 'diff'])[:, None],
+        np.array(['', 'vis0', 'vis1', 'vis2', 'vis3', 'diff'])[:, None],
         table))
     report.add_htmls_to_section(table2html(table), stimuli, 'table')
 
