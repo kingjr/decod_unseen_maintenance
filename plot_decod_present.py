@@ -122,7 +122,7 @@ for ii, (auc, color) in enumerate(zip(results['AUC_pas'][::-1, :, :],
     if ii == 1:
         continue  # XXX the highest visibility levels are difficult to distinguish  # noqa
     scores = np.array([np.diag(ii) for ii in auc])
-    sig = stats(scores - chance) < .05
+    sig = stats(scores - .5) < .05
     pretty_decod(scores, times=times, ax=ax, width=1.,
                  alpha=1., chance=.5, color=color, fill=True, sig=sig)
 ax.set_ylim([.45, 1.])
