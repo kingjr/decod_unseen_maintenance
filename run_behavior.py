@@ -40,8 +40,8 @@ def make_3d_plot(ax, xs, y, zs, colors):
         ys += np.std(y[:, :, ii], axis=0) / np.sqrt(len(subjects))
         verts_sem.append(list(zip(np.hstack((0., xs, 1.)),
                                   np.hstack((0., ys, 0.)))))
-    poly = PolyCollection(verts, facecolors=colors, edgecolor=colors,
-                          linewidth=2)
+    poly = PolyCollection(verts, facecolors=colors, edgecolor='k',
+                          linewidth=1)
     poly.set_alpha(.75)
     ax.add_collection3d(poly, zs=zs, zdir='y')
 
@@ -118,13 +118,10 @@ for s, subject in enumerate(subjects):
 print('detection dprime: %s' % print_stats(x_vis_dprime))
 
 fig = plt.figure(figsize=[6, 4])
+cmap_contrast = plt.get_cmap('hot_r')
 ax = fig.gca(projection='3d')
 ax = make_3d_plot(ax, np.linspace(0, 1., 4.), x_vis, np.linspace(.25, 1., 4.),
-                  [cmap(i) for i in contrasts])
-ax.text(1., .25, np.mean(x_vis[:, -1, 0], axis=0) + .02, 'Absent', 'x',
-        color=cmap(0.), ha='right', va='bottom')
-ax.text(1., 1, np.mean(x_vis[:, -1, -1], axis=0) + .05, 'Full contrast', 'x',
-        color=cmap(1.), ha='right', va='bottom')
+                  [cmap_contrast(i) for i in contrasts])
 ax.set_xlabel('Visibility Rating')
 ax.set_ylabel('Contrast')
 ax.zaxis.set_rotate_label(False)
