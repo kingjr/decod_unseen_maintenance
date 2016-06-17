@@ -239,13 +239,15 @@ report.add_htmls_to_section(table, 'duration', 'table')
 table = np.empty((4, len(tois)), dtype=object)
 for pas in range(4):
     score = results['AUC_pas'][pas, :, :]
-    p_val = stats(score - .5)
+    score = np.array([np.diag(s) for s in score])
     for jj, toi in enumerate(tois):
         toi_ = np.where((times >= toi[0]) & (times < toi[1]))[0]
         score_ = np.mean(score[:, toi_], axis=1)
+        _, p_val = wilcoxon(score_ - .5)
         table[pas, jj] = '[%.3f+/-%.3f, p=%.4f]' % (
             np.nanmean(score_), np.nanstd(score_) / np.sqrt(len(score_)),
-            np.min(p_val[toi_]))
+            p_val)
+print(table)
 table = table2html(table, head_column=tois,
                    head_line=['pas%i' % pas for pas in range(4)])
 report.add_htmls_to_section(table, 'AUC', 'table')
@@ -254,23 +256,25 @@ report.add_htmls_to_section(table, 'AUC', 'table')
 table = np.empty((3, len(tois)), dtype=object)
 for ii, key in enumerate(['contrast', 'vis']):
     R = results['R_%s' % key]
-    p_val = results['p_%s' % key]
+    R = np.array([np.diag(r) for r in R])
     for jj, toi in enumerate(tois):
         toi_ = np.where((times >= toi[0]) & (times < toi[1]))[0]
         R_ = np.mean(R[:, toi_], axis=1)
+        _, p_val = wilcoxon(R_)
         table[ii, jj] = '[%.3f+/-%.3f, p=%.4f]' % (
             np.nanmean(R_), np.nanstd(R_) / np.sqrt(len(R_)),
-            np.min(p_val[toi_]))
+            p_val)
 
 # add interaction visibility & contrast modulation of decoding score
 R = results['R_contrast'] - results['R_vis']
-p_val = stats(R)
+R = np.array([np.diag(r) for r in R])
 for jj, toi in enumerate(tois):
     toi_ = np.where((times >= toi[0]) & (times < toi[1]))[0]
     R_ = np.mean(R[:, toi_], axis=1)
+    _, p_val = wilcoxon(R_)
     table[2, jj] = '[%.3f+/-%.3f, p=%.4f]' % (
         np.nanmean(R_), np.nanstd(R_) / np.sqrt(len(R_)),
-        np.min(p_val[toi_]))
+        p_val)
 table = table2html(table, head_column=tois,
                    head_line=['R_contrast', 'R_vis', 'diff'])
 report.add_htmls_to_section(table, 'R', 'table')
