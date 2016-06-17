@@ -46,13 +46,13 @@ fig.subplots_adjust(right=0.85, hspace=0.05, wspace=0.05)
 for ii in range(2):
     for jj in range(2):
         scores = -np.array(results['bias'][:, ii, jj, ...])
-        p_val = results['bias_pval'][ii, jj, :, :].T  # XXX ? why T
+        p_val = results['bias_pval'][ii, jj, :, :]
         pretty_gat(scores.mean(0), times=times, ax=axes[ii, jj],
                    colorbar=False, clim=[-.1, .1], sig=p_val < .05)
         axes[ii, jj].axvline(.800, color='k')
         axes[ii, jj].axhline(.800, color='k')
-pretty_axes(axes, ylabelpad=-15, xticks=np.linspace(-.100, 1.100, 13),
-            xticklabels=['', 0] + [''] * 9 + [1000, ''])
+pretty_axes(axes, ylabelpad=-15, xticks=np.linspace(-.100, 1.400, 13),
+            xticklabels=['', 0] + [''] * 13 + [1400, ''])
 pretty_colorbar(cax=fig.add_axes([.88, .25, .02, .55]), ax=axes[0, 0])
 report.add_figs_to_section(fig, 'gat', 'bias')
 
