@@ -75,12 +75,24 @@ def _average_ypred_toi(gat, toi, analysis):
     return y_pred
 
 
-def _subscore_toi_vis(y_pred, events, analysis):
-    """Subscore each visibility"""
-    scores = np.nan * np.zeros(4)
-    for vis in range(4):
-        # select trials according to visibility
-        sel = np.where(events['detect_button'] == vis)[0]
+def _subscore_toi(y_pred, events, analysis, factor):
+    """Subscore each visibility
+    y_pred : shape(n_trials,)
+    events : dataframe, shape(n_trials,)
+    analysis : dict(name='target_present' | 'target_circAngle', scorer)
+    key: 'detect_button' | 'target_contrast'
+    values: range(4) | [.50, .75, 1.]
+    """
+    factors = dict(visibility=['detect_button', range(4)],
+                   contrast=['target_contrast', [.50, .75, 1.]])
+    key, values = factors[factor]
+    y_true = events[analysis['name']]
+
+    scores = np.nan * np.zeros(len(values))
+
+    for ii, value in enumerate(values):
+        # select trials e.g. according to visibility or contrast
+        sel = np.where(events[key] == value)[0]
 
         # for clarity, add all absent trials in target_present analysis
         if analysis['name'] == 'target_present':
@@ -88,63 +100,54 @@ def _subscore_toi_vis(y_pred, events, analysis):
                         np.where(events['target_present'] == False)[0]]  # noqa
 
         # skip if not enough trials
-        if len(sel) < 5:
+        if len(sel) < 5 or len(np.unique(y_true[sel])) < 2:
             continue
-        scores[vis] = analysis['scorer'](
-            y_true=events[analysis['name']][sel],
-            y_pred=y_pred[sel])
-    # Do the prediction vary across visibility?
-    sel = np.where(events['detect_button'] >= 0.)[0]
-    y_error = _y_error(y_pred, events[analysis['name']])
-    R = repeated_spearman(y_error[sel], events['detect_button'][sel])
-    return scores, R
+
+        # score
+        scores[ii] = analysis['scorer'](y_true=y_true[sel], y_pred=y_pred[sel])
+    return scores
 
 
-def _subscore_toi_contrast(y_pred, events, analysis):
-    """Subscore each contrast"""
-    scores = np.nan * np.zeros(3)
-    for ii, contrast in enumerate([.5, .75, 1.]):
-        # select trials according to visibility
-        sel = np.where(events['target_contrast'] == contrast)[0]
-        # for clarity, add all absent trials in target_present analysis
-        if analysis['name'] == 'target_present':
-            sel = np.r_[sel,
-                        np.where(events['target_present'] == False)[0]]  # noqa
+def _subregress_toi(y_pred, events, analysis, factor):
+    """Correlate single trial error with factor"""
+    factors = dict(visibility=['detect_button', range(4)],
+                   contrast=['target_contrast', [.50, .75, 1.]])
+    key, values = factors[factor]
+    y_true = np.array(events[analysis['name']])
 
-        scores[ii] = analysis['scorer'](
-            y_true=events[analysis['name']][sel],
-            y_pred=y_pred[sel])
-    # Do the prediction vary across visibility?
-    sel = np.where(events['target_present'])[0]
-    y_error = _y_error(y_pred, events[analysis['name']])
-    R = repeated_spearman(y_error[sel], events['target_contrast'][sel])
-    return scores, R
+    # Check dimensiality
+    y_pred = np.squeeze(y_pred)
+    if (y_pred.ndim != 1) or len(y_pred) != len(y_true):
+        raise ValueError
 
-
-def _y_error(y_true, y_pred, analysis):
-    """Compute error at single trial"""
+    # Compute single trial error
     if 'circAngle' in analysis['name']:
         y_error = (y_pred - y_true) % (2 * np.pi)
         y_error = np.abs(np.pi - y_error)
     else:
         y_error = np.abs(y_pred - y_true)
-    return y_error
+
+    # Do the prediction vary across visibilities/contrasts?
+    sel = np.where(events[key] >= values[0])[0]
+    R = repeated_spearman(y_error[sel], events[key][sel])
+    return R
 
 
-def _subscore_toi(analysis):
+def _analyze_toi(analysis):
     """Subscore each analysis as a function of the reported visibility"""
     ana_name = analysis['name'] + '-toi'
 
     # don't recompute if not necessary
     fname = paths('score', analysis=ana_name)
-    if os.path.exists(fname):
-        return load('score', analysis=ana_name)
+    # if os.path.exists(fname):
+    #     return load('score', analysis=ana_name)
 
     # gather data
-    scores_vis = np.zeros((20, len(tois), 4))
-    R_vis = np.zeros((20, len(tois)))
-    scores_cntrst = np.zeros((20, len(tois), 3))
-    R_cntrst = np.zeros((20, len(tois)))
+    n_subject = 20
+    scores = dict(visibility=np.zeros((n_subject, len(tois), 4)),
+                  contrast=np.zeros((n_subject, len(tois), 3)))
+    R = dict(visibility=np.zeros((n_subject, len(tois))),
+             contrast=np.zeros((n_subject, len(tois))),)
     for s, subject in enumerate(subjects):
         gat, _, events_sel, events = load('decod', subject=subject,
                                           analysis=analysis['name'])
@@ -152,14 +155,17 @@ def _subscore_toi(analysis):
         for t, toi in enumerate(tois):
             # Average predictions on single trials across time points
             y_pred = _average_ypred_toi(gat, toi, analysis)
-            scores_vis[s, t, :], R_vis[s, t] = _subscore_toi_vis(
-                y_pred, events, analysis)
-            scores_cntrst[s, t, :], R_cntrst[s, t] = _subscore_toi_contrast(
-                y_pred, events, analysis)
+            # visibility
+            for factor in ['visibility', 'contrast']:
+                # subscore per condition (e.g. each visibility rating)
+                scores[factor][s, t, :] = _subscore_toi(y_pred, events,
+                                                        analysis, factor)
+                # correlate residuals with factor
+                R[factor][s, t] = _subregress_toi(y_pred, events,
+                                                  analysis, factor)
 
-    save([scores_vis, R_vis, scores_cntrst, R_cntrst], 'score',
-         analysis=ana_name, overwrite=True, upload=True)
-    return [scores_vis, R_vis, scores_cntrst, R_cntrst]
+    save([scores, R], 'score', analysis=ana_name, overwrite=True, upload=True)
+    return [scores, R]
 
 
 def _correlate(analysis):
@@ -231,10 +237,9 @@ def _duration_toi(analysis):
 
 
 # Main plotting
-cmap = plt.get_cmap('bwr')
-colors_vis = cmap(np.linspace(0, 1, 4.))
-cmap = plt.get_cmap('hot_r')
-colors_contrast = cmap([.5, .75, 1.])
+colors = dict(visibility=plt.get_cmap('bwr')(np.linspace(0, 1, 4.)),
+              contrast=plt.get_cmap('hot_r')([.5, .75, 1.]))
+
 for analysis in analyses:
     all_scores, score_pvals, times = _subscore(analysis)
     if 'circAngle' in analysis['name']:
@@ -267,8 +272,8 @@ for analysis in analyses:
                 continue
             score = all_scores[:, vis, toi, :]
             sig = np.array(score_pvals)[vis, toi, :] < .05
-            pretty_decod(score, times, color=colors_vis[vis], ax=ax, sig=sig,
-                         fill=True, chance=analysis['chance'])
+            pretty_decod(score, times, color=colors['visibility'][vis],
+                         ax=ax, sig=sig, fill=True, chance=analysis['chance'])
         if ax != axes[-1]:
             ax.set_xlabel('')
         ax.axvline(.800, color='k')
@@ -302,10 +307,10 @@ for analysis in analyses:
         for vis in range(4)[::-1]:
             score = all_durations[:, vis, t+1, :]
             sig = toi_pvals[vis, t+1, :] < .05
-            plot_sem(roll_times, score, color=colors_vis[vis], alpha=.05,
-                     ax=ax)
+            plot_sem(roll_times, score, color=colors['visibility'][vis],
+                     alpha=.05, ax=ax)
             pretty_decod(np.nanmean(score, 0), roll_times,
-                         color=colors_vis[vis],
+                         color=colors['visibility'][vis],
                          chance=analysis['chance'], sig=sig, ax=ax)
         if ax != axes[-1]:
             ax.set_xlabel('')
@@ -328,8 +333,8 @@ for analysis in analyses:
         pval = score_pvals[vis]
         sig = pval > .05
         xx, yy = np.meshgrid(times, times, copy=False, indexing='xy')
-        ax.contourf(xx, yy, sig, levels=[-1, 0], colors=[colors_vis[vis]],
-                    aspect='equal')
+        ax.contourf(xx, yy, sig, levels=[-1, 0],
+                    colors=[colors['visibility'][vis]], aspect='equal')
     ax.contour(xx, yy, R_pval > .05, levels=[-1, 0], colors='k',
                aspect='equal')
     ax.axvline(.800, color='k')
@@ -351,12 +356,12 @@ for analysis in analyses:
     # plot and report subscore per visibility and contrast for each toi
     from scipy.stats import wilcoxon
     from jr.utils import table2html
-    toi_vis, toi_R_vis, toi_cntrst, toi_R_cntrst = _subscore_toi(analysis)
+    toi_scores, toi_R = _analyze_toi(analysis)
 
     # report angle error because orientation
     if 'circAngle' in analysis['name']:
-        toi_vis /= 2.
-        toi_cntrst /= 2.
+        toi_scores['visibility'] /= 2.
+        toi_scores['visibility'] /= 2.
 
     def quick_stats(x, chance):
         x = x[np.where(~np.isnan(x))[0]]
@@ -366,58 +371,65 @@ for analysis in analyses:
         pval = wilcoxon(x - chance)[1]
         return text % (m, sem, pval)
 
-    # subscore visibilty then subscore contrast
-    for name, toi_scores, toi_R, colors in (
-        ('visibility', toi_vis, toi_R_vis, colors_vis),
-            ('contrast', toi_cntrst, toi_R_cntrst, colors_contrast)):
+    # subscore visibility then subscore contrast
+    for factor in ('visibility', 'contrast'):
+        score = toi_scores[factor]
+        R = toi_R[factor]
+        color = colors[factor]
+        n_subscore = score.shape[2]
 
-        n_subscore = 3 if name == 'contrast' else 4
         fig, axes = plt.subplots(1, len(tois), sharey=True, figsize=[6, 2])
         table = np.empty((len(tois), n_subscore + 3), dtype=object)
 
         # effect in each toi
         for toi, ax in enumerate(axes):
-            bar_sem(range(n_subscore),
-                    toi_scores[:, toi, :] - analysis['chance'],
-                    bottom=analysis['chance'], ax=ax, color=colors)
+            # plot subscores
+            bar_sem(range(n_subscore), score[:, toi, :] - analysis['chance'],
+                    bottom=analysis['chance'], ax=ax, color=color)
+
+            # compute stats for each subscore
             for ii in range(n_subscore):
-                score_ = toi_scores[:, toi, ii]
-                table[toi, ii] = quick_stats(toi_scores[:, toi, ii],
+                score_ = score[:, toi, ii]
+                table[toi, ii] = quick_stats(score[:, toi, ii],
                                              chance=analysis['chance'])
+
             # difference min max (e.g. seen - unseen)
-            table[toi, n_subscore] = quick_stats(toi_scores[:, toi, -1] -
-                                                 toi_scores[:, toi, 0], 0.)
+            table[toi, n_subscore] = quick_stats(score[:, toi, -1] -
+                                                 score[:, toi, 0], chance=0.)
             # regression across scores: single trials
-            table[toi, n_subscore + 1] = quick_stats(toi_R[:, toi], chance=0.)
+            table[toi, n_subscore + 1] = quick_stats(R[:, toi], chance=0.)
 
             # regression across scores: not single trials
-            R = [repeated_spearman(range(n_subscore), subject)[0]
-                 for subject in toi_scores[:, toi, :]]
-            table[toi, n_subscore + 2] = quick_stats(np.array(R), chance=0.)
+            adhoc_R = [repeated_spearman(range(n_subscore), subject)[0]
+                       for subject in score[:, toi, :]]
+            table[toi, n_subscore + 2] = quick_stats(np.array(adhoc_R), 0.)
 
         pretty_axes(axes, xticks=[])
+        report.add_figs_to_section([fig], [factor], analysis['name'])
+
         table = np.c_[[str(t) for t in tois], table]
 
-        headers = [name + str(ii) for ii in range(n_subscore)]
+        headers = [factor + str(ii) for ii in range(n_subscore)]
         table = np.vstack((np.r_[[''], headers, ['max-min'],
                                  ['R', 'R (not single trials)']], table))
-        report.add_htmls_to_section(table2html(table),
-                                    'subscore_' + name, analysis['name'])
+        report.add_htmls_to_section(table2html(table), 'subscore_' + factor,
+                                    analysis['name'])
 
         # Does the effect vary over time
         # e.g. seen-unseen stronger in early vs late
         table = np.empty((len(tois), len(tois)), dtype=object)
         for t1 in range(len(tois)):
             for t2 in range(len(tois)):
-                table[t1, t2] = quick_stats(toi_R[:, t1] - toi_R[:, t2], 0.)
-        report.add_htmls_to_section(table2html(table),
-                                    'toi_toi_' + name, analysis['name'])
-        report.add_figs_to_section([fig], [name], analysis['name'])
+                table[t1, t2] = quick_stats(R[:, t1] - R[:, t2], 0.)
+        report.add_htmls_to_section(table2html(table), 'toi_toi_' + factor,
+                                    analysis['name'])
+
     # Do contrast and visibility affect different time points? FIXME:
     # Not the right test?
     table = np.empty(len(tois), dtype=object)
     for toi in range(len(tois)):
-        table[toi] = quick_stats(toi_R_vis[:, toi] - toi_R_cntrst[:, toi], 0.)
+        table[toi] = quick_stats(toi_R['visibility'][:, toi] -
+                                 toi_R['contrast'][:, toi], 0.)
     table = np.vstack(([str(toi) for toi in tois], table))
     report.add_htmls_to_section(table2html(table),
                                 'toi_subscore_', analysis['name'])
