@@ -139,8 +139,8 @@ def _analyze_toi(analysis):
 
     # don't recompute if not necessary
     fname = paths('score', analysis=ana_name)
-    # if os.path.exists(fname):
-    #     return load('score', analysis=ana_name)
+    if os.path.exists(fname):
+        return load('score', analysis=ana_name)
 
     # gather data
     n_subject = 20
