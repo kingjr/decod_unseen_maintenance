@@ -95,7 +95,8 @@ def _subscore_toi_vis(y_pred, events, analysis):
             y_pred=y_pred[sel])
     # Do the prediction vary across visibility?
     sel = np.where(events['detect_button'] >= 0.)[0]
-    R = repeated_spearman(y_pred[sel], events['detect_button'][sel])
+    y_error = _y_error(y_pred, events[analysis['name']])
+    R = repeated_spearman(y_error[sel], events['detect_button'][sel])
     return scores, R
 
 
@@ -115,8 +116,19 @@ def _subscore_toi_contrast(y_pred, events, analysis):
             y_pred=y_pred[sel])
     # Do the prediction vary across visibility?
     sel = np.where(events['target_present'])[0]
-    R = repeated_spearman(y_pred[sel], events['target_contrast'][sel])
+    y_error = _y_error(y_pred, events[analysis['name']])
+    R = repeated_spearman(y_error[sel], events['target_contrast'][sel])
     return scores, R
+
+
+def _y_error(y_true, y_pred, analysis):
+    """Compute error at single trial"""
+    if 'circAngle' in analysis['name']:
+        y_error = (y_pred - y_true) % (2 * np.pi)
+        y_error = np.abs(np.pi - y_error)
+    else:
+        y_error = np.abs(y_pred - y_true)
+    return y_error
 
 
 def _subscore_toi(analysis):
