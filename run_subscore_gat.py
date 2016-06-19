@@ -128,7 +128,10 @@ def _subregress_toi(y_pred, events, analysis, factor):
         y_error = np.abs(y_pred - y_true)
 
     # Do the prediction vary across visibilities/contrasts?
-    sel = np.where(events[key] >= values[0])[0]
+    sel = np.intersect1d(
+        np.where(events['target_present'] == True)[0],  # noqa
+        np.where(events[key] >= values[0])[0])
+
     R = repeated_spearman(y_error[sel], events[key][sel])
     return R
 
@@ -364,7 +367,7 @@ for analysis in analyses:
         toi_scores['visibility'] /= 2.
 
     def quick_stats(x, chance):
-        x = x[np.where(~np.isnan(x))[0]]
+        # x = x[np.where(~np.isnan(x))[0]]
         text = '[%.3f+/-%.3f, p=%.4f]'
         m = np.nanmean(x)
         sem = np.nanstd(x) / np.sqrt(len(x))
