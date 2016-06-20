@@ -2,7 +2,7 @@
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-from jr.gat import subscore
+from jr.gat import subscore, get_diagonal_ypred
 from jr.stats import repeated_spearman
 from jr.plot import (pretty_plot, pretty_gat, share_clim, pretty_axes,
                      pretty_decod, plot_sem, bar_sem)
@@ -14,7 +14,7 @@ analyses = [analysis for analysis in analyses if analysis['name'] in
             ['target_present', 'target_circAngle']]
 
 
-def _subscore(analysis):
+def _subscore_pipeline(analysis):  # FIXME merge with subscore
     """Subscore each analysis as a function of the reported visibility"""
     ana_name = analysis['name'] + '-vis'
 
@@ -59,7 +59,6 @@ def _subscore(analysis):
 
 def _average_ypred_toi(gat, toi, analysis):
     """Average single trial predictions of each time point in a given TOI"""
-    from jr.gat import get_diagonal_ypred
     y_pred = np.transpose(get_diagonal_ypred(gat), [1, 0, 2])
     times = gat.train_times_['times']
     # select time sample
@@ -72,10 +71,10 @@ def _average_ypred_toi(gat, toi, analysis):
         y_pred = np.angle(np.median((cos + 1j * sin) * radius, axis=1))
     else:
         y_pred = np.median(y_pred[:, toi], axis=1)
-    return y_pred
+    return np.squeeze(y_pred)
 
 
-def _subscore_toi(y_pred, events, analysis, factor):
+def _subscore(y_pred, events, analysis, factor):
     """Subscore each visibility
     y_pred : shape(n_trials,)
     events : dataframe, shape(n_trials,)
@@ -83,12 +82,16 @@ def _subscore_toi(y_pred, events, analysis, factor):
     key: 'detect_button' | 'target_contrast'
     values: range(4) | [.50, .75, 1.]
     """
+    scorer = analysis['scorer']
     factors = dict(visibility=['detect_button', range(4)],
                    contrast=['target_contrast', [.50, .75, 1.]])
     key, values = factors[factor]
     y_true = events[analysis['name']]
+    if y_pred.ndim == 1:
+        y_pred = y_pred[:, np.newaxis]
+    n_samples, n_times = y_pred.shape
 
-    scores = np.nan * np.zeros(len(values))
+    scores = np.nan * np.zeros((n_times, len(values)))
 
     for ii, value in enumerate(values):
         # select trials e.g. according to visibility or contrast
@@ -104,11 +107,11 @@ def _subscore_toi(y_pred, events, analysis, factor):
             continue
 
         # score
-        scores[ii] = analysis['scorer'](y_true=y_true[sel], y_pred=y_pred[sel])
+        scores[:, ii] = scorer(y_true=y_true[sel], y_pred=y_pred[sel])
     return scores
 
 
-def _subregress_toi(y_pred, events, analysis, factor):
+def _subregress(y_pred, events, analysis, factor, independent=False):
     """Correlate single trial error with factor"""
     factors = dict(visibility=['detect_button', range(4)],
                    contrast=['target_contrast', [.50, .75, 1.]])
@@ -116,24 +119,77 @@ def _subregress_toi(y_pred, events, analysis, factor):
     y_true = np.array(events[analysis['name']])
 
     # Check dimensiality
-    y_pred = np.squeeze(y_pred)
-    if (y_pred.ndim != 1) or len(y_pred) != len(y_true):
+    if len(y_pred) != len(y_true):
         raise ValueError
+    if y_pred.ndim == 1:
+        y_pred = y_pred[:, np.newaxis]
+    n_times = y_pred.shape[1]
 
     # Compute single trial error
     if 'circAngle' in analysis['name']:
-        y_error = (y_pred - y_true) % (2 * np.pi)
+        y_error = (y_pred - y_true[:, np.newaxis]) % (2 * np.pi)
         y_error = np.abs(np.pi - y_error)
     else:
-        y_error = np.abs(y_pred - y_true)
+        y_error = np.abs(y_pred - y_true[:, np.newaxis])
 
     # Do the prediction vary across visibilities/contrasts?
     sel = np.intersect1d(
         np.where(events['target_present'] == True)[0],  # noqa
         np.where(events[key] >= values[0])[0])
 
-    R = repeated_spearman(y_error[sel], events[key][sel])
+    if independent:
+        # define covariate factor
+        cov_factor = 'target_contrast' if factor == 'visibility' \
+            else 'detect_button'
+        cov_key, cov_values = factors[factor]
+
+        R = np.nan * np.zeros((len(cov_values), n_times))
+        for ii, cov_value in enumerate(cov_values):
+            cov_sel = np.intersect1d(
+                np.where(events[cov_factor] == cov_value)[0], sel)
+            if len(cov_sel) <= 5:
+                continue
+            R[ii] = repeated_spearman(y_error[cov_sel], events[key][cov_sel])
+        R = np.nanmean(R, axis=0)
+    else:
+        R = repeated_spearman(y_error[sel], events[key][sel])
     return R
+
+
+def _analyze_continuous(analysis):
+    """Regress prediction error as a function of visibility and contrast for
+    each time point"""
+    ana_name = analysis['name'] + '-continuous'
+
+    # don't recompute if not necessary
+    fname = paths('score', analysis=ana_name)
+    if os.path.exists(fname):
+        return load('score', analysis=ana_name)
+
+    # gather data
+    n_subject = 20
+    n_time = 151
+    scores = dict(visibility=np.zeros((n_subject, n_time, 4)),
+                  contrast=np.zeros((n_subject, n_time, 3)))
+    R = dict(visibility=np.zeros((n_subject, n_time)),
+             contrast=np.zeros((n_subject, n_time)),)
+    for s, subject in enumerate(subjects):
+        gat, _, events_sel, events = load('decod', subject=subject,
+                                          analysis=analysis['name'])
+        events = events.iloc[events_sel].reset_index()
+        y_pred = np.transpose(get_diagonal_ypred(gat), [1, 0, 2])[..., 0]
+        for factor in ['visibility', 'contrast']:
+            # subscore per condition (e.g. each visibility rating)
+            scores[factor][s, :, :] = _subscore(y_pred, events,
+                                                analysis, factor)
+            # correlate residuals with factor
+            R[factor][s, :] = _subregress(y_pred, events,
+                                          analysis, factor, True)
+
+    times = gat.train_times_['times']
+    save([scores, R, times], 'score', analysis=ana_name,
+         overwrite=True, upload=True)
+    return [scores, R, times]
 
 
 def _analyze_toi(analysis):
@@ -161,11 +217,11 @@ def _analyze_toi(analysis):
             # visibility
             for factor in ['visibility', 'contrast']:
                 # subscore per condition (e.g. each visibility rating)
-                scores[factor][s, t, :] = _subscore_toi(y_pred, events,
-                                                        analysis, factor)
+                scores[factor][s, t, :] = _subscore(y_pred, events,
+                                                    analysis, factor)
                 # correlate residuals with factor
-                R[factor][s, t] = _subregress_toi(y_pred, events,
-                                                  analysis, factor)
+                R[factor][s, t] = _subregress(y_pred, events,
+                                              analysis, factor, True)
 
     save([scores, R], 'score', analysis=ana_name, overwrite=True, upload=True)
     return [scores, R]
@@ -244,7 +300,17 @@ colors = dict(visibility=plt.get_cmap('bwr')(np.linspace(0, 1, 4.)),
               contrast=plt.get_cmap('hot_r')([.5, .75, 1.]))
 
 for analysis in analyses:
-    all_scores, score_pvals, times = _subscore(analysis)
+    scores, R, times = _analyze_continuous(analysis)
+    fig, (ax1, ax2) = plt.subplots(2, 1)
+    sig = stats(R['visibility']) < .05
+    pretty_decod(-R['visibility'], times=times, sig=sig, ax=ax1,
+                 color='purple', fill=True)
+    sig = stats(R['contrast']) < .05
+    pretty_decod(-R['contrast'], times=times, sig=sig, ax=ax2,
+                 color='orange', fill=True)
+    report.add_figs_to_section([fig], ['continuous regress'], analysis['name'])
+
+    all_scores, score_pvals, times = _subscore_pipeline(analysis)
     if 'circAngle' in analysis['name']:
         all_scores /= 2.
     # plot subscore GAT
