@@ -371,6 +371,7 @@ def read_events(bhv_fname):
         phasebin = lambda v: np.digitize(
             [v], np.linspace(0, 1, 7))[0] * 2 * np.pi / 6.
         # Target
+        # XXX contrast should be 25, 75 or 100 FIXME
         event['target_contrast'] = [0, .5, .75, 1][trial.contrast - 1]
         event['target_spatialFreq'] = check_present(
             trial.__getattribute__('lambda'))
