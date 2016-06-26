@@ -119,4 +119,15 @@ m = np.nanmean(diff)
 sem = np.nanstd(diff) / np.sqrt(sum(~np.isnan(diff)))
 print('[%.3f+/-%.3f, p=%.4f]' % (m, sem, p_val))
 
+# regression
+from jr.stats import repeated_spearman
+for toi in range(4):
+    X = results['bias_vis_toi'][:, 0, 1, :, toi]
+    y = np.arange(4)
+    all_R = repeated_spearman(X.T, y.T)
+    m = np.nanmean(all_R, axis=0)
+    sem = np.std(all_R, axis=0) / np.sqrt(20)
+    _, p = wilcoxon(all_R)
+    print('%.3f+/-%.3f, p=%.4f' % (m, sem, p))
+
 report.save()

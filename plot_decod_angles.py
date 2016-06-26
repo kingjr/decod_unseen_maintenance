@@ -333,10 +333,11 @@ for analysis in analyses:
     # plt.show()
 
     # Report Stats Table
-    table = np.empty((6, len(tois)), dtype=object)
+    table = np.empty((8, len(tois)), dtype=object)
     # Score seen unseen
-    for ii, score in enumerate([get_sub('seen_toi') / 2.,
-                                get_sub('unseen_toi') / 2.]):
+    scores_vis = np.array([get_sub('unseen_toi'), get_sub('pas1.0_toi'),
+                           get_sub('pas2.0_toi'), get_sub('pas3.0_toi'),]) / 2.
+    for ii, score in enumerate(scores_vis):
         for jj, toi in enumerate(tois):
             score_ = score[:, jj]
             p_val = wilcoxon(score_)[1]
@@ -386,8 +387,9 @@ for analysis in analyses:
             np.nanmean(score_), np.nanstd(score_) / np.sqrt(len(score_)),
             p_val)
     table = np.vstack(([str(t) for t in tois], table))
-    table = np.hstack((np.array(['', 'seen', 'unseen', 's-u', 'contrast',
-                                 'R contrast', 'R vis'])[:, None], table))
+    table = np.hstack((
+        np.array(['', 'vis0', 'vis1', 'vis2', 'vis3', 's-u', 'contrast',
+                  'R contrast', 'R vis'])[:, None], table))
 
     report.add_htmls_to_section(table2html(table), analysis['name'], 'table')
 
