@@ -175,13 +175,11 @@ for analysis in analyses:
     colors = cmap(np.linspace(0., 1., 4.))
     scores_vis = np.array([get_sub('pas3.0'), get_sub('pas2.0'),
                            get_sub('pas1.0'), get_sub('unseen')]) / 2.
-    times_r = np.squeeze(resample1D(times[1:]))
     fig, ax = plt.subplots(1, figsize=[6, 2.])
     for score, color in zip(scores_vis, colors):
-        score = resample1D(score)
         p_val = stats(score[:, :, None])
         pretty_decod(np.nanmean(score, axis=0), sig=p_val < .05, color=color,
-                     times=times_r, fill=True, alpha=1., chance=0.)
+                     times=times, fill=True, alpha=1., chance=0.)
     ax.axvline(.800, color='k')
     ax.set_ylim([-.03, .12])
     ax.set_xlim(-.05, 1.200)
@@ -197,18 +195,18 @@ for analysis in analyses:
 
     # dynamics
     seen, unseen = get_sub('seen') / 2., get_sub('unseen') / 2.
-    seen = resample1D(get_sub('seen'))
-    unseen = resample1D(get_sub('unseen'))
+    seen = get_sub('seen')
+    unseen = get_sub('unseen')
     p_seen = stats(seen[:, :, None])
     p_unseen = stats(unseen[:, :, None])
     fig, ax = plt.subplots(1, figsize=[6, 2.])
-    opts = dict(chance=0, ax=ax, alpha=1., width=1, times=times_r, fill=True)
+    opts = dict(chance=0, ax=ax, alpha=1., width=1, times=times, fill=True)
     pretty_decod(seen, sig=p_seen < .05, color='r', **opts)
     pretty_decod(np.mean(seen, axis=0), sig=p_seen < .05, color='k',
-                 times=times_r)
+                 times=times)
     pretty_decod(unseen, sig=p_unseen < .05, color='b', **opts)
     pretty_decod(np.nanmean(unseen, axis=0), sig=p_unseen < .05, color='k',
-                 times=times_r)
+                 times=times)
     ax.axvline(.800, color='k')
     ax.set_ylim([-.1, .21])
     ax.set_yticks([ax.get_ylim()[1]])
@@ -336,7 +334,7 @@ for analysis in analyses:
     table = np.empty((8, len(tois)), dtype=object)
     # Score seen unseen
     scores_vis = np.array([get_sub('unseen_toi'), get_sub('pas1.0_toi'),
-                           get_sub('pas2.0_toi'), get_sub('pas3.0_toi'),]) / 2.
+                           get_sub('pas2.0_toi'), get_sub('pas3.0_toi')]) / 2.
     for ii, score in enumerate(scores_vis):
         for jj, toi in enumerate(tois):
             score_ = score[:, jj]
