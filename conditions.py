@@ -32,7 +32,11 @@ def scorer_auc(y_true, y_pred):
 def analysis(name, typ, condition=None, query=None, title=None):
     """Wrapper to ensure that we attribute the same function for each type
     of analyses: e.g. categorical, regression, circular regression."""
-    erf_function = None
+    # Define univariate analysis
+    erf_function = None  # Default is fast_mannwhitneyu
+    # /!\ for categorical analyses, the contrast is min(y) - max(y)
+    # e.g. target_present==False - target_present==True
+
     if typ == 'categorize':
         clf = make_pipeline(
             StandardScaler(),

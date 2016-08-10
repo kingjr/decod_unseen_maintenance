@@ -161,4 +161,4 @@ def save(var, typ, subject='fsaverage', analysis='analysis', block=999,
     return True
 
 # Analysis Parameters
-tois = np.array([[-.100, 0.050], [.100, .250], [.300, .800], [.900, 1.050]])
+tois = np.array([[-.150, 0.], [.100, .250], [.300, .800], [.900, 1.050]])
