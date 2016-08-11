@@ -28,6 +28,7 @@ for subject in missing_mri:
 
 
 for analysis in analyses:
+    section = ['sources_%s' % analysis['name']]
     chance = analysis['chance']
     # Read data
     evokeds = dict()
@@ -69,8 +70,9 @@ for analysis in analyses:
     ylim = [2, -2]
 
     # Plot
-    for ii, (score, p_val, ax, color) in enumerate(zip(
-            scores, p_values.T, axes, colors)):
+    details_toi, details_roi = list(), list()
+    for ii, (score, p_val, ax, color, roi) in enumerate(zip(
+            scores, p_values.T, axes, colors, rois)):
         pretty_decod(score, sig=p_val < .05, times=times-np.min(times),
                      color=color, ax=ax, fill=True, chance=chance)
 
@@ -102,12 +104,45 @@ for analysis in analyses:
                           ylim[0] + .75 * np.ptp(ylim),
                           analysis['title'], color=[.2, .2, .2],
                           ha='center', weight='bold')
-    section = ['sources_%s' % analysis['name']]
+
+        # Dump some mean and SEM on a priori regions
+        tois = [.109, .169, .500, 1.300]
+        for toi in tois:
+            toi_ = np.where(times > toi)[0][0]
+            details_toi.append(dict(
+                roi=roi,
+                toi=toi,
+                mean=np.mean(score[:, toi_]),  # FIXME contrast is inverted
+                inv_mean=1.-np.mean(score[:, toi_]),  # XXX FIXME
+                sem=np.std(score[:, toi_]) / np.sqrt(len(score))))
+
+        # Dump some sig cluster details
+        sig = p_val < .05
+        diff = np.diff(1. * sig)
+        starts, stops = np.where(diff > 0)[0], np.where(diff < 0)[0]
+        for start, stop in zip(starts, stops):
+            score_toi = np.mean(score[:, start:stop], axis=1)
+            details_roi.append(dict(
+                roi=roi,
+                p_val=p_val[stop],
+                start=times[start],
+                stop=times[stop],
+                mean=np.mean(score_toi),  # FIXME contrast is inverted
+                inv_mean=1.-np.mean(score_toi),  # XXX FIXME
+                sem=np.std(score_toi) / np.sqrt(len(score))))
+
     report.add_figs_to_section([fig], section, 'source')
+    report.add_htmls_to_section(DataFrame(details_roi).to_html(),
+                                section, 'roi')
+    report.add_htmls_to_section(DataFrame(details_toi).to_html(),
+                                section, 'toi')
 
     # Dump significant clusters on all regions
     connectivity = sparse.csr_matrix(np.eye((data.shape[1])))
     p_vals = stats(data.transpose(0, 2, 1) - chance, None, n_jobs=-1)
+    sig_labels = DataFrame(labels[np.where(np.sum(p_vals < .05, axis=0))[0]])
+    report.add_htmls_to_section(sig_labels.to_html(), section, 'sig_cluster')
+
     sig_labels = DataFrame(labels[np.where(np.sum(p_vals < .05, axis=0))[0]])
     report.add_htmls_to_section(sig_labels.to_html(), section, 'sig_cluster')
 
