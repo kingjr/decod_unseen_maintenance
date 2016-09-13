@@ -301,7 +301,7 @@ colors = dict(visibility=plt.get_cmap('bwr')(np.linspace(0, 1, 4.)),
 
 for analysis in analyses:
     scores, R, times = _analyze_continuous(analysis)
-    fig, (ax1, ax2) = plt.subplots(2, 1)
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=[20, 10])
     sig = stats(R['visibility']) < .05
     pretty_decod(-R['visibility'], times=times, sig=sig, ax=ax1,
                  color='purple', fill=True)
@@ -316,12 +316,15 @@ for analysis in analyses:
     # plot subscore GAT
     figs, axes = list(), list()
     for vis in range(4):
-        fig, ax = plt.subplots(1, figsize=[7, 5.5])
+        fig, ax = plt.subplots(1, figsize=[14, 11])
         scores = all_scores[:, vis, ...]
         p_val = score_pvals[vis]
         pretty_gat(np.nanmean(scores, axis=0), times=times,
                    chance=analysis['chance'],
-                   sig=p_val < .05, ax=ax, colorbar=False)
+                   ax=ax, colorbar=False)
+        xx, yy = np.meshgrid(times, times, copy=False, indexing='xy')
+        ax.contour(xx, yy, p_val < .05, colors='black', levels=[0],
+                   linestyles='--', linewidth=5)
         ax.axvline(.800, color='k')
         ax.axhline(.800, color='k')
         axes.append(ax)
@@ -332,7 +335,7 @@ for analysis in analyses:
 
     # plot GAT slices
     slices = np.arange(.100, .901, .200)
-    fig, axes = plt.subplots(len(slices), 1, figsize=[5, 6],
+    fig, axes = plt.subplots(len(slices), 1, figsize=[20, 24],
                              sharex=True, sharey=True)
     for this_slice, ax in zip(slices, axes[::-1]):
         toi = np.where(times >= this_slice)[0][0]
@@ -371,7 +374,7 @@ for analysis in analyses:
     roll_times = times-times[len(times)//2]
     if 'circAngle' in analysis['name']:
         all_durations /= 2.
-    fig, axes = plt.subplots(2, 1, sharex=True, sharey=True, figsize=[3, 6])
+    fig, axes = plt.subplots(2, 1, sharex=True, sharey=True, figsize=[9, 18])
     for t, (toi, ax) in enumerate(zip(tois[1:-1], axes[::-1])):
         for vis in range(4)[::-1]:
             score = all_durations[:, vis, t+1, :]
@@ -395,7 +398,7 @@ for analysis in analyses:
 
     # plot sig scores and correlation with visibility
     _, R_pval, _ = _correlate(analysis)
-    fig, ax = plt.subplots(1, figsize=[5, 6])
+    fig, ax = plt.subplots(1, figsize=[10, 12])
     for vis in range(4)[::-1]:
         if vis not in [0, 3]:  # for clarity only plot min max visibility
             continue
@@ -405,7 +408,7 @@ for analysis in analyses:
         ax.contourf(xx, yy, sig, levels=[-1, 0],
                     colors=[colors['visibility'][vis]], aspect='equal')
     ax.contour(xx, yy, R_pval > .05, levels=[-1, 0], colors='k',
-               aspect='equal')
+               aspect='equal', linewidth=5, linestyle='--')
     ax.axvline(.800, color='k')
     ax.axhline(.800, color='k')
     ticks = np.arange(-.100, 1.101, .100)
@@ -421,6 +424,30 @@ for analysis in analyses:
     pretty_plot(ax)
     ax.set_aspect('equal')
     report.add_figs_to_section([fig], [analysis['name']], 'R')
+
+    # plot correlation with visibility
+    all_R, R_pval, _ = _correlate(analysis)
+    fig, ax = plt.subplots(1, figsize=[10, 11])
+    pretty_gat(np.nanmean(all_R, axis=0), times=times,
+               chance=0., ax=ax, colorbar=False)
+    xx, yy = np.meshgrid(times, times, copy=False, indexing='xy')
+    ax.contour(xx, yy, R_pval < .05, colors='black', levels=[0],
+               linestyles='--', linewidth=5)
+    ax.axvline(.800, color='k')
+    ax.axhline(.800, color='k')
+    ticks = np.arange(-.100, 1.101, .100)
+    ticklabels = [int(1e3 * ii) if ii in [0, .800] else '' for ii in ticks]
+    ax.set_xlabel('Test Time')
+    ax.set_ylabel('Train Time')
+    ax.set_xticks(ticks)
+    ax.set_yticks(ticks)
+    ax.set_xticklabels(ticklabels)
+    ax.set_yticklabels(ticklabels)
+    ax.set_xlim(-.100, 1.100)
+    ax.set_ylim(-.100, 1.100)
+    pretty_plot(ax)
+    ax.set_aspect('equal')
+    report.add_figs_to_section([fig], [analysis['name']], 'R vis')
 
     # plot and report subscore per visibility and contrast for each toi
     from scipy.stats import wilcoxon
@@ -447,7 +474,7 @@ for analysis in analyses:
         color = colors[factor]
         n_subscore = score.shape[2]
 
-        fig, axes = plt.subplots(1, len(tois), sharey=True, figsize=[6, 2])
+        fig, axes = plt.subplots(1, len(tois), sharey=True, figsize=[24, 8])
         table = np.empty((len(tois), n_subscore + 3), dtype=object)
 
         # effect in each toi
