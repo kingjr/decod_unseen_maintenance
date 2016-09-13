@@ -120,6 +120,7 @@ for ii, (analysis, ax_diag) in enumerate(zip(analyses, axes_alldiag)):
         # bottom suplot
         ax_diag.set_xlabel('')
         ax_diag.set_xticklabels([])
+        ax_diag.xaxis.set_visible(False)
     elif ax_diag == axes_alldiag[0]:
         # top subplot
         ax_diag.text(0, ylim[1], 'Target',  backgroundcolor='w', ha='center',
