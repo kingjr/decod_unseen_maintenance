@@ -1,15 +1,19 @@
 """GAT subscore and regress as a function of visibility"""
 import os
 import numpy as np
+from pandas import DataFrame
+from scipy.stats import wilcoxon
 import matplotlib.pyplot as plt
 from jr.gat import subscore, get_diagonal_ypred
 from jr.stats import repeated_spearman
 from jr.plot import (pretty_plot, pretty_gat, share_clim, pretty_axes,
                      pretty_decod, plot_sem, bar_sem)
-from jr.utils import align_on_diag
+from jr.utils import align_on_diag, table2html
 from config import subjects, load, save, paths, report, tois
 from base import stats
 from conditions import analyses
+
+# Restrict subscore analyses to target presence and target orientation.
 analyses = [analysis for analysis in analyses if analysis['name'] in
             ['target_present', 'target_circAngle']]
 
@@ -299,7 +303,9 @@ def _duration_toi(analysis):
 colors = dict(visibility=plt.get_cmap('bwr')(np.linspace(0, 1, 4.)),
               contrast=plt.get_cmap('hot_r')([.5, .75, 1.]))
 
+# Loop across visibility and orientation analyses
 for analysis in analyses:
+    # Plot correlation of decoding score with visibility and contrast
     scores, R, times = _analyze_continuous(analysis)
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=[20, 10])
     sig = stats(R['visibility']) < .05
@@ -310,10 +316,10 @@ for analysis in analyses:
                  color='orange', fill=True)
     report.add_figs_to_section([fig], ['continuous regress'], analysis['name'])
 
+    # Plot decoding score for each visibility level
     all_scores, score_pvals, times = _subscore_pipeline(analysis)
     if 'circAngle' in analysis['name']:
-        all_scores /= 2.
-    # plot subscore GAT
+        all_scores /= 2.  # from circle to half circle
     figs, axes = list(), list()
     for vis in range(4):
         fig, ax = plt.subplots(1, figsize=[14, 11])
@@ -396,8 +402,8 @@ for analysis in analyses:
     pretty_plot(ax)
     report.add_figs_to_section([fig], [analysis['name']], 'toi_duration')
 
-    # plot sig scores and correlation with visibility
-    _, R_pval, _ = _correlate(analysis)
+    # plot significant GAT subscore for each visibility within the same figure
+    all_R, R_pval, _ = _correlate(analysis)
     fig, ax = plt.subplots(1, figsize=[10, 12])
     for vis in range(4)[::-1]:
         if vis not in [0, 3]:  # for clarity only plot min max visibility
@@ -425,8 +431,7 @@ for analysis in analyses:
     ax.set_aspect('equal')
     report.add_figs_to_section([fig], [analysis['name']], 'R')
 
-    # plot correlation with visibility
-    all_R, R_pval, _ = _correlate(analysis)
+    # Plot GAT correlaltion between subscores and visibility
     fig, ax = plt.subplots(1, figsize=[10, 11])
     pretty_gat(np.nanmean(all_R, axis=0), times=times,
                chance=0., ax=ax, colorbar=False)
@@ -450,8 +455,6 @@ for analysis in analyses:
     report.add_figs_to_section([fig], [analysis['name']], 'R vis')
 
     # plot and report subscore per visibility and contrast for each toi
-    from scipy.stats import wilcoxon
-    from jr.utils import table2html
     toi_scores, toi_R = _analyze_toi(analysis)
 
     # report angle error because orientation
@@ -467,7 +470,8 @@ for analysis in analyses:
         pval = wilcoxon(x - chance)[1]
         return text % (m, sem, pval)
 
-    # subscore visibility then subscore contrast
+    # Orthogonolize visibility and contrast by subscoring visibility then
+    # subscoring contrast
     for factor in ('visibility', 'contrast'):
         score = toi_scores[factor]
         R = toi_R[factor]
@@ -529,5 +533,75 @@ for analysis in analyses:
     table = np.vstack(([str(toi) for toi in tois], table))
     report.add_htmls_to_section(table2html(table),
                                 'toi_subscore_', analysis['name'])
+
+    # Stats for tested models
+    all_scores, _, times = _subscore_pipeline(analysis)
+    all_R, R_pval, _ = _correlate(analysis)
+    train_early = np.where(times >= .100)[0][0]
+    test_late = np.where((times >= tois[2][0]) & (times <= tois[2][1]))[0]
+
+    # Test single stage model:
+    table = list()
+    # Are estimators better at training time or generalization time?
+    # average across visibility levels (shape: subject, vis, train, test)
+    scores = np.mean(all_scores[:, :, :, :], axis=1)
+    # Focus on decodable time window (early + delay)
+    toi = np.where((times >= tois[1][0]) & (times <= tois[2][1]))[0]
+    scores = scores[:, toi, toi]
+    # Get mean diagonal score for each subject
+    diag = np.array([np.diag(subject).mean() for subject in scores])
+    # Get mean generalization score each subject
+    gen = np.array([subject.mean() for subject in scores])
+    table.append(dict(name='diag-gen', disp=quick_stats(diag - gen, 0.)))
+
+    # Test 'early maintenance' model
+    # Do early classifiers only generalize over time in the unseen condition?
+    # select early trained unseen condition
+    vis = 0
+    scores = all_scores[:, vis, train_early, :]
+
+    # --- cluster corrected
+    p_val = stats(scores - analysis['chance'])
+    sig_late = np.where(p_val[test_late] < .05)[0]
+    if len(sig_late):
+        table.append(dict(name='early gen cluster time',
+                          disp=times[test_late[sig_late[[0, -1]]]]))
+        table.append(dict(name='early gen cluster p_val',
+                          disp=p_val[test_late[sig_late[0]]]))
+    # --- compute mean generalization score over late time window
+    mean_scores = scores[:, test_late].mean(1)
+    table.append(dict(name='early gen average over late',
+                      disp=quick_stats(mean_scores, analysis['chance'])))
+
+    # --- difference with diagonal score
+    diag = np.array([np.diag(subject[vis]) for subject in all_scores])
+    diag = diag[:, test_late].mean(1)
+    table.append(dict(name='early gen average lower than diag',
+                      disp=quick_stats(diag - mean_scores, 0.)))
+    report.add_htmls_to_section(table.to_html())
+
+    # Test re-entry:
+    # do early classifiers generalize differently across visibilities
+    R = all_R[:, train_early, test_late].mean(-1)
+    diag_R = np.mean([np.diag(r)[test_late] for r in all_R], axis=1)
+    table.append(dict(name='early estimator late gen correlates with vis',
+                      disp=quick_stats(R, 0.)))
+    table.append(dict(
+        name='early estimator late gen correlates with vis less than diag',
+        disp=quick_stats(diag_R - R, 0.)))
+
+    # test late maintenance:
+    # Do late estimators generalize over the entire time period?
+    train_500 = np.where(times >= .500)[0][0]
+    scores = all_scores[:, vis, train_500, :]
+    p_val = stats(scores - analysis['chance'])
+    sig = np.where(p_val < .05)[0]
+    if len(sig):
+        first_cluster = np.array([sig[0],
+                                  sig[np.where(np.diff(sig) > 1)[0][0]-1]])
+        table.append(dict(name='t_500 generalize between',
+                          disp=times[first_cluster]))
+        table.append(dict(name='t_500 generalize p_val',
+                          disp=p_val[first_cluster[0]]))
 
 report.save()
