@@ -24,7 +24,6 @@ The scripts are generally decomposed in terms of general functions (base), actua
 - 'config.py'  # where the paths and filenames are setup
 
 #### Prepare data
-- 'run_download_all.py'  # downloads data from aws
 - 'run_behavior.py'  # plot visibility, accuracy and d-prime
 - 'run_preprocessing.py'  # filter and epochs raw signals
 
