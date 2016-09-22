@@ -1,10 +1,14 @@
-"""Plot region of interest"""
+"""Make a plot of the selected region of interest typically associated with
+visual perception (i.e. ventral and dorsal stream + PFC)"""
+
+import numpy as np
+import matplotlib.pyplot as plt
+import mne
+from surfer import Brain
+
 rois = ['lingual', 'inferiortemporal', 'superiorparietal',
         'supramarginal', 'rostralmiddlefrontal', 'precentral']
-import mne
-import matplotlib.pyplot as plt
-import numpy as np
-from surfer import Brain
+
 brain = Brain('fsaverage', 'split', 'inflated', background='w')
 labels = mne.read_labels_from_annot('fsaverage', parc='aparc')
 cmap = plt.get_cmap('rainbow')

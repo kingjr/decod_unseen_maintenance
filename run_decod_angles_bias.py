@@ -3,8 +3,9 @@ angle after probe onset is bias by and/or solely due to the presence of a probe
 whose orientation is correlated to the target's"""
 import numpy as np
 from jr.stats import circ_tuning
-from config import load, save, subjects, tois
+from config import load, save, subjects
 from base import stats, get_predict_error, angle_acc, angle_bias
+from conditions import tois
 
 n_bins = 24
 toi_probe = tois[-1]

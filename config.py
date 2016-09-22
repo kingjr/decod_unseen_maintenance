@@ -7,7 +7,7 @@ from mne.io import Raw
 from jr.utils import OnlineReport
 from jr.cloud import Client
 
-# Setup paths
+# Setup paths depending on we're computing locally or on AWS
 aws = False
 if 'aws' in os.environ.keys() and os.environ['aws'] == 'True':
     aws = True
@@ -16,17 +16,19 @@ if aws:
 else:
     data_path = '/media/jrking/harddrive/Niccolo/data/'
 
+# Setup client with AWS to save and retrieve data
 client = Client('S3', bucket='meg.niccolo', client_root=data_path)
 
-# Setup online HTML report
+# Setup online HTML report to generate figures on each iteration
 report = OnlineReport()
 
 # Experiment parameters
 base_path = op.dirname(op.dirname(__file__))
 print base_path
 
-subjects = range(1, 21)
 
+# Define subjects id, and MRI
+subjects = range(1, 21)
 subjects_id = ['ak130184', 'el130086', 'ga130053', 'gm130176', 'hn120493',
                'ia130315', 'jd110235', 'jm120476', 'ma130185', 'mc130295',
                'mj130216', 'mr080072', 'oa130317', 'rg110386', 'sb120316',
@@ -38,6 +40,7 @@ bad_mri = ['av130322']  # missing temporal cortex!
 
 
 def paths(typ, subject='fsaverage', analysis='analysis', block=999):
+    """function to handle reading/saving paths"""
     subject = 's%i' % subject if isinstance(subject, int) else subject
     this_path = op.join(data_path, subject, typ)
     if typ in ['fwd', 'inv', 'cov', 'morph', 'trans', 'stc']:
@@ -159,6 +162,3 @@ def save(var, typ, subject='fsaverage', analysis='analysis', block=999,
     if upload:
         client.upload(fname)
     return True
-
-# Analysis Parameters
-tois = np.array([[-.150, 0.], [.100, .250], [.300, .800], [.900, 1.050]])

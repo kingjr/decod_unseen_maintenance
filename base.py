@@ -1,7 +1,8 @@
 import numpy as np
 from jr.utils import tile_memory_free, pairwise, table2html
-from jr.stats import (repeated_spearman, corr_linear_circular,
-                      circ_mean, corr_circular_linear)
+from jr.stats import (repeated_spearman, circ_mean, corr_circular_linear,
+                      fast_mannwhitneyu)
+from mne.stats import ttest_1samp_no_p
 from mne.stats import spatio_temporal_cluster_1samp_test
 from scipy.stats import wilcoxon
 
@@ -10,7 +11,6 @@ from scipy.stats import wilcoxon
 
 def stat_fun(x, sigma=0, method='relative'):
     """Aux. function of stats"""
-    from mne.stats import ttest_1samp_no_p
     t_values = ttest_1samp_no_p(x, sigma=sigma, method=method)
     t_values[np.isnan(t_values)] = 0
     return t_values
@@ -87,6 +87,11 @@ def table_duration(data, tois, times, chance):
 def nested_analysis(X, df, condition, function=None, query=None,
                     single_trial=False, y=None, n_jobs=-1):
     """ Apply a nested set of analyses.
+
+    This pipeline is to manually identify main effects in the case of multiple
+    independent variables. In the present study, it is an overkill, and could
+    be simplified.
+
     Parameters
     ----------
     X : np.array, shape(n_samples, ...)
@@ -112,7 +117,7 @@ def nested_analysis(X, df, condition, function=None, query=None,
     sub : dict()
         Contains results of sub levels.
     """
-    import numpy as np
+
     if isinstance(condition, str):
         # Subselect data using pandas.DataFrame queries
         sel = range(len(X)) if query is None else df.query(query).index
@@ -178,8 +183,7 @@ def nested_analysis(X, df, condition, function=None, query=None,
 
 
 def _default_analysis(X, y):
-    # from sklearn.metrics import roc_auc_score
-    from jr.stats import fast_mannwhitneyu
+    """Aux. function to nested_analysis"""
     # Binary contrast
     unique_y = np.unique(y)
     # if two condition, can only return contrast
@@ -221,46 +225,10 @@ def meg_to_gradmag(chan_types):
 # DECODING ####################################################################
 
 
-def scorer_angle_tuning(truth, prediction, n_bins=19):
-    """WIP XXX should be transformed into a scorer?"""
-    prediction = np.array(prediction)
-    truth = np.array(truth)
-    error = (np.pi - prediction + truth) % (2 * np.pi) - np.pi
-    bins = np.linspace(-np.pi, np.pi, n_bins + 1)
-    h, _ = np.histogram(error, bins)
-    h /= sum(h)
-    return h
-
-
-def scorer_angle_discrete(truth, prediction):
-    """WIP Scoring function dedicated to SVC_angle"""
-    n_trials, n_angles = prediction.shape
-    angles = np.linspace(0, 2 * np.pi * (1 - 1 / n_angles), n_angles)
-    x_pred = prediction * tile_memory_free(np.cos(angles), [n_trials, 1]).T
-    y_pred = prediction * tile_memory_free(np.sin(angles), [n_trials, 1]).T
-    angle_pred = np.arctan2(y_pred.mean(1), x_pred.mean(1))
-    angle_error = truth - angle_pred
-    pi = np.pi
-    score = np.mean(np.abs((angle_error + pi) % (2 * pi) - pi))
-    return pi / 2 - score
-
-
-def scorer_angle(truth, prediction):
-    """Scoring function dedicated to SVR_angle"""
-    angle_error = truth - prediction[:, 0]
-    pi = np.pi
-    score = np.mean(np.abs((angle_error + pi) % (2 * pi) - pi))
-    return np.pi / 2 - score
-
-
-def scorer_circlin(y_line, y_circ):
-    """Scoring function to compute pseudo R value from circular linear
-    correlation"""
-    R, R2, pval = corr_linear_circular(y_line, y_circ)
-    return R
 
 
 def get_predict(gat, sel=None, toi=None, mean=True, typ='diagonal'):
+    """Retrieve decoding prediction from a GeneralizationAcrossTime object"""
     from jr.gat import get_diagonal_ypred
     from jr.utils import align_on_diag
     # select data in the gat matrix
@@ -293,12 +261,14 @@ def get_predict(gat, sel=None, toi=None, mean=True, typ='diagonal'):
 
 
 def lstack(x, y):
+    """Stack x and y and transpose"""
     z = np.stack([x, y])
     return np.transpose(z, np.r_[range(1, z.ndim), 0])
 
 
 def get_predict_error(gat, sel=None, toi=None, mean=True, typ='diagonal',
                       y_true=None):
+    """Retrieve single trial error from a GeneralizationAcrossTime object"""
     y_pred = get_predict(gat, sel=sel, toi=toi, mean=mean, typ=typ)[..., 0]
     # error is diff modulo pi centered on 0
     sel = range(len(y_pred)) if sel is None else sel

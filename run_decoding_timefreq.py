@@ -10,6 +10,7 @@ from conditions import analyses
 
 
 def _run(epochs, events, analysis):
+    """Runs Time Frequency Decoding on a given subject and analysis"""
 
     # Set time frequency parameters
     start = np.where(epochs.times >= -.200)[0][0]
@@ -17,7 +18,7 @@ def _run(epochs, events, analysis):
     frequencies = np.logspace(np.log10(4), np.log10(80), 25)
     decim = slice(start, stop, 8)  # ~62 Hz after TFR
 
-    # Get relevant trials
+    # Select relevant trials (e.g. remove absent trials)
     query, condition = analysis['query'], analysis['condition']
     sel = range(len(events)) if query is None \
         else events.query(query).index
@@ -26,6 +27,7 @@ def _run(epochs, events, analysis):
 
     print analysis['name'], np.unique(y[sel]), len(sel)
 
+    # Abort if no trial
     if len(sel) == 0:
         return
 

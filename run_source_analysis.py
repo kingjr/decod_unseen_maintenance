@@ -12,6 +12,7 @@ inv_params = dict(lambda2=1.0 / (2 ** 3.0),
                   verbose=False)
 
 for meg_subject, subject in zip(range(1, 21), subjects_id):
+    # load single subject effects (across trials)
     if subject in bad_mri:
         continue
     epochs = load('epochs_decim', subject=meg_subject, preload=True)
@@ -19,11 +20,12 @@ for meg_subject, subject in zip(range(1, 21), subjects_id):
     epochs.apply_baseline((None, 0))
     epochs.pick_types(meg=True, eeg=False, eog=False)
 
+    # Setup source data container
     evoked = epochs.average()
-
     inv = load('inv', subject=meg_subject)
     stc = apply_inverse(evoked, inv, **inv_params)
 
+    # run each analysis within subject
     for analysis in analyses:
         # source transforming should be applied as early as possible,
         # but here I'm struggling on memory

@@ -10,7 +10,11 @@ from sklearn.metrics import roc_auc_score
 from sklearn.linear_model import LogisticRegression, Ridge
 from jr.gat import force_predict, scorer_spearman, PolarRegression
 from jr.gat import scorer_angle as _scorer_angle
+from jr.stats import corr_linear_circular
 from base import scorer_circlin
+
+# Analysis Parameters: arbitrary time regions of interest
+tois = np.array([[-.150, 0.], [.100, .250], [.300, .800], [.900, 1.050]])
 
 
 def scorer_angle(y_true, y_pred):
@@ -29,6 +33,13 @@ def scorer_auc(y_true, y_pred):
     return roc_auc_score(y_true == np.max(y_true), y_pred[:, 0])
 
 
+def scorer_circlin(y_line, y_circ):
+    """Scoring function to compute pseudo R value from circular linear
+    correlation"""
+    R, R2, pval = corr_linear_circular(y_line, y_circ)
+    return R
+
+
 def analysis(name, typ, condition=None, query=None, title=None):
     """Wrapper to ensure that we attribute the same function for each type
     of analyses: e.g. categorical, regression, circular regression."""
@@ -38,19 +49,23 @@ def analysis(name, typ, condition=None, query=None, title=None):
     # e.g. target_present==False - target_present==True
 
     if typ == 'categorize':
+        # estimator is normalization + l2 Logistic Regression
         clf = make_pipeline(
             StandardScaler(),
             force_predict(LogisticRegression(class_weight='balanced'), axis=1))
         scorer = scorer_auc
         chance = .5
     elif typ == 'regress':
+        # estimator is normalization + l2 Ridge
         clf = make_pipeline(StandardScaler(), Ridge())
         scorer = scorer_spearman
         chance = 0.
     elif typ == 'circ_regress':
+        # estimator is normalization + l2 Logistic Regression on cos and sin
         clf = make_pipeline(StandardScaler(), PolarRegression(Ridge()))
         scorer = scorer_angle
         chance = 0.
+        # The univariate analysis needs a different scorer
         erf_function = scorer_circlin
     if condition is None:
         condition = name
@@ -61,6 +76,7 @@ def analysis(name, typ, condition=None, query=None, title=None):
 
 # For each analysis we need to specifically analyze a subset of trials to avoid
 # finding trivial effects (e.g. visibility is correlated with target presence)
+# This is done via a pandas.DataFrame query.
 analyses = (
     analysis('target_present',      'categorize', title='Target Presence'),
     analysis('target_contrast_pst', 'regress', condition='target_contrast',

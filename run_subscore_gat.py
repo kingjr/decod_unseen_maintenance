@@ -9,9 +9,9 @@ from jr.stats import repeated_spearman
 from jr.plot import (pretty_plot, pretty_gat, share_clim, pretty_axes,
                      pretty_decod, plot_sem, bar_sem)
 from jr.utils import align_on_diag, table2html
-from config import subjects, load, save, paths, report, tois
+from config import subjects, load, save, paths, report
 from base import stats
-from conditions import analyses
+from conditions import analyses, tois
 
 # Restrict subscore analyses to target presence and target orientation.
 analyses = [analysis for analysis in analyses if analysis['name'] in

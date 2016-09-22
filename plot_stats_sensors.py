@@ -2,8 +2,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from jr.plot import plot_butterfly, plot_gfp, pretty_colorbar
-from config import report, load, tois
-from conditions import analyses
+from config import report, load
+from conditions import analyses, tois
 
 # Apply contrast on each type of epoch
 for analysis in analyses:

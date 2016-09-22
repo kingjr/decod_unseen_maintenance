@@ -44,7 +44,6 @@ for s, subject in enumerate(subjects):  # Loop across each subject
     save([gat, analysis, sel_gat, events], 'decod', subject=subject,
          analysis=analysis['name'] + '_probe_to_target')
 
-# FIXME probe starts at 816!
 times = epochs.times[:-5]
 score_diag = np.array([np.diag(np.array(score)[4:, :]) for score in scores])
 p_val = stats(score_diag)

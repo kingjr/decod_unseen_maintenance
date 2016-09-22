@@ -11,11 +11,14 @@ from config import paths, load, save
 
 def _epoch_raw(subject, block, overwrite=False):
     """high pass filter raw data, make consistent channels and epoch."""
+
+    # Checks if preprocessing has already been done
     epo_fname = paths('epo_block', subject=subject, block=block)
     if op.exists(epo_fname) and not overwrite:
         return
     print(subject, block)
 
+    # Load raw data
     raw = load('sss', subject=subject, block=block, preload=True)
 
     # Explicit picking of channel to ensure same channels across subjects
@@ -40,7 +43,7 @@ def _epoch_raw(subject, block, overwrite=False):
     picks = [np.where(np.array(raw.ch_names) == ch)[0][0] for ch in picks]
     picks = np.r_[np.arange(306), picks]
 
-    # Filtered
+    # high pass filtering
     raw.filter(.1, None, l_trans_bandwidth=.05, filter_length='30s',
                n_jobs=1)
 

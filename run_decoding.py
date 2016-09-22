@@ -5,6 +5,7 @@ from conditions import analyses
 
 
 def _run(epochs, events, analysis):
+    """Runs temporal generalization for a given subject and analysis"""
     print(subject, analysis['name'])
     # subselect the trials (e.g. exclude absent trials) with a
     # dataframe query defined in conditions.py
@@ -12,7 +13,7 @@ def _run(epochs, events, analysis):
     sel = range(len(events)) if query is None \
         else events.query(query).index
     sel = [ii for ii in sel if ~np.isnan(events[condition][sel][ii])]
-    
+
     # The to-be-predicted value, for each trial:
     y = np.array(events[condition], dtype=np.float32)
 
@@ -59,7 +60,7 @@ for s, subject in enumerate(subjects):  # Loop across each subject
 
     # load data
     epochs = load('epochs_decim', subject=subject, preload=True)
-    
+
     # only analyze MEG from -100 ms to 1400 ms after target onset
     epochs.pick_types(meg=True, eeg=False, stim=False, eog=False, ecg=False)
     epochs.crop(-.1, 1.4)
@@ -68,6 +69,6 @@ for s, subject in enumerate(subjects):  # Loop across each subject
     # Apply to each analysis (e.g. presence, orientation, ...)
     for analysis in analyses:
         _run(epochs, events, analysis)
-    
+
     # Clear memory
     del epochs, events

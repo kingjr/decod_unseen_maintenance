@@ -1,9 +1,14 @@
 import numpy as np
+import os.path as op
+from config import missing_mri, bad_mri, paths
+import shutil
+
 from scipy import sparse
 from pandas import DataFrame
 import matplotlib.pyplot as plt
 
 import mne
+
 from jr.plot import pretty_decod
 
 from base import stats
@@ -18,9 +23,6 @@ sel_analyses = ['target_present', 'target_circAngle', 'detect_button_pst']
 analyses = [ana for ana in analyses if ana['name'] in sel_analyses]
 
 # Copy fsaverage labels for subjects without an mri
-import os.path as op
-from config import missing_mri, bad_mri, paths
-import shutil
 for subject in missing_mri:
     to = op.join(paths('freesurfer'), subject, 'label')
     if not op.exists(to):
@@ -42,7 +44,7 @@ for analysis in analyses:
         stc, _, _ = load('evoked_source', subject=subject,
                          analysis=analysis['name'])
 
-        # Extract
+        # Extract time course
         for label in labels:
             if 'unknown' in label.name:
                 continue
@@ -56,7 +58,7 @@ for analysis in analyses:
     data = np.transpose([evokeds.values()], [0, 2, 1, 3])[0]
     times = stc.times
 
-    # Stats on region of interest
+    # Stats on region of interest across subjects
     scores = list()
     for roi in rois:
         idx = np.where([roi in this_roi for this_roi in labels])[0]
@@ -105,7 +107,8 @@ for analysis in analyses:
                           analysis['title'], color=[.2, .2, .2],
                           ha='center', weight='bold')
 
-        # Dump some mean and SEM on a priori regions
+        # Print some mean and SEM on a priori regions to report in the
+        # manuscript
         tois = [.109, .169, .500, 1.300]
         for toi in tois:
             toi_ = np.where(times > toi)[0][0]
@@ -116,7 +119,7 @@ for analysis in analyses:
                 inv_mean=1.-np.mean(score[:, toi_]),  # XXX FIXME
                 sem=np.std(score[:, toi_]) / np.sqrt(len(score))))
 
-        # Dump some sig cluster details
+        # Print some sig cluster details
         sig = p_val < .05
         diff = np.diff(1. * sig)
         starts, stops = np.where(diff > 0)[0], np.where(diff < 0)[0]
@@ -137,7 +140,7 @@ for analysis in analyses:
     report.add_htmls_to_section(DataFrame(details_toi).to_html(),
                                 section, 'toi')
 
-    # Dump significant clusters on all regions
+    # Print significant clusters on all regions
     connectivity = sparse.csr_matrix(np.eye((data.shape[1])))
     p_vals = stats(data.transpose(0, 2, 1) - chance, None, n_jobs=-1)
     sig_labels = DataFrame(labels[np.where(np.sum(p_vals < .05, axis=0))[0]])

@@ -1,3 +1,4 @@
+"""Prepare source analysis for each subject"""
 import os
 import numpy as np
 from mne.io import read_info
@@ -9,7 +10,7 @@ os.environ['SUBJECTS_DIR'] = subjects_dir
 
 # Anatomy pipeline ------------------------------------------------------------
 from jr.meg import anatomy_pipeline
-if False:
+if True:
     for meg_subject, subject in zip(range(1, 21), subjects_id):
         if subject not in missing_mri + bad_watershed + bad_mri:
             continue
@@ -17,7 +18,7 @@ if False:
         anatomy_pipeline(subject=subject, subjects_dir=subjects_dir,
                          overwrite=False)
 
-if False:
+if True:
     from mne.bem import (make_bem_model, write_bem_surfaces,
                          make_bem_solution, write_bem_solution)
     for subject in bad_watershed:
@@ -34,7 +35,7 @@ if False:
 
 # check anat
 from mne.viz import plot_bem
-if False:
+if True:
     figs = list()
     for meg_subject, subject in zip(range(1, 21), subjects_id):
         if subject in missing_mri + bad_mri:
@@ -61,7 +62,7 @@ if False:
 # Coregistration --------------------------------------------------------------
 from mne.viz import plot_trans
 from mne.gui import coregistration
-if False:
+if True:
     for meg_subject, subject in zip(range(1, 21), subjects_id):
         if subject in missing_mri + bad_mri:
             continue
@@ -106,7 +107,7 @@ def _copy_from_fsaverage(subject, subjects_dir, overwrite=False):
         if overwrite or not(os.path.exists(f_to)):
             copyfile(f_from, f_to)
 
-if False:
+if True:
     # coregistration and source space for missing mri
     from shutil import copyfile
     anatomy_pipeline(subject='fsaverage', subjects_dir=subjects_dir,
@@ -145,7 +146,7 @@ if False:
 
 # Forward model ---------------------------------------------------------------
 from jr.meg import forward_pipeline
-if False:
+if True:
     for meg_subject, subject in zip(range(1, 21), subjects_id):
         if subject in bad_mri:
             continue
@@ -159,7 +160,7 @@ if False:
 
 # Covariance -----------------------------------------------------------------
 from mne.cov import compute_covariance
-if False:
+if True:
     for meg_subject, subject in zip(range(1, 21), subjects_id):
         if subject in bad_mri:
             continue
@@ -175,7 +176,7 @@ if False:
 
 # Inverse --------------------------------------------------------------------
 from mne.minimum_norm import make_inverse_operator
-if False:
+if True:
     for meg_subject, subject in zip(range(1, 21), subjects_id):
         if subject in bad_mri:
             continue
@@ -191,7 +192,7 @@ if False:
 from mne import EvokedArray
 from mne import compute_morph_matrix
 from mne.minimum_norm import apply_inverse
-if False:
+if True:
     for meg_subject, subject in zip(range(1, 21), subjects_id):
         if subject in bad_mri:
             continue

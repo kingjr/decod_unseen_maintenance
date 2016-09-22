@@ -6,9 +6,9 @@ import numpy as np
 from jr.plot import pretty_gat, pretty_decod, pretty_slices
 from jr.utils import table2html
 from scipy.stats import wilcoxon
-from config import load, report, tois
+from config import load, report
 from base import stats
-from conditions import analyses
+from conditions import analyses, tois
 
 fig_alldiag = plt.figure(figsize=[6.5, 11])
 axes_alldiag = gridspec.GridSpec(len(analyses), 1, hspace=0.1)
@@ -17,6 +17,8 @@ table_toi = np.empty((len(analyses), len(tois)), dtype=object)
 table_reversal = np.empty((len(analyses), 2), dtype=object)
 figs = list()
 alpha = 0.05  # statistical threshold for line delimitation
+
+# Plot diagonal decoding and temporal generalization for each analysis
 for ii, (analysis, ax_diag) in enumerate(zip(analyses, axes_alldiag)):
     print analysis['name']
     # Load
