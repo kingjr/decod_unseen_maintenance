@@ -1,20 +1,37 @@
 Brain mechanisms underlying the brief maintenance of seen and unseen sensory information
-=======================================================================================
+========================================================================================
 
-This repository stores all scripts to analyze MEG data from the eponymous manuscript, by Jean-Remi King, Niccolo Pescetelli & Stanislas Dehaene.
+Jean-Rémi King, Niccolo Pescetelli & Stanislas Dehaene, Neuron 2016
 
-The corresponding manuscript has been submitted and **is currently not peer-reviewed**. The preprint pdf can be downloaded from [BioArXiv](http://biorxiv.org/content/early/2016/02/18/040030), and will be updated once the paper is accepted for publication.
 
 Abstract
 ========
 
-Recent studies of "unconscious working memory" have challenged the notion that only visible stimuli can be actively maintained over time. In the present study, we investigated the neural dynamics underlying the processing and brief maintenance of subjectively visible and invisible stimuli, using machine learning techniques applied to magnetoencephalography recordings (MEG). Subjects were presented with a masked Gabor patch whose angle had to be briefly memorized. We show that targets are encoded in early brain activity independently of their visibility, and that the maintenance of target presence and orientation continues to be decodable above chance level throughout the retention period, even in the lowest visibility condition. Source and temporal generalization analyses revealed that perceptual maintenance depends on a deep hierarchical network ranging from early visual cortex to temporal, parietal and frontal cortices. Importantly, the representations coded in the late processing stages of this network specifically predict subjective reports. Together, these results challenge several predictions of current neuronal theories of visual awareness and suggest that unseen sensory information can be briefly maintained within the higher processing stages of visual perception.
+Recent evidence of unconscious working memory challenges the notion that only visible stimuli can be actively maintained over time. In the present study, we investigated the neural dynamics underlying the maintenance of variably visible stimuli using magnetoencephalography. Subjects had to detect and mentally maintain the orientation of a masked grating. We show that the stimulus is fully encoded in early brain activity independently of visibility reports. However, the presence and orientation of the target are actively maintained throughout the brief retention period, even when the stimulus is reported as unseen. Source and decoding analyses revealed that perceptual maintenance recruits a hierarchical network spanning the early visual, temporal, parietal and frontal cortices. Importantly, the representations coded in the late processing stages of this network specifically predict visibility reports. These unexpected results challenge several theories of consciousness and suggest that invisible information can be briefly maintained within the higher processing stages of visual perception.
+
+
+Data
+====
+
+The data will soon be made publicly accessible. Stay tuned.
+
+Notebooks
+=========
+
+A series of tutorials have been made available in `notebook/` to clarify the methods, and strip them from the data handling.
+
+* `method_decoding.ipynb` explains the general procedure used to perform decoding with MEG data.
+* `method_model_types.ipynb` explains how categorical, ordinal and circular models can be fitted and scored.
+* `method_statistics.ipynb` explains how the statistics are performed in the manuscript.
+* `results_summary.ipynb` gives a preview of some of the results to allow user to replicate our analyses, or go further by looking at individual subjects, test other statistical methods etc.
+
+Also consider looking at [MNE's examples and tutorials](mne-tools.github.io) showing how the `TimeDecoding` and `GeneralizationAcrossTime` classes can be used.
 
 
 Scripts
 =======
 
-Overall, the scripts remain designed for research purposes, and could therefore be improved and clarified. If you judge that some codes would benefit from specific clarifications do not hesitate to raise an issue.
+Overall, the current scripts remain designed for research purposes, and could therefore be improved and clarified. If you judge that some codes would benefit from specific clarifications do not hesitate to contact us.
 
 The scripts are generally decomposed in terms of general functions (base), actual analyses (decoding, cluster analyses), and report (plotting, tables, quick stats).
 
@@ -37,16 +54,16 @@ The scripts are generally decomposed in terms of general functions (base), actua
 - 'run_source_analysis.py'
 - 'run_stats_source.py'
 - 'plot_anatomy_roi.py'
-- 'plot_source_analysis.py'  # non-thresholded sources
-plot_source_time_course  # time course of source ROI
+- 'plot_source_time_course.py'  # time course of source of regions of interest
+- 'plot_source_analysis.py'  # all-brain sources
 
 #### Decoding
-- 'run_decoding.py'  # evoked
-- 'run_decoding_timefreq.py'  # induced
-- 'run_stats_decodings.py'
+- 'run_decoding.py'  # decoding evoked related fields
+- 'run_decoding_timefreq.py'  # decoding of induced related fields
+- 'run_stats_decodings.py'  # second-level statistics across subjects
 - 'plot_stats_decoding.py'
 - 'plot_time_freqs.py'
-- 'run_subscore_gat.py'  # score each visibility condition, correlates score with factors etc
+- 'run_subscore_gat.py'  # score each visibility condition, correlates decoding scores with experimental conditions etc
 
 #### Models
 - 'run_simulations.py'
@@ -58,28 +75,10 @@ plot_source_time_course  # time course of source ROI
 - 'run_veryhighpass.py' # show that high pass filtering removes late metastability
 
 
-Data
-====
-
-The available data is currently partial. The complete data and non truncated results will be made publicly available once the paper is accepted for publication.
-
-Online Tutorials and Results
-============================
-
-I wrote a series of tutorials available in notebook/ to clarify the methods, and strip them from the data handling.
-
-* `method_decoding.ipynb` explains the general procedure used to perform decoding with MEG data.
-* `method_model_types.ipynb` explains how categorical, ordinal and circular models can be fitted and scored.
-* `method_statistics.ipynb` explains how the statistics are performed in the manuscript.
-* `results_summary.ipynb` gives a preview of some of the results to allow user to replicate our analyses, or go further by looking at individual subjects, test other statistical methods etc.
-
-Also consider looking at the [MNE-Python gallery](http://martinos.org/mne/dev/auto_examples/). You will find several examples, showing how the `TimeDecoding` and `GeneralizationAcrossTime` can be used.
-
-
 Dependencies
 ============
 
-- mne-python: 0.13.dev0
+- MNE: 0.13.dev0
 - scikit-learn: 0.18.dev0
 - pandas: 0.18.1
 - matplotlib: 1.5.1

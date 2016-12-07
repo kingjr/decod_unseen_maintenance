@@ -14,4 +14,5 @@ orientations/
 .ipynb_checkpoints/
 ./*.ipynb
 cloud/
-docs/
+old/
+illustrations/
