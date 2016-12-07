@@ -1,4 +1,7 @@
-"""Plot decoding and GeneralizationAcrossTime (GAT) results"""
+"""Plot decoding and Temporal Generalization (TG) results
+
+Used to generate Figures 3 & S6.
+"""
 
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
@@ -40,14 +43,12 @@ for ii, (analysis, ax_diag) in enumerate(zip(analyses, axes_alldiag)):
                                     [len(times), 1, 1]).transpose(1, 0, 2)
     slices_tois = np.arange(.100, 1.100, .200)
 
-    # GAT
+    # Temporal generalization matrices
     clim = np.percentile(np.diag(np.mean(scores, axis=0)), 97)
     clim = [chance-(clim-chance), clim]
     fig_gat, ax_gat = plt.subplots(1, figsize=[7, 5.5])
     pretty_gat(np.mean(scores, axis=0), times=times, sig=p_values < alpha,
                chance=chance, ax=ax_gat, clim=clim)
-    # for toi in slices_tois:
-    #     ax_gat.axhline(toi, color='b')
     ax_gat.axvline(.800, color='k')
     ax_gat.axhline(.800, color='k')
     ax_gat.set_xlabel('Test Times', labelpad=-10)
@@ -60,32 +61,6 @@ for ii, (analysis, ax_diag) in enumerate(zip(analyses, axes_alldiag)):
     ax.set_xticks(np.arange(0., 1.200, .01))
     ax.set_yticks(np.arange(0., 1.200, .01))
     figs.append(fig_)
-
-    # Small GAT
-    clim = np.percentile(np.diag(np.mean(scores, axis=0)), 97)
-    clim = [chance-(clim-chance), clim]
-    fig_gat_small, ax_gat = plt.subplots(1, figsize=[3.5, 2.5])
-    pretty_gat(np.mean(scores, axis=0), times=times, sig=p_values < alpha,
-               chance=chance, ax=ax_gat, clim=clim)
-    ax_gat.axvline(.800, color='k')
-    ax_gat.axhline(.800, color='k')
-    ax_gat.set_xlabel('Test Times', labelpad=-10)
-    ax_gat.set_ylabel('Train Times', labelpad=-15)
-    ax_gat.set_xlim(-.050, .350)
-    ax_gat.set_ylim(-.050, .350)
-    ax_gat.set_yticks(np.arange(0, .301, .100))
-    ax_gat.set_yticklabels([0, '', '', 300])
-    ax_gat.set_xticks(np.arange(0, .301, .100))
-    ax_gat.set_xticklabels([0, '', '', 300])
-    if 'probe' in analysis['name']:
-        ax_gat.set_xlim(-.050 + .800, .350 + .800)
-        ax_gat.set_ylim(-.050 + .800, .350 + .800)
-        ax_gat.set_yticks(np.arange(.800, 1.101, .100))
-        ax_gat.set_yticklabels([800, '', '', 1100])
-        ax_gat.set_xticks(np.arange(.800, 1.101, .100))
-        ax_gat.set_xticklabels([800, '', '', 1100])
-    fig_gat_small.tight_layout()
-    report.add_figs_to_section(fig_gat_small, 'gat_small', analysis['name'])
 
     # ------ Plot times slices score
     fig_offdiag, axs = plt.subplots(len(slices_tois), 1, figsize=[5, 6])
@@ -178,7 +153,7 @@ table_reversal = table2html(table_reversal.T, head_line=toi_reversal,
                             head_column=[a['title'] for a in analyses])
 report.add_htmls_to_section(table_reversal, 'table_reversal', 'all')
 
-# main effect of task relevance
+# Report main effect of task relevance
 score_relevant, score_irrelevant = list(), list()
 relevant = ['target_circAngle', 'target_present', 'detect_button_pst']
 irrelevant = ['target_contrast_pst', 'target_spatialFreq', 'target_phase']

@@ -1,3 +1,8 @@
+"""Plot non-thresholded whole-brain source analyses.
+
+Used to generate Figures 2.b and S4.
+"""
+
 import os
 import os.path as op
 import numpy as np
@@ -8,30 +13,30 @@ from jr.plot import alpha_cmap
 from config import load, subjects_id, report, tois
 report._setup_provenance()
 
-# get stc for plotting
+# Load a first source space to setup plotting
 stc, _, _ = load('evoked_source', subject=1, analysis='target_present')
 morph = load('morph', subject=1)
 vertices_to = [np.arange(10242)] * 2
 stc_morph = morph_data_precomputed(subjects_id[0], 'fsaverage', stc,
                                    vertices_to, morph)
-
+# Loop across analyses (target presence, angle etc)
 for analysis in analyses:
     stcs, connectivity = load('score_source', analysis=analysis['name'])
     p_val = load('score_pval', analysis=analysis['name'])
 
-    # morph pval in log space
+    # Morph pval in log space
     stc_morph._data[:, :] = np.log(p_val.T)
     stc_pval = stc_morph.morph('fsaverage', grade=None)
     sig = np.exp(stc_pval._data) < .05
     del stc_pval, p_val
 
-    # get absolute score value for plotting
+    # Get absolute score value for plotting
     chance = analysis['chance']
     stc2 = np.mean(np.abs(stcs - chance) + chance, axis=0)
     stc = np.mean(stcs, axis=0)
     del stcs, connectivity
 
-    # plot
+    # Plot effect size in each source
     cmaps = (alpha_cmap('RdBu_r'),
              alpha_cmap(LinearSegmentedColormap.from_list(
                         'RdBu', ['k', analysis['color']]), diverge=False))
@@ -65,22 +70,22 @@ for analysis in analyses:
             for ii in contours:
                 ii['surface'].remove()
             brain.set_time(t)
-            # plot significant clusters
-            overlay = 1. * sig[:, np.where(brain._times >= t)[0][0]]
-            left = brain.add_contour_overlay(
-                overlay[len(overlay)//2:], min=0., max=1.,
-                hemi='lh',
-                n_contours=2, colorbar=False, colormap='hot')
-            contours = brain.contour_list
-            right = brain.add_contour_overlay(
-                overlay[:len(overlay)//2], min=0., max=1.,
-                hemi='rh',
-                n_contours=2, colorbar=False, colormap='hot')
-            contours += brain.contour_list
+            if False:  # plot significant clusters
+                overlay = 1. * sig[:, np.where(brain._times >= t)[0][0]]
+                left = brain.add_contour_overlay(
+                    overlay[len(overlay)//2:], min=0., max=1.,
+                    hemi='lh',
+                    n_contours=2, colorbar=False, colormap='hot')
+                contours = brain.contour_list
+                right = brain.add_contour_overlay(
+                    overlay[:len(overlay)//2], min=0., max=1.,
+                    hemi='rh',
+                    n_contours=2, colorbar=False, colormap='hot')
+                contours += brain.contour_list
             fname = '%s_source_%3i%s.png' % (analysis['name'], t, suf)
             brain.save_image(op.join(image_path, fname))
 
-        # plot average in time region of interest
+        # Plot average over time region of interest
         stc_morph._data = np.mean(data, axis=0)
         for toi in tois:
             sel = np.where((stc_morph.times >= (toi[0])) &

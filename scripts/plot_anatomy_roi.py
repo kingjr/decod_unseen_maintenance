@@ -1,5 +1,8 @@
 """Make a plot of the selected region of interest typically associated with
-visual perception (i.e. ventral and dorsal stream + PFC)"""
+visual perception (i.e. ventral and dorsal stream + PFC)
+
+Used to generate Figure 2.a
+"""
 
 import numpy as np
 import matplotlib.pyplot as plt

@@ -2,10 +2,101 @@
 angle after probe onset is bias by and/or solely due to the presence of a probe
 whose orientation is correlated to the target's"""
 import numpy as np
-from jr.stats import circ_tuning
+from jr.stats import circ_tuning, circ_mean, corr_circular_linear
 from config import load, save, subjects
-from base import stats, get_predict_error, angle_acc, angle_bias
+from base import stats
 from conditions import tois
+
+
+# ad-hoc functions: XXX needs clean-up
+
+
+def get_predict(gat, sel=None, toi=None, mean=True, typ='diagonal'):
+    """Retrieve decoding prediction from a GeneralizationAcrossTime object"""
+    from jr.gat import get_diagonal_ypred
+    from jr.utils import align_on_diag
+    # select data in the gat matrix
+    if typ == 'diagonal':
+        y_pred = np.transpose(get_diagonal_ypred(gat), [1, 0, 2])
+    elif typ == 'align_on_diag':
+        y_pred = np.squeeze(align_on_diag(gat.y_pred_)).transpose([2, 0, 1, 3])
+    elif typ == 'gat':
+        y_pred = np.squeeze(gat.y_pred_).transpose([2, 0, 1, 3])
+    elif typ == 'slice':
+        raise NotImplementedError('slice')
+    y_pred = y_pred % (2 * np.pi)  # make sure data is in on circle
+    # Select trials
+    sel = range(len(y_pred)) if sel is None else sel
+    y_pred = y_pred[sel, ...]
+    # select TOI
+    times = np.array(gat.train_times_['times'])
+    toi = times[[0, -1]] if toi is None else toi
+    toi_ = np.where((times >= toi[0]) & (times <= toi[1]))[0]
+    y_pred = y_pred[:, toi_, ...]
+    # mean across time point
+    if mean:
+        # weighted circular mean (dim = angle * radius)
+        cos = np.mean(np.cos(y_pred[..., 0]) * y_pred[..., 1], axis=1)
+        sin = np.mean(np.sin(y_pred[..., 0]) * y_pred[..., 1], axis=1)
+        radius = np.median(y_pred[..., 1], axis=1)
+        angle = np.arctan2(sin, cos)
+        y_pred = lstack(angle, radius)
+    return y_pred[:, None] if y_pred.ndim == 1 else y_pred
+
+
+def lstack(x, y):
+    """Stack x and y and transpose"""
+    z = np.stack([x, y])
+    return np.transpose(z, np.r_[range(1, z.ndim), 0])
+
+
+def get_predict_error(gat, sel=None, toi=None, mean=True, typ='diagonal',
+                      y_true=None):
+    """Retrieve single trial error from a GeneralizationAcrossTime object"""
+    y_pred = get_predict(gat, sel=sel, toi=toi, mean=mean, typ=typ)[..., 0]
+    # error is diff modulo pi centered on 0
+    sel = range(len(y_pred)) if sel is None else sel
+    if y_true is None:
+        y_true = gat.y_true_[sel]
+    y_true = np.tile(y_true, np.hstack((np.shape(y_pred)[1:], 1)))
+    y_true = np.transpose(y_true, [y_true.ndim - 1] + range(y_true.ndim - 1))
+    y_error = (y_pred - y_true + np.pi) % (2 * np.pi) - np.pi
+    return y_error
+
+
+def angle_acc(y_error, axis=None):
+    # range between -pi and pi just in case not done already
+    y_error = y_error % (2 * np.pi)
+    y_error = (y_error + np.pi) % (2 * np.pi) - np.pi
+    # random error = np.pi/2, thus:
+    return np.pi / 2 - np.mean(np.abs(y_error), axis=axis)
+
+
+def angle_bias(y_error, y_tilt):
+    # This is an ad hoc function to compute the systematic bias across angles
+    # It consists in testing whether the angles are correlated with the tilt
+    # [-1, 1] and multiplying the root square resulting R square value by the
+    #  sign of the mean angle.
+    # In this way, if there is a correlations, we can get a positive or
+    # negative R value depending on the direction of the bias, and get 0 if
+    # there's no correlation.
+    n_train, n_test = 1, 1
+    y_tilt_ = y_tilt
+    if y_error.ndim == 3:
+        n_train, n_test = np.shape(y_error)[1:]
+        y_tilt_ = np.tile(y_tilt, [n_train, n_test, 1]).transpose([2, 0, 1])
+
+    # compute mean angle
+    alpha = circ_mean(y_error * y_tilt_, axis=0)
+    alpha = ((alpha + np.pi) % (2 * np.pi)) - np.pi
+    # compute correlation
+    _, R2, _ = corr_circular_linear(y_error.reshape([len(y_error), -1]),
+                                    y_tilt)
+    R2 = R2.reshape([n_train, n_test])
+    # set direction of the bias
+    R = np.sqrt(R2) * np.sign(alpha)
+    return R
+
 
 n_bins = 24
 toi_probe = tois[-1]

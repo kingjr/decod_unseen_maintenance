@@ -1,15 +1,14 @@
 import numpy as np
-from jr.utils import tile_memory_free, pairwise, table2html
-from jr.stats import (repeated_spearman, circ_mean, corr_circular_linear,
-                      fast_mannwhitneyu)
+from jr.utils import tile_memory_free, pairwise
+from jr.stats import repeated_spearman, fast_mannwhitneyu
 from mne.stats import ttest_1samp_no_p
 from mne.stats import spatio_temporal_cluster_1samp_test
-from scipy.stats import wilcoxon
 
 
-# STATS #######################################################################
+# STATISTICS ##################################################################
 
-def stat_fun(x, sigma=0, method='relative'):
+
+def _stat_fun(x, sigma=0, method='relative'):
     """Aux. function of stats"""
     t_values = ttest_1samp_no_p(x, sigma=sigma, method=method)
     t_values[np.isnan(t_values)] = 0
@@ -17,11 +16,22 @@ def stat_fun(x, sigma=0, method='relative'):
 
 
 def stats(X, connectivity=None, n_jobs=-1):
-    """Use systematically the same stat with multiple comparison correction."""
+    """Cluster statistics to control for multiple comparisons.
+
+    Parameters
+    ----------
+    X : array, shape (n_samples, n_space, n_times)
+        The data, chance is assumed to be 0.
+    connectivity : None | array, shape (n_space, n_times)
+        The connectivity matrix to apply cluster correction. If None uses
+        neighboring cells of X.
+    n_jobs : int
+        The number of parallel processors.
+    """
     X = np.array(X)
     X = X[:, :, None] if X.ndim == 2 else X
     T_obs_, clusters, p_values, _ = spatio_temporal_cluster_1samp_test(
-        X, out_type='mask', stat_fun=stat_fun, n_permutations=2**12,
+        X, out_type='mask', stat_fun=_stat_fun, n_permutations=2**12,
         n_jobs=n_jobs, connectivity=connectivity)
     p_values_ = np.ones_like(X[0]).T
     for cluster, pval in zip(clusters, p_values):
@@ -31,62 +41,10 @@ def stats(X, connectivity=None, n_jobs=-1):
 # ANALYSES ####################################################################
 
 
-def table_duration(data, tois, times, chance):
-    n_toi, n_vis, n_subject, n_time = data.shape
-    if n_toi != 2:
-        raise RuntimeError("Can only process early versus late time windows." +
-                           " Got %i tois instead" % n_toi)
-    if n_vis != 4:
-        raise RuntimeError("Can only process early 4 visibility ratings")
-
-    if len(times) != n_time:
-        raise RuntimeError("Inconsistent time dimension")
-    freq = len(times) / np.ptp(times)
-
-    table_data = np.zeros((8, n_toi, n_subject))  # initialize array
-    # loop across tois
-    for ii, (data, toi) in enumerate(zip(data, tois)):
-        # loop across visibility ratings
-        for pas in range(n_vis):
-            score = data[pas, :, :len(times)/2]
-            # we had a chance value at the end, to ensure that we find a value
-            # for each subject. Note that this could bias the distribution
-            # towards shorter durations depending on the noise level.
-            score = np.hstack((score, [[chance]] * n_subject))
-            # for each subject, find the first time sample that is below chance
-            table_data[pas, ii, :] = [np.where(s <= chance)[0][0]/freq
-                                      for s in score]
-        # mean across visibility to get overall estimate
-        table_data[4, ii, :] = np.nanmean(table_data[:4, ii, :], axis=0)
-        # seen - unseen
-        table_data[5, ii, :] = table_data[3, ii, :] - table_data[0, ii, :]
-    # interaction time: is early duration different from late
-    table_data[6, 0, :] = table_data[4, 1, :] - table_data[4, 0, :]
-    # interaction time x vis: does the difference (seen- unseen) vary with TOI
-    table_data[7, 0, :] = table_data[5, 1, :] - table_data[5, 0, :]
-    table = np.empty((8, n_toi), dtype=object)
-
-    # Transfor this data into stats summary:
-    for ii in range(8):
-        for jj in range(n_toi):
-            score = table_data[ii, jj, :]
-            m = np.nanmedian(score)
-            sem = np.nanstd(score) / np.sqrt(sum(~np.isnan(score)))
-            p_val = wilcoxon(score)[1] if sum(abs(score)) > 0. else 1.
-            # the stats for each pas is not meaningful because there's no
-            # chance level, we 'll thus skip it
-            p_val = p_val if ii > 3 else np.inf
-            table[ii, jj] = '[%.3f+/-%.3f, p=%.4f]' % (m, sem, p_val)
-    # HTML export
-    headlines = (['pas%i' % pas for pas in range(4)] +
-                 ['pst', 'seen-unseen', 'late-early',
-                  '(late-early)*(seen-unseen)'])
-    return table2html(table, head_column=tois, head_line=headlines)
-
-
 def nested_analysis(X, df, condition, function=None, query=None,
                     single_trial=False, y=None, n_jobs=-1):
-    """ Apply a nested set of analyses.
+    """ Apply a nested set of analyses. Note that this is an overkill in this
+    study has only main effects are modeled.
 
     This pipeline is to manually identify main effects in the case of multiple
     independent variables. In the present study, it is an overkill, and could
@@ -190,7 +148,7 @@ def _default_analysis(X, y):
     if len(y) == 2:
         y = np.where(y == unique_y[0], 1, -1)
         # Tile Y to across X dimension without allocating memory
-        Y = tile_memory_free(y, X.shape[1:])
+        Y = tile_memory_free(y, X.shape[1:])  # FIXME tile memory free is now automatic in numpy # noqa
         return np.mean(X * Y, axis=0)
     elif len(unique_y) == 2:
         # if two conditions but multiple trials, can return AUC
@@ -205,113 +163,6 @@ def _default_analysis(X, y):
         return repeated_spearman(X, y)
     else:
         raise RuntimeError('Please specify a function for this kind of data')
-
-# MNE #########################################################################
-
-
-def meg_to_gradmag(chan_types):
-    """force separation of magnetometers and gradiometers"""
-    from mne.channels import read_ch_connectivity
-    if 'meg' in [chan['name'] for chan in chan_types]:
-        mag_connectivity, _ = read_ch_connectivity('neuromag306mag')
-        # FIXME grad connectivity? Need virtual sensor?
-        # grad_connectivity, _ = read_ch_connectivity('neuromag306grad')
-        chan_types = [dict(name='mag', connectivity=mag_connectivity),
-                      dict(name='grad', connectivity='missing')] + \
-                     [chan for chan in chan_types if chan['name'] != 'meg']
-    return chan_types
-
-
-# DECODING ####################################################################
-
-
-
-
-def get_predict(gat, sel=None, toi=None, mean=True, typ='diagonal'):
-    """Retrieve decoding prediction from a GeneralizationAcrossTime object"""
-    from jr.gat import get_diagonal_ypred
-    from jr.utils import align_on_diag
-    # select data in the gat matrix
-    if typ == 'diagonal':
-        y_pred = np.transpose(get_diagonal_ypred(gat), [1, 0, 2])
-    elif typ == 'align_on_diag':
-        y_pred = np.squeeze(align_on_diag(gat.y_pred_)).transpose([2, 0, 1, 3])
-    elif typ == 'gat':
-        y_pred = np.squeeze(gat.y_pred_).transpose([2, 0, 1, 3])
-    elif typ == 'slice':
-        raise NotImplementedError('slice')
-    y_pred = y_pred % (2 * np.pi)  # make sure data is in on circle
-    # Select trials
-    sel = range(len(y_pred)) if sel is None else sel
-    y_pred = y_pred[sel, ...]
-    # select TOI
-    times = np.array(gat.train_times_['times'])
-    toi = times[[0, -1]] if toi is None else toi
-    toi_ = np.where((times >= toi[0]) & (times <= toi[1]))[0]
-    y_pred = y_pred[:, toi_, ...]
-    # mean across time point
-    if mean:
-        # weighted circular mean (dim = angle * radius)
-        cos = np.mean(np.cos(y_pred[..., 0]) * y_pred[..., 1], axis=1)
-        sin = np.mean(np.sin(y_pred[..., 0]) * y_pred[..., 1], axis=1)
-        radius = np.median(y_pred[..., 1], axis=1)
-        angle = np.arctan2(sin, cos)
-        y_pred = lstack(angle, radius)
-    return y_pred[:, None] if y_pred.ndim == 1 else y_pred
-
-
-def lstack(x, y):
-    """Stack x and y and transpose"""
-    z = np.stack([x, y])
-    return np.transpose(z, np.r_[range(1, z.ndim), 0])
-
-
-def get_predict_error(gat, sel=None, toi=None, mean=True, typ='diagonal',
-                      y_true=None):
-    """Retrieve single trial error from a GeneralizationAcrossTime object"""
-    y_pred = get_predict(gat, sel=sel, toi=toi, mean=mean, typ=typ)[..., 0]
-    # error is diff modulo pi centered on 0
-    sel = range(len(y_pred)) if sel is None else sel
-    if y_true is None:
-        y_true = gat.y_true_[sel]
-    y_true = np.tile(y_true, np.hstack((np.shape(y_pred)[1:], 1)))
-    y_true = np.transpose(y_true, [y_true.ndim - 1] + range(y_true.ndim - 1))
-    y_error = (y_pred - y_true + np.pi) % (2 * np.pi) - np.pi
-    return y_error
-
-
-def angle_acc(y_error, axis=None):
-    # range between -pi and pi just in case not done already
-    y_error = y_error % (2 * np.pi)
-    y_error = (y_error + np.pi) % (2 * np.pi) - np.pi
-    # random error = np.pi/2, thus:
-    return np.pi / 2 - np.mean(np.abs(y_error), axis=axis)
-
-
-def angle_bias(y_error, y_tilt):
-    # This is an ad hoc function to compute the systematic bias across angles
-    # It consists in testing whether the angles are correlated with the tilt
-    # [-1, 1] and multiplying the root square resulting R square value by the
-    #  sign of the mean angle.
-    # In this way, if there is a correlations, we can get a positive or
-    # negative R value depending on the direction of the bias, and get 0 if
-    # there's no correlation.
-    n_train, n_test = 1, 1
-    y_tilt_ = y_tilt
-    if y_error.ndim == 3:
-        n_train, n_test = np.shape(y_error)[1:]
-        y_tilt_ = np.tile(y_tilt, [n_train, n_test, 1]).transpose([2, 0, 1])
-
-    # compute mean angle
-    alpha = circ_mean(y_error * y_tilt_, axis=0)
-    alpha = ((alpha + np.pi) % (2 * np.pi)) - np.pi
-    # compute correlation
-    _, R2, _ = corr_circular_linear(y_error.reshape([len(y_error), -1]),
-                                    y_tilt)
-    R2 = R2.reshape([n_train, n_test])
-    # set direction of the bias
-    R = np.sqrt(R2) * np.sign(alpha)
-    return R
 
 
 # LOAD DATA ###################################################################
@@ -379,5 +230,5 @@ def read_events(bhv_fname):
 
 
 def angle2circle(angles):
-    """from degree to radians multipled by rm2"""
+    """from degree to radians multipled by 2"""
     return np.deg2rad(2 * (np.array(angles) + 7.5))

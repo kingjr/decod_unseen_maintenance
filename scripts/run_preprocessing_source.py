@@ -10,7 +10,7 @@ os.environ['SUBJECTS_DIR'] = subjects_dir
 
 # Anatomy pipeline ------------------------------------------------------------
 from jr.meg import anatomy_pipeline
-if True:
+if True:  # Runs Freesurfer anatomy pipeline
     for meg_subject, subject in zip(range(1, 21), subjects_id):
         if subject not in missing_mri + bad_watershed + bad_mri:
             continue
@@ -18,7 +18,7 @@ if True:
         anatomy_pipeline(subject=subject, subjects_dir=subjects_dir,
                          overwrite=False)
 
-if True:
+if True:  # Runs MNE/Freesurfer BEM models
     from mne.bem import (make_bem_model, write_bem_surfaces,
                          make_bem_solution, write_bem_solution)
     for subject in bad_watershed:
@@ -33,9 +33,8 @@ if True:
         bem = make_bem_solution(surfs)
         write_bem_solution(fname=bem_sol_fname, bem=bem)
 
-# check anat
 from mne.viz import plot_bem
-if True:
+if True:  # Plot subjects' BEMs and source spaces
     figs = list()
     for meg_subject, subject in zip(range(1, 21), subjects_id):
         if subject in missing_mri + bad_mri:
@@ -59,7 +58,7 @@ if True:
                           surf.z[vertidx], color=(1, 1, 0), scale_factor=1.5)
         raw_input('next?')
 
-# Coregistration --------------------------------------------------------------
+# Manual Coregistration -------------------------------------------------------
 from mne.viz import plot_trans
 from mne.gui import coregistration
 if True:
@@ -83,7 +82,7 @@ if True:
 
 
 def _copy_from_fsaverage(subject, subjects_dir, overwrite=False):
-    """copy fsaverage files"""
+    """Copy fsaverage files for subjects with missing MRI"""
     for this_dir in ['bem', 'surf']:
         bem_dir = os.path.join(subjects_dir, subject, this_dir)
         if not os.path.exists(bem_dir):
@@ -107,8 +106,7 @@ def _copy_from_fsaverage(subject, subjects_dir, overwrite=False):
         if overwrite or not(os.path.exists(f_to)):
             copyfile(f_from, f_to)
 
-if True:
-    # coregistration and source space for missing mri
+if True:  # Coregistration and source space for missing mri
     from shutil import copyfile
     anatomy_pipeline(subject='fsaverage', subjects_dir=subjects_dir,
                      overwrite=False)
@@ -135,7 +133,7 @@ if True:
         bem_dir = os.path.join(subjects_dir, subject, 'bem')
         src_fname = os.path.join(bem_dir, subject + '-oct-6-src.fif')
 
-        # 3. Setup source space
+        # Setup source space
         if not os.path.isfile(src_fname):
             from mne import setup_source_space
             setup_source_space(subject=subject, subjects_dir=subjects_dir,
@@ -158,7 +156,7 @@ if True:
                          subject=subject, subjects_dir=subjects_dir,
                          overwrite=True)
 
-# Covariance -----------------------------------------------------------------
+# Covariance (based on prestimulus window) ------------------------------------
 from mne.cov import compute_covariance
 if True:
     for meg_subject, subject in zip(range(1, 21), subjects_id):
@@ -167,14 +165,13 @@ if True:
         # Preproc
         epochs = load('epochs_decim', subject=meg_subject, preload=True)
         epochs.pick_types(meg=True, eeg=False, eog=False)
-        # epochs = epochs[:160]  # compute covariance from a single run
         epochs.apply_baseline((None, 0))
         # Compute covariance on same window as baseline
         cov = compute_covariance(epochs, tmin=epochs.times[0], tmax=0.,
                                  method='shrunk')
         save(cov, 'cov', subject=meg_subject, overwrite=True)
 
-# Inverse --------------------------------------------------------------------
+# Estimate inverse operator ---------------------------------------------------
 from mne.minimum_norm import make_inverse_operator
 if True:
     for meg_subject, subject in zip(range(1, 21), subjects_id):
@@ -188,7 +185,7 @@ if True:
         inv = make_inverse_operator(info, fwd, cov, loose=0.2, depth=0.8)
         save(inv, 'inv', subject=meg_subject, overwrite=True)
 
-# Morph ----------------------------------------------------------------------
+# Morph anatomy into common model ---------------------------------------------
 from mne import EvokedArray
 from mne import compute_morph_matrix
 from mne.minimum_norm import apply_inverse

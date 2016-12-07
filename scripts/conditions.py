@@ -1,4 +1,4 @@
-"""Define each analysis and its corresponding classifier"""
+"""Define each analysis, its corresponding classifier & scoring metrics"""
 # Decoding parameters
 import numpy as np
 import matplotlib.pyplot as plt
@@ -11,7 +11,6 @@ from sklearn.linear_model import LogisticRegression, Ridge
 from jr.gat import force_predict, scorer_spearman, PolarRegression
 from jr.gat import scorer_angle as _scorer_angle
 from jr.stats import corr_linear_circular
-from base import scorer_circlin
 
 # Analysis Parameters: arbitrary time regions of interest
 tois = np.array([[-.150, 0.], [.100, .250], [.300, .800], [.900, 1.050]])
@@ -87,8 +86,8 @@ analyses = (
     analysis('target_circAngle',    'circ_regress', title='Target Angle'),
     analysis('probe_circAngle',     'circ_regress', title='Probe Angle'),
     analysis('probe_tilt',          'categorize', title='Target - Probe Tilt'),
-    analysis('probe_phase',    'circ_regress', title='Probe Phase'),
-    analysis('discrim_button', 'categorize', title='Tilt Decision'),
+    analysis('probe_phase',         'circ_regress', title='Probe Phase'),
+    analysis('discrim_button',      'categorize', title='Tilt Decision'),
     analysis('detect_button_pst',   'regress', condition='detect_button',
              query='target_present == True', title='Visibility Decision'),
 )

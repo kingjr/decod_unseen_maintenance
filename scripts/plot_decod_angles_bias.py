@@ -1,4 +1,7 @@
-"""Plot analyses related to the control analyses of target and probe angles"""
+"""Plot analyses related to the control analyses of target and probe angles
+
+Used to generate Figure S3.
+"""
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -8,17 +11,18 @@ from jr.utils import table2html
 from config import load, report
 from scipy.stats import wilcoxon
 
+# Define color codes
 cmap = plt.get_cmap('bwr')
 colors_vis = cmap(np.linspace(0, 1, 4))
+cmap = plt.get_cmap('BrBG')
+colors = cmap(np.linspace(0.2, .8, 3))
 
 # Load data
 results = load('score', subject='fsaverage', analysis='target_probe')
-times = results['times']
-tois = results['tois']
+times = results['times']  # Decoding times
+tois = results['tois']  # time regions of interest
 
 # Plot tuning curve at probe time for each estimator, alignment and tilt
-cmap = plt.get_cmap('BrBG')
-colors = cmap(np.linspace(0.2, .8, 3))
 fig, axes = plt.subplots(2, 2, figsize=[5, 3.8])
 for ii in range(2):  # Estimator: target or probe orientation?
     for jj in range(2):  # Angle error with regard to: target or probe ?
@@ -40,7 +44,7 @@ pretty_axes(axes, xticklabels=['$-\pi/2$', '', '$\pi/2$'],
 fig.tight_layout()
 report.add_figs_to_section(fig, 'target_probe', 'cross_generalization')
 
-# Plot bias GAT
+# Plot bias Temporal Generalization Matrices
 fig, axes = plt.subplots(2, 2, figsize=[6.15, 5.6])
 fig.subplots_adjust(right=0.85, hspace=0.05, wspace=0.05)
 for ii in range(2):
@@ -56,12 +60,11 @@ pretty_axes(axes, ylabelpad=-15, xticks=np.linspace(-.100, 1.400, 13),
 pretty_colorbar(cax=fig.add_axes([.88, .25, .02, .55]), ax=axes[0, 0])
 report.add_figs_to_section(fig, 'gat', 'bias')
 
-# plot bias diagonal
+# Plot bias of TG diagonal (i.e. decoding bias)
 fig, ax = plt.subplots(1, figsize=[7., 2.])
 scores = np.array([np.diag(s) for s in results['bias'][:, 0, 1, ...]])
 p_val = np.diag(results['bias_pval'][0, 1, :, :])
-color = cmap(1.)
-pretty_decod(-scores, ax=ax, times=times, color=color, sig=p_val < .05,
+pretty_decod(-scores, ax=ax, times=times, color=cmap(1.), sig=p_val < .05,
              fill=True)
 ax.axvline(.800, color='k')
 ax.set_xlabel('Times', labelpad=-10)
@@ -70,7 +73,7 @@ report.add_figs_to_section(fig, 'diagonal', 'bias')
 
 
 def quick_stats(x, ax=None):
-    """Test significant bias in each toi for unseen and seen"""
+    """Report significant bias in each toi for unseen and seen"""
     pvals = [wilcoxon(ii)[1] for ii in x.T]
     sig = [['', '*'][p < .05] for p in pvals]
     m = np.nanmean(x, axis=0)
@@ -119,7 +122,7 @@ m = np.nanmean(diff)
 sem = np.nanstd(diff) / np.sqrt(sum(~np.isnan(diff)))
 print('[%.3f+/-%.3f, p=%.4f]' % (m, sem, p_val))
 
-# regression
+# regression analyses: i.e. does bias vary as a function of subjective reports
 from jr.stats import repeated_spearman
 for toi in range(4):
     X = results['bias_vis_toi'][:, 0, 1, :, toi]

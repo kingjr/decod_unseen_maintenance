@@ -7,7 +7,7 @@ from conditions import analyses
 def _run(epochs, events, analysis):
     """Runs temporal generalization for a given subject and analysis"""
     print(subject, analysis['name'])
-    
+
     # subselect the trials (e.g. exclude absent trials) with a
     # dataframe query defined in conditions.py
     query, condition = analysis['query'], analysis['condition']

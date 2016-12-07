@@ -1,4 +1,7 @@
-"""Plot the topographical effects obtained in each analysis"""
+"""Plot the topographical effects obtained in each analysis.
+
+Used to generate Figure 3.
+"""
 import numpy as np
 import matplotlib.pyplot as plt
 from jr.plot import plot_butterfly, plot_gfp, pretty_colorbar
@@ -13,13 +16,13 @@ for analysis in analyses:
     evoked.data -= analysis['chance']  # to avoid interpolation bug
     evoked_full = evoked.copy()  # used for tois
 
-    # set sig
+    # Find significant cluster
     sig = np.zeros_like(evoked.data)
     sig[::3, :] = sig[1::3, :] = sig[2::3, :] = p_values < .05
     sig_times = np.array(np.sum(sig, axis=0) > 0., dtype=int)
     sig = sig[:, np.where((evoked.times >= -.100) & (evoked.times <= .600))[0]]
 
-    # define color limit
+    # Define color limit
     toi = np.where((evoked_full.times >= tois[0][0]) &
                    (evoked_full.times <= tois[0][1]))[0]
     vmin = np.percentile(np.mean(evoked_full.data[:, toi], axis=1), 99)
@@ -69,16 +72,13 @@ for analysis in analyses:
     # ax.axvline(800, color='k')
     ax.set_xlim([-100, 600])
     ax.set_xlabel('Times (ms)', labelpad=-15)
-    # fig_butt_m.tight_layout()
     report.add_figs_to_section(fig_butt_m, 'butterfly_mag', analysis['name'])
 
     # plot GFP
     fig_butt_gfp, ax = plt.subplots(1, figsize=fig_grad.get_size_inches())
     plot_gfp(evoked, ax=ax, sig=sig, color=analysis['color'])
-    # ax.axvline(800, color='k')
     ax.set_xlim([-100, 600])
     ax.set_xlabel('Times (ms)', labelpad=-15)
-    # fig_butt_gfp.tight_layout()
     report.add_figs_to_section(fig_butt_gfp, 'butterfly_gfp', analysis['name'])
 
     # Plot topo of mean |effect| on TOI

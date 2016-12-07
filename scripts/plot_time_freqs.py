@@ -1,3 +1,7 @@
+"""Plot the time-frequency decoding for each analysis.
+
+Used to generate Figure 3.
+"""
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec

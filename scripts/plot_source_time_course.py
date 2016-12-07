@@ -1,3 +1,8 @@
+"""Plot target-presence AUC time course of each region of interest.
+
+Used to generate Figures 2.a
+"""
+
 import numpy as np
 import os.path as op
 from config import missing_mri, bad_mri, paths
@@ -19,16 +24,14 @@ from config import load, subjects, subjects_id, report
 rois = ['lingual', 'inferiortemporal', 'superiorparietal',
         'rostralmiddlefrontal', 'precentral']
 
-sel_analyses = ['target_present', 'target_circAngle', 'detect_button_pst']
-analyses = [ana for ana in analyses if ana['name'] in sel_analyses]
-
 # Copy fsaverage labels for subjects without an mri
 for subject in missing_mri:
     to = op.join(paths('freesurfer'), subject, 'label')
     if not op.exists(to):
         shutil.copytree(op.join(paths('freesurfer'), 'fsaverage', 'label'), to)
 
-
+sel_analyses = ['target_present', 'target_circAngle', 'detect_button_pst']
+analyses = [ana for ana in analyses if ana['name'] in sel_analyses]
 for analysis in analyses:
     section = ['sources_%s' % analysis['name']]
     chance = analysis['chance']
