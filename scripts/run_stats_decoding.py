@@ -1,3 +1,7 @@
+# Author: Jean-Remi King <jeanremi.king@gmail.com>
+#
+# Licence: BSD 3-clause
+
 """Performs stats across subjects of decoding scores fitted within subjects"""
 import numpy as np
 from base import stats

@@ -1,3 +1,10 @@
+# Author: Jean-Remi King <jeanremi.king@gmail.com>
+#
+# Licence: BSD 3-clause
+
+"""Run decoding and temporal generalization analyses for each subject
+separately.
+"""
 import numpy as np
 from mne.decoding import GeneralizationAcrossTime
 from config import subjects, load, save

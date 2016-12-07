@@ -1,3 +1,7 @@
+# Author: Jean-Remi King <jeanremi.king@gmail.com>
+#
+# Licence: BSD 3-clause
+
 """Plot target-presence AUC time course of each region of interest.
 
 Used to generate Figures 2.a

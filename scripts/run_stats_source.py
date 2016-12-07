@@ -1,3 +1,10 @@
+# Author: Jean-Remi King <jeanremi.king@gmail.com>
+#
+# Licence: BSD 3-clause
+
+"""Run mass-univariate source analyses across subjects from their single-trial
+effect sizes.
+"""
 import numpy as np
 from mne import morph_data_precomputed
 from mne import spatial_tris_connectivity, grade_to_tris

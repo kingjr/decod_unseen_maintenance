@@ -1,3 +1,7 @@
+# Author: Jean-Remi King <jeanremi.king@gmail.com>
+#
+# Licence: BSD 3-clause
+
 """Define data paths and file names"""
 import numpy as np
 import pickle

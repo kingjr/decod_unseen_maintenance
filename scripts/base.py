@@ -1,3 +1,7 @@
+# Author: Jean-Remi King <jeanremi.king@gmail.com>
+#
+# Licence: BSD 3-clause
+
 import numpy as np
 from jr.utils import tile_memory_free, pairwise
 from jr.stats import repeated_spearman, fast_mannwhitneyu

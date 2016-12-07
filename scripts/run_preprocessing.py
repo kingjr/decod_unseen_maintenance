@@ -1,3 +1,7 @@
+# Author: Jean-Remi King <jeanremi.king@gmail.com>
+#
+# Licence: BSD 3-clause
+
 """Preprocess continuous (raw) data and epoch it into epochs."""
 import os.path as op
 import numpy as np

@@ -1,3 +1,7 @@
+# Author: Jean-Remi King <jeanremi.king@gmail.com>
+#
+# Licence: BSD 3-clause
+
 """Performs sensor analysis within each subjects separately"""
 from base import nested_analysis
 from config import subjects, load, save

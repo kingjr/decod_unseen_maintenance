@@ -1,3 +1,8 @@
+# Authors: Niccolo Pescetelli <niccolo.pescetelli@gmail.com>
+#          Jean-Remi King <jeanremi.king@gmail.com>
+#
+# Licence: BSD 3-clause
+
 """Behavioral analyses and plot.
 
 Used to Generate Figure 1."""

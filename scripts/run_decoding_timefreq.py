@@ -1,3 +1,7 @@
+# Author: Jean-Remi King <jeanremi.king@gmail.com>
+#
+# Licence: BSD 3-clause
+
 """"Main decoding pipeline, consisting in fitting for each subject separately,
 a linear multivariate regresser (catgorical, ordinal or circular) that
 optimally predicts the trials' value from a single time slice.

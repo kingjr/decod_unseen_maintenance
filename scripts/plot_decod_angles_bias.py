@@ -1,3 +1,7 @@
+# Author: Jean-Remi King <jeanremi.king@gmail.com>
+#
+# Licence: BSD 3-clause
+
 """Plot analyses related to the control analyses of target and probe angles
 
 Used to generate Figure S3.

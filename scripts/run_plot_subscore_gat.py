@@ -1,3 +1,7 @@
+# Author: Jean-Remi King <jeanremi.king@gmail.com>
+#
+# Licence: BSD 3-clause
+
 """Temporal Generalization Analyses: subscore data (score a subset of the test
 set) and  visibility regression (correlation of single trial prediction with
 experimental condition).

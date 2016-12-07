@@ -1,3 +1,7 @@
+# Author: Jean-Remi King <jeanremi.king@gmail.com>
+#
+# Licence: BSD 3-clause
+
 """Plot decoding and Temporal Generalization (TG) results
 
 Used to generate Figures 3 & S6.

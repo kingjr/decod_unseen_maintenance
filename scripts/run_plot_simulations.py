@@ -1,3 +1,7 @@
+# Author: Jean-Remi King <jeanremi.king@gmail.com>
+#
+# Licence: BSD 3-clause
+
 """
 These simulations aim at showing how different types of underlying sources may
 reproduce the 3 main decoding results we observed: i.e.

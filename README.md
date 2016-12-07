@@ -20,12 +20,12 @@ Notebooks
 
 A series of tutorials have been made available in `notebook/` to clarify the methods, and strip them from the data handling.
 
-* `method_decoding.ipynb` explains the general procedure used to perform decoding with MEG data.
-* `method_model_types.ipynb` explains how categorical, ordinal and circular models can be fitted and scored.
-* `method_statistics.ipynb` explains how the statistics are performed in the manuscript.
-* `results_summary.ipynb` gives a preview of some of the results to allow user to replicate our analyses, or go further by looking at individual subjects, test other statistical methods etc.
+- `notebook/method_decoding.ipynb` explains the general procedure used to perform decoding with MEG data.
+- `notebook/method_model_types.ipynb` explains how categorical, ordinal and circular models can be fitted and scored.
+- `notebook/method_statistics.ipynb` explains how the statistics are performed in the manuscript.
+- `notebook/results_summary.ipynb` gives a preview of some of the results to allow user to replicate our analyses, or go further by looking at individual subjects, test other statistical methods etc.
 
-Also consider looking at [MNE's examples and tutorials](mne-tools.github.io) showing how the `TimeDecoding` and `GeneralizationAcrossTime` classes can be used.
+Also consider looking at [MNE's examples and tutorials](http://mne-tools.github.io/stable/auto_tutorials/plot_sensors_decoding.html) showing how the `TimeDecoding` and `GeneralizationAcrossTime` classes can be used on your own data.
 
 
 Scripts
@@ -36,43 +36,43 @@ Overall, the current scripts remain designed for research purposes, and could th
 The scripts are generally decomposed in terms of general functions (base), actual analyses (decoding, cluster analyses), and report (plotting, tables, quick stats).
 
 #### Config files
-- 'base.py' # where all generic functions are defined
-- 'conditions.py' # where the analyses, multivariate estimators, scorers etc are defined
-- 'config.py'  # where the paths and filenames are setup
+- 'scripts/base.py' # where all generic functions are defined
+- 'scripts/conditions.py' # where the analyses, multivariate estimators, scorers etc are defined
+- 'scripts/config.py'  # where the paths and filenames are setup
 
 #### Prepare data
-- 'run_behavior.py'  # plot visibility, accuracy and d-prime
-- 'run_preprocessing.py'  # filter and epochs raw signals
+- 'scripts/run_plot_behavior.py'  # plot visibility, accuracy and d-prime
+- 'scripts/run_preprocessing.py'  # filter and epochs raw signals
 
 #### Mass univariate sensor analyses
-- 'run_sensor_analysis.py'  # analyze sensor ERF within each subject
-- 'run_stats_sensors.py'  # run second-level (between subjects) stats
-- 'plot_stats_sensors.py'  # plot average topographies across subjects
+- 'scripts/run_sensor_analysis.py'  # analyze sensor ERF within each subject
+- 'scripts/run_stats_sensors.py'  # run second-level (between subjects) stats
+- 'scripts/plot_stats_sensors.py'  # plot average topographies across subjects
 
 #### Mass univariate source analyses
-- 'run_preprocess_source.py'
-- 'run_source_analysis.py'
-- 'run_stats_source.py'
-- 'plot_anatomy_roi.py'
-- 'plot_source_time_course.py'  # time course of source of regions of interest
-- 'plot_source_analysis.py'  # all-brain sources
+- 'scripts/run_preprocess_source.py'
+- 'scripts/run_source_analysis.py'
+- 'scripts/run_stats_source.py'
+- 'scripts/plot_anatomy_roi.py'
+- 'scripts/plot_source_time_course.py'  # time course of source of regions of interest
+- 'scripts/plot_source_analysis.py'  # all-brain sources
 
 #### Decoding
-- 'run_decoding.py'  # decoding evoked related fields
-- 'run_decoding_timefreq.py'  # decoding of induced related fields
-- 'run_stats_decodings.py'  # second-level statistics across subjects
-- 'plot_stats_decoding.py'
-- 'plot_time_freqs.py'
-- 'run_subscore_gat.py'  # score each visibility condition, correlates decoding scores with experimental conditions etc
+- 'scripts/run_decoding.py'  # decoding evoked related fields
+- 'scripts/run_decoding_timefreq.py'  # decoding of induced related fields
+- 'scripts/run_stats_decodings.py'  # second-level statistics across subjects
+- 'scripts/plot_stats_decoding.py'
+- 'scripts/plot_time_freqs.py'
+- 'scripts/run_plot_subscore_gat.py'  # score each visibility condition, correlates decoding scores with experimental conditions etc
 
 #### Models
-- 'run_simulations.py'
+- 'scripts/run_plot_simulations.py'
 
 #### Additional control analyses
-- 'run_decod_angles_bias.py'  # control analyses to test independence between target and probe codes
-- 'plot_decod_angles_bias.py'
-- 'run_decod_phase_probe.py' # demonstrate that estimators fitted on the probe phase can significantly predict the target phase
-- 'run_veryhighpass.py' # show that high pass filtering removes late metastability
+- 'scripts/run_decod_angles_bias.py'  # control analyses to test independence between target and probe codes
+- 'scripts/plot_decod_angles_bias.py'
+- 'scripts/run_decod_phase_probe.py' # demonstrate that estimators fitted on the probe phase can significantly predict the target phase
+- 'scripts/run_plot_veryhighpass.py' # show that high pass filtering removes late metastability
 
 
 Dependencies

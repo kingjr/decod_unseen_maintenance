@@ -1,3 +1,7 @@
+# Author: Jean-Remi King <jeanremi.king@gmail.com>
+#
+# Licence: BSD 3-clause
+
 """Plot the topographical effects obtained in each analysis.
 
 Used to generate Figure 3.

@@ -1,3 +1,7 @@
+# Author: Jean-Remi King <jeanremi.king@gmail.com>
+#
+# Licence: BSD 3-clause
+
 """Performs statistics across subjects at the sensor level"""
 import numpy as np
 from jr.stats import robust_mean

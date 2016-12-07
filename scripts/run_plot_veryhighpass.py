@@ -1,3 +1,7 @@
+# Author: Jean-Remi King <jeanremi.king@gmail.com>
+#
+# Licence: BSD 3-clause
+
 """Preprocess continuous (raw) data with very high pass filtering to
 demonstrate that late generalization is indeed stable at the single trials
 level"""

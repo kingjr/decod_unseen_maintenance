@@ -1,3 +1,10 @@
+# Author: Jean-Remi King <jeanremi.king@gmail.com>
+#
+# Licence: BSD 3-clause
+
+"""Run single-trial mass-univariate analyses in source space for each subject
+separately"""
+
 import numpy as np
 from mne.minimum_norm import apply_inverse, apply_inverse_epochs
 

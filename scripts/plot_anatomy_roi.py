@@ -1,3 +1,7 @@
+# Author: Jean-Remi King <jeanremi.king@gmail.com>
+#
+# Licence: BSD 3-clause
+
 """Make a plot of the selected region of interest typically associated with
 visual perception (i.e. ventral and dorsal stream + PFC)
 

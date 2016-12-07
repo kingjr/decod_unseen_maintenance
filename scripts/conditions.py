@@ -1,3 +1,7 @@
+# Author: Jean-Remi King <jeanremi.king@gmail.com>
+#
+# Licence: BSD 3-clause
+
 """Define each analysis, its corresponding classifier & scoring metrics"""
 # Decoding parameters
 import numpy as np

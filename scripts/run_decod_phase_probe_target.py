@@ -1,3 +1,7 @@
+# Author: Jean-Remi King <jeanremi.king@gmail.com>
+#
+# Licence: BSD 3-clause
+
 """Additional analysis consisting in taking the estimators trained on the probe
 phase to predict the phase of the target. The results show that the phase of
 the target is decodable slightly above chance, although this effect is

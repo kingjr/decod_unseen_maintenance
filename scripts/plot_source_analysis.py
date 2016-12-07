@@ -1,3 +1,7 @@
+# Author: Jean-Remi King <jeanremi.king@gmail.com>
+#
+# Licence: BSD 3-clause
+
 """Plot non-thresholded whole-brain source analyses.
 
 Used to generate Figures 2.b and S4.

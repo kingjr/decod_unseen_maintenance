@@ -1,3 +1,7 @@
+# Author: Jean-Remi King <jeanremi.king@gmail.com>
+#
+# Licence: BSD 3-clause
+
 """Plot the time-frequency decoding for each analysis.
 
 Used to generate Figure 3.
